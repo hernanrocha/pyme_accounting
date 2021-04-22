@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_arba_afip_upload" model="ir.ui.view">
+        <field name="name">gob.ar.afip.upload.wizard</field>
+        <field name="model">gob.ar.afip.upload</field>
+        <field name="arch" type="xml">
+            <form string="Cargar archivo AFIP">
+                <separator string="Selección de Archivos" />
+                <group col="4" colspan="6">
+                    <field name="afip_file"/>
+                    <field name="iibb_file"/>
+                </group>
+                
+                <separator string="Datos Cargados" />
+                <notebook>
+                    <page string="Facturas">
+
+                        <field name="invoice_ids" widget="section_and_note_one2many" options="{'reload_on_button': true}">
+                            <tree decoration-warning="needs_attention">
+                                <!-- <control>
+                                    <create name="add_product_control" string="Agregar Producto"/>
+                                </control> -->
+                                <field name="needs_attention" invisible="1" />
+                                <field name="date" edit="false" />
+                                <field name="pos_number" edit="false" />
+                                <field name="invoice_number" edit="false" />
+                                <field name="taxed_amount" />
+                                <field name="untaxed_amount" optional="hide" />
+                                <field name="excempt_amount" optional="hide" />
+                                <field name="iva" />
+                                <field name="percepcion_iibb" />
+                                <field name="difference" optional="show" />
+                                <field name="total" />
+                                <field name="vendor" edit="false" />
+                                <field name="cuit" edit="false" />
+                            </tree>
+                        </field>
+                    </page>
+                    <page string="Compras">
+                        <field name="purchase_ids" widget="section_and_note_one2many" options="{'reload_on_button': true}">
+                            <tree editable="false">
+                                <field name="company_id" invisible="1" />
+                                <field name="name" />
+                                <field name="partner_id" />
+                                <field name="state" />
+                            </tree>
+                        </field>
+                    </page>
+                </notebook>
+
+                <footer>
+                    <field name="notes" />
+                    <separator />
+                    <button name="compute_sheet" string="Cargar" type="object" class="btn-primary"/>
+                    <button name="generate_data" string="Generar Facturas" type="object" class="btn-primary" />
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_arba_afip_upload" model="ir.actions.act_window">
+        <field name="name">Import AFIP</field>
+        <field name="res_model">gob.ar.afip.upload</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>
