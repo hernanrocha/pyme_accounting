@@ -5,6 +5,23 @@
         <field name="model">gob.ar.afip.upload</field>
         <field name="arch" type="xml">
             <form string="Cargar archivo AFIP">
+                <header>
+                    <button name="calculate_iibb" string="Calcular" type="object" class="btn-primary" />
+                </header>
+                <group string="Reporte de Ingresos Brutos" col="2">
+                    <field name="iibb_report_date_from" />
+                    <field name="iibb_report_date_to" />
+                    <field name="iibb_report_sale_total" />
+                    <field name="iibb_report_tax_percentage" />
+                    <field name="iibb_report_tax_subtotal" />
+                    <separator />
+                    <field name="iibb_report_deducciones" />
+                    <field name="iibb_report_tax_prev_saldo" />
+                    <separator />
+                    <field name="iibb_report_tax_total_saldo" />
+                    <field name="iibb_report_tax_total_to_pay" />
+                </group>
+
                 <separator string="Selección de Archivos" />
                 <group col="4" colspan="6">
                     <field name="afip_file"/>
@@ -59,11 +76,112 @@
         </field>
     </record>
 
+    <!-- TODO: Ver account_menuitem.xml para una definicion rapida de menu -->
+
+    <!-- <menuitem id="menu_finance_payables" name="Vendors" sequence="3"> -->
+            <!-- <menuitem id="menu_action_move_in_invoice_type" action="action_move_in_invoice_type" sequence="1"/> -->
+        
+
+    <record model="ir.ui.view" id="account_view_in_invoice_tree">
+        <field name="name">account.move.arba.list</field>
+        <field name="model">account.move</field>
+        <field name="priority" eval="1" />
+        <field name="inherit_id" ref="account.view_invoice_tree" />
+        <field name="mode">primary</field>
+        <field name="arch" type="xml">
+                <!-- <header>
+                    <button name="action_register_payment" type="object" string="Register Payment" groups="account.group_account_user" invisible="context.get('default_move_type') not in ('out_invoice', 'out_refund', 'out_receipt', 'in_invoice', 'in_refund','in_receipt')"/>
+                </header> -->
+
+                <field name="activity_ids" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+                <field name="ref" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+                <field name="invoice_date_due" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+                <field name="company_id" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+                <field name="amount_total_signed" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+                <field name="amount_untaxed_signed" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+
+                <field name="name" position="attributes">
+                    <attribute name="optional">show</attribute>
+                </field>
+                <field name="state" position="attributes">
+                    <attribute name="optional">show</attribute>
+                </field>
+                <field name="payment_state" position="attributes">
+                    <attribute name="optional">show</attribute>
+                </field>
+                
+                <field name="invoice_date" position="after">
+                    <field name="arba_pos_number" />
+                    <field name="arba_invoice_number" />
+                    <field name="amount_subtotal_unsigned" />
+                    <field name="arba_iibb" />
+                    <field name="amount_total_unsigned" />
+                    <field name="arba_cuit" />
+                </field>
+
+                <field name="arba_cuit" position="after">
+                    <field name="invoice_partner_display_name" position="move" />
+                </field>
+        </field>
+    </record>
+
+    <record id="action_move_in_invoice_type" model="ir.actions.act_window">
+        <field name="name">Facturas</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="account_view_in_invoice_tree"/>
+        <field name="search_view_id" ref="account.view_account_invoice_filter"/>
+        <field name="domain">[('move_type', '=', 'in_invoice')]</field>
+        <field name="context">{'default_move_type': 'in_invoice'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+            Create a vendor bill
+            </p><p>
+            Create invoices, register payments and keep track of the discussions with your vendors.
+            </p>
+        </field>
+    </record>
+
+    <!-- Desactivar menu "Proveedores - Facturas"  -->
+    <record model="ir.ui.menu" id="account.menu_action_move_in_invoice_type">
+        <field name="active" eval="False"/>
+    </record>
+
+    <menuitem id="menu_account_view_in_invoice"
+        name="Facturas"
+        action="action_move_in_invoice_type"
+        parent="account.menu_finance_payables"
+        sequence="1"/>
+
     <record id="action_arba_afip_upload" model="ir.actions.act_window">
         <field name="name">Import AFIP</field>
         <field name="res_model">gob.ar.afip.upload</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
     </record>
+
+<!-- 
+    <template id="iibb_arba_monthly_report">
+    <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <h2>Reporte Ingresos Brutos Marzo/2021</h2>
+                    <p>This object's name is <span t-field="o.name"/></p>
+                </div>
+            </t>
+    </t>
+    </template> -->
 
 </odoo>
