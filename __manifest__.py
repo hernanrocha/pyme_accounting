@@ -13,11 +13,14 @@
     'depends': [
         'account',
         'purchase',
+        'sale_management'
     ],
     'data': [
         # 'security/hr_payroll_security.xml',
         'security/ir.model.access.csv',
         'wizard/arba_afip_views.xml',
+        'wizard/arba_report_views.xml',
+        'wizard/afip_import_sales_views.xml',
         'views/account_menuitem.xml'
     ],
     'images': [], # 'static/description/banner.png'

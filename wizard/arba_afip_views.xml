@@ -1,29 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+
     <record id="view_arba_afip_upload" model="ir.ui.view">
         <field name="name">gob.ar.afip.upload.wizard</field>
         <field name="model">gob.ar.afip.upload</field>
         <field name="arch" type="xml">
             <form string="Cargar archivo AFIP">
-                <header>
-                    <button name="calculate_iibb" string="Calcular" type="object" class="btn-primary" />
-                </header>
-                <group string="Reporte de Ingresos Brutos" col="2">
-                    <field name="iibb_report_date_from" />
-                    <field name="iibb_report_date_to" />
-                    <field name="iibb_report_sale_total" />
-                    <field name="iibb_report_tax_percentage" />
-                    <field name="iibb_report_tax_subtotal" />
-                    <separator />
-                    <field name="iibb_report_deducciones" />
-                    <field name="iibb_report_tax_prev_saldo" />
-                    <separator />
-                    <field name="iibb_report_tax_total_saldo" />
-                    <field name="iibb_report_tax_total_to_pay" />
-                </group>
 
-                <separator string="Selección de Archivos" />
-                <group col="4" colspan="6">
+                <separator string="Archivos" />
+                <group col="2">
                     <field name="afip_file"/>
                     <field name="iibb_file"/>
                 </group>
@@ -77,10 +62,6 @@
     </record>
 
     <!-- TODO: Ver account_menuitem.xml para una definicion rapida de menu -->
-
-    <!-- <menuitem id="menu_finance_payables" name="Vendors" sequence="3"> -->
-            <!-- <menuitem id="menu_action_move_in_invoice_type" action="action_move_in_invoice_type" sequence="1"/> -->
-        
 
     <record model="ir.ui.view" id="account_view_in_invoice_tree">
         <field name="name">account.move.arba.list</field>
@@ -154,19 +135,8 @@
         </field>
     </record>
 
-    <!-- Desactivar menu "Proveedores - Facturas"  -->
-    <record model="ir.ui.menu" id="account.menu_action_move_in_invoice_type">
-        <field name="active" eval="False"/>
-    </record>
-
-    <menuitem id="menu_account_view_in_invoice"
-        name="Facturas"
-        action="action_move_in_invoice_type"
-        parent="account.menu_finance_payables"
-        sequence="1"/>
-
     <record id="action_arba_afip_upload" model="ir.actions.act_window">
-        <field name="name">Import AFIP</field>
+        <field name="name">Importar AFIP</field>
         <field name="res_model">gob.ar.afip.upload</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>

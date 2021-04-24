@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- IMPORTAR VENTAS AFIP - FORM -->
+    <record id="view_afip_import_sale_form" model="ir.ui.view">
+        <field name="name">l10n_ar.afip.import_sale.form</field>
+        <field name="model">l10n_ar.afip.import_sale</field>
+        <field name="arch" type="xml">
+            <form string="Importar Ventas">
+
+                <group string="Archivo" col="2">
+                    <field name="afip_file" />
+                </group>
+                
+                <group string="Ventas Cargadas" col="2">
+                    <field name="invoice_ids" nolabel="1" widget="section_and_note_one2many" options="{'reload_on_button': true}">
+                        <tree>
+                            <field name="date" edit="false" />
+                            <field name="pos_number" edit="false" />
+                            <field name="invoice_number" edit="false" />
+                            <field name="taxed_amount" />
+                            <field name="untaxed_amount" optional="hide" />
+                            <field name="excempt_amount" optional="hide" />
+                            <field name="iva" />
+                            <field name="difference" optional="hide" />
+                            <field name="total" />
+                            <field name="partner" string="Cliente" optional="hide" edit="false" />
+                            <field name="cuit" optional="hide" edit="false" />
+                        </tree>
+                    </field>
+                </group>
+
+                <!-- TODO: agregar totales y deshabilitar nuevas lineas -->
+
+                <!-- TODO: agregar vista de form de las lineas de factura -->
+
+                <footer>
+                    <field name="notes" />
+                    <separator />
+                    <button name="parse_sales" string="Cargar" type="object" class="btn-primary" />
+                </footer>
+
+            </form>
+        </field>
+    </record>
+
+    <!-- IMPORTAR VENTAS AFIP - ACTION -->
+    <record id="action_afip_import_sale_wizard" model="ir.actions.act_window">
+        <field name="name">Ventas</field>
+        <field name="res_model">l10n_ar.afip.import_sale</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

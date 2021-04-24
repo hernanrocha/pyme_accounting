@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- REPORTE DE IIBB ARBA - FORM -->
+    <record id="view_iibb_arba_wizard" model="ir.ui.view">
+        <field name="name">l10n_ar.iibb.arba.wizard</field>
+        <field name="model">l10n_ar.iibb.arba.wizard</field>
+        <field name="arch" type="xml">
+            <form string="DD.JJ. Mensual de Ingresos Brutos ARBA">
+
+                <group string="Configuración" col="4">
+                    <field name="iibb_report_date_from" />
+                    <field name="iibb_report_date_to" />
+
+                    <field name="iibb_report_tax_percentage" />
+                    <field name="iibb_report_min_amount" />
+                </group>
+
+                <button name="calculate_iibb" string="Calcular" type="object" class="btn-primary" />
+
+                <group string="Reporte Generado" col="2">
+                    <field name="iibb_report_sale_total" />
+                    <field name="iibb_report_tax_percentage" readonly="1" />
+                    <field name="iibb_report_tax_subtotal" />
+                    <separator />
+                    <field name="iibb_report_deducciones" readonly="1" />
+                    <field name="iibb_report_tax_prev_saldo" />
+                    <separator />
+                    <field name="iibb_report_tax_total_saldo" />
+                    <field name="iibb_report_tax_total_to_pay" />
+                </group>
+
+            </form>
+        </field>
+    </record>
+
+    <!-- REPORTE DE IIBB ARBA - ACTION -->
+    <record id="action_iibb_arba_wizard" model="ir.actions.act_window">
+        <field name="name">DD.JJ. ARBA</field>
+        <field name="res_model">l10n_ar.iibb.arba.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>
