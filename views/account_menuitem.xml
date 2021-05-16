@@ -4,6 +4,75 @@
     <record model="ir.ui.menu" id="account.menu_action_move_in_invoice_type">
         <field name="active" eval="False"/>
     </record>
+    
+    <record id="view_account_invoice_filter" model="ir.ui.view">
+    <field name="name">account.invoice.select</field>
+    <field name="model">account.move.line</field>
+    <field name="arch" type="xml">
+        <search string="Search Invoice">
+            <field name="date" string="Period"/>
+            <filter string="ARBA" name="filter_tax_tag_ids"
+                domain="[('tax_tag_ids', 'contains', 'ARBA')]" />
+            <filter name="filter_date" date="date" string="Fecha" default_period="last_month" />
+            <!-- <filter domain="[('invoice_user_id', '=', uid)]" name="myinvoices" help="My Invoices"/>
+            <separator/>
+            <filter name="draft" string="Draft" domain="[('state','=','draft')]"/>
+            <filter name="posted" string="Posted" domain="[('state', '=', 'posted')]"/>
+            <filter name="cancel" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
+            <separator/>
+            <filter string="To Check" name="to_check" domain="[('to_check', '=', True)]"/>
+            <separator/>
+            <filter name="in_payment" string="In Payment" domain="[('payment_state', '=', 'in_payment'), ('state', '=', 'posted')]"/>
+            <filter name="partial" string="Partially Paid" domain="[('payment_state', '=', 'partial'), ('state', '=', 'posted')]"/>
+            <filter name="paid" string="Paid" domain="[('payment_state', '=', 'paid'), ('state', '=', 'posted')]"/>
+            <filter name="unpaid" string="Not Paid" domain="[('payment_state', '=', 'not_paid'), ('state', '=', 'posted')]"/>
+            <filter name="reversed" string="Reversed" domain="[('payment_state', '=', 'reversed'), ('state', '=', 'posted')]"/>
+            <filter name="late" string="Overdue" domain="['&amp;', ('invoice_date_due', '&lt;', time.strftime('%%Y-%%m-%%d')), ('state', '=', 'posted'), ('payment_state', 'in', ('not_paid', 'partial'))]" help="Overdue invoices, maturity date passed"/>
+            <separator/>
+            <filter name="invoice_date" string="Invoice Date" date="invoice_date"/>
+            <filter name="due_date" string="Due Date" date="invoice_date_due"/>
+            <separator/>
+            <filter invisible="1" string="Late Activities" name="activities_overdue"
+                domain="[('activity_ids.date_deadline', '&lt;', context_today().strftime('%Y-%m-%d'))]"
+                help="Show all records which has next action date is before today"/>
+            <filter invisible="1" string="Today Activities" name="activities_today"
+                domain="[('activity_ids.date_deadline', '=', context_today().strftime('%Y-%m-%d'))]"/>
+            <filter invisible="1" string="Future Activities" name="activities_upcoming_all"
+                domain="[('activity_ids.date_deadline', '&gt;', context_today().strftime('%Y-%m-%d'))]"/> -->
+            <group expand="1" string="Agrupar P...">
+                <!-- <filter string="Salesperson" name="salesperson" context="{'group_by':'invoice_user_id'}"/> -->
+                <filter name="group_account_id" string="Cuenta" context="{'group_by':'account_id'}"/>
+                <separator/>
+                <!-- parent_state -->
+                <!-- <filter string="Invoice Date" name="invoicedate" context="{'group_by': 'invoice_date'}"/>
+                <filter string="Due Date" name="duedate" context="{'group_by': 'invoice_date_due'}"/> -->
+            </group>
+        </search>
+    </field>
+</record>
+    
+    <!-- Asientos IIBB -->
+    <record id="action_iibb_arba_asientos" model="ir.actions.act_window">
+        <field name="name">Asientos IIBB</field>
+        <field name="res_model">account.move.line</field>
+        <field name="view_mode">tree</field>
+        <!-- <field name="context">{}</field> -->
+        <!-- <field name="view_id" ref="view_iibb_arba_asientos_tree" /> -->
+        <field name="search_view_id" ref="view_account_invoice_filter"></field>
+        <field name="context">{'search_default_group_account_id': 1, 'search_default_filter_date': 1}</field>
+        <field name="domain">[]</field>
+        <field name="target">main</field>
+    </record>
+
+        <!-- Reportes -->
+    <record id="action_tax_report" model="ir.actions.act_window">
+        <field name="name">Reportes</field>
+        <field name="res_model">account.tax.report</field>
+        <field name="view_mode">list</field>
+        <!-- <field name="context">{}</field> -->
+        <!-- <field name="view_id" ref="view_iibb_arba_asientos_tree" /> -->
+        <field name="target">main</field>
+    </record>
 
     <!-- MENU Facturacion/Proveedores/Facturas --> 
     <menuitem id="menu_account_view_in_invoice"
@@ -36,9 +105,16 @@
         <menuitem id="menu_taxes_iibb" name="Ingresos Brutos" sequence="1">
         
             <!-- MENU Facturacion/Impuestos/IIBB/ARBA  -->
-            <menuitem name="DD.JJ. ARBA" sequence="1"
+            <menuitem name="Asientos IIBB" sequence="1"
+                id="menu_iibb_arba_asientos" action="action_iibb_arba_asientos"/>
+
+            <!-- MENU Facturacion/Impuestos/IIBB/ARBA  -->
+            <menuitem name="DD.JJ. ARBA" sequence="2"
                 id="menu_taxes_iibb_arba" action="action_iibb_arba_wizard"/>
 
+            <!-- MENU Facturacion/Impuestos/IIBB/ARBA  -->
+            <menuitem name="Reportes" sequence="3"
+                id="menu_tax_report" action="action_tax_report"/>
         </menuitem>
     </menuitem>
 

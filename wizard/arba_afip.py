@@ -109,10 +109,10 @@ class InvoiceLine(models.Model):
     total = fields.Float(string="Total")
     import_id = fields.Many2one(comodel_name="gob.ar.afip.upload", ondelete="cascade")
 
-    @api.depends('taxed_amount', 'iva', 'percepcion_iibb', 'total')
+    @api.depends('taxed_amount', 'iva', 'percepcion_iibb', 'untaxed_amount', 'total')
     def compute_difference(self):
         for line in self:
-            line.difference = line.total - (line.taxed_amount + line.iva + line.percepcion_iibb)
+            line.difference = line.total - (line.taxed_amount + line.iva + line.percepcion_iibb + line.untaxed_amount)
 
     @api.depends('difference')
     def compute_needs_attention(self):
@@ -291,6 +291,27 @@ class ImpuestosImporter(models.Model):
         }
         # return {'type': 'ir.actions.act_window_close'}
 
+    def fix_difference(self):
+        count = 0
+
+        for invoice in self.invoice_ids:
+            if invoice.needs_attention:
+                invoice.untaxed_amount = invoice.difference
+                count += 1
+
+        self.notes = "{} facturas actualizadas correctamente".format(count)
+
+        return {
+            'context': self.env.context,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'gob.ar.afip.upload',
+            'res_id': self.id,
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+        }
+    
     def generate_data(self):
         [data] = self.read()
 
@@ -365,7 +386,7 @@ class ImpuestosImporter(models.Model):
                 'qty_received_manual': 1,
                 'order_id': purchase.id,
                 'partner_id': partner.id,
-                'product_id': 2, # TODO: obtener producto "Compras Varias"
+                'product_id': 1, # TODO: obtener producto "Compras Varias"
             }
             if len(line) == 0:
                 # Crear Linea de Compra
@@ -376,6 +397,29 @@ class ImpuestosImporter(models.Model):
                 line.write(line_data)
 
             print("Purchase Line", line)
+
+            # Agregar linea de compra para valor no gravado
+            if invoice.untaxed_amount > 0:
+                print("Creando linea de compra para no gravado", invoice.untaxed_amount)
+                line_data = {
+                    'name': 'Compra - Monto No Gravado',
+                    'product_qty': 1,
+                    'product_uom': 1,
+                    'price_unit': invoice.untaxed_amount,
+                    'currency_id': 19, # TODO: Get currency ID
+                    'price_subtotal': invoice.untaxed_amount, # TODO: restar del total las percepciones y el IVA para obtener este valor
+                    # 'price_tax': invoice.iva,
+                    'price_total': invoice.untaxed_amount,
+                    'qty_received': 1,
+                    'qty_received_manual': 1,
+                    'order_id': purchase.id,
+                    'partner_id': partner.id,
+                    'product_id': 2, # TODO: obtener producto "Compra No Gravada"
+                }
+
+                print(line_data)
+                line = self.env['purchase.order.line'].create(line_data)
+                print("Creada linea de compra no gravada", invoice.untaxed_amount)
 
             # Confirmar compra si esta en borrador
             if purchase.state == 'draft':
@@ -413,7 +457,10 @@ class ImpuestosImporter(models.Model):
 
             # Publicar Factura si esta en estado borrador
             if (purchase.invoice_ids.state == "draft"):
-                purchase.invoice_ids.action_post()
+                if invoice.needs_attention:
+                    print("Marcando factura con diferencia para revisar", invoice.pos_number, invoice.invoice_number)
+                else:
+                    purchase.invoice_ids.action_post()
 
             # TODO: en la UI sigue apareciendo el valor viejo de IIBB
 

@@ -1,7 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- REPORTE DE IIBB ARBA - FORM -->
+    <record model="ir.ui.view" id="account_view_in_invoice_tree">
+        <field name="name">account.move.arba.list</field>
+        <field name="model">account.move</field>
+        <field name="priority" eval="1" />
+        <field name="inherit_id" ref="account.view_invoice_tree" />
+        <field name="mode">primary</field>
+        <field name="arch" type="xml">
+                <!-- <header>
+                    <button name="action_register_payment" type="object" string="Register Payment" groups="account.group_account_user" invisible="context.get('default_move_type') not in ('out_invoice', 'out_refund', 'out_receipt', 'in_invoice', 'in_refund','in_receipt')"/>
+                </header> -->
+
+                <field name="activity_ids" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+                <field name="ref" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+                <field name="invoice_date_due" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+                <field name="company_id" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+                <field name="amount_total_signed" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+                <field name="amount_untaxed_signed" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+
+                <field name="name" position="attributes">
+                    <attribute name="optional">show</attribute>
+                </field>
+                <field name="state" position="attributes">
+                    <attribute name="optional">show</attribute>
+                </field>
+                <field name="payment_state" position="attributes">
+                    <attribute name="optional">show</attribute>
+                </field>
+                
+                <field name="invoice_date" position="after">
+                    <field name="arba_pos_number" />
+                    <field name="arba_invoice_number" />
+                    <field name="amount_subtotal_unsigned" />
+                    <field name="arba_iibb" />
+                    <field name="amount_total_unsigned" />
+                    <field name="arba_cuit" />
+                </field>
+
+                <field name="arba_cuit" position="after">
+                    <field name="invoice_partner_display_name" position="move" />
+                </field>
+        </field>
+    </record>
+
+    <record id="action_move_in_invoice_type" model="ir.actions.act_window">
+        <field name="name">Facturas</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="account_view_in_invoice_tree"/>
+        <field name="search_view_id" ref="account.view_account_invoice_filter"/>
+        <field name="domain">[('move_type', '=', 'in_invoice')]</field>
+        <field name="context">{'default_move_type': 'in_invoice'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+            Create a vendor bill
+            </p><p>
+            Create invoices, register payments and keep track of the discussions with your vendors.
+            </p>
+        </field>
+    </record>
+
+    <!-- REPORTE DE IIBB ARBA - FORM VIEW -->
     <record id="view_iibb_arba_wizard" model="ir.ui.view">
         <field name="name">l10n_ar.iibb.arba.wizard</field>
         <field name="model">l10n_ar.iibb.arba.wizard</field>
@@ -18,28 +90,68 @@
 
                 <button name="calculate_iibb" string="Calcular" type="object" class="btn-primary" />
 
-                <group string="Reporte Generado" col="2">
-                    <field name="iibb_report_sale_total" />
-                    <field name="iibb_report_tax_percentage" readonly="1" />
-                    <field name="iibb_report_tax_subtotal" />
-                    <separator />
-                    <field name="iibb_report_deducciones" readonly="1" />
-                    <field name="iibb_report_tax_prev_saldo" />
-                    <separator />
-                    <field name="iibb_report_tax_total_saldo" />
-                    <field name="iibb_report_tax_total_to_pay" />
-                </group>
+                <notebook>
+                    <page string="Resumen">
+                        <group string="Reporte Generado" col="2">
+                            <field name="iibb_report_sale_total" readonly="1" />
+                            <field name="iibb_report_tax_percentage" readonly="1" />
+                            <field name="iibb_report_tax_subtotal" />
+                            <separator />
+                            <field name="iibb_report_percepciones" readonly="1" />
+                            <separator />
+                            <field name="iibb_report_deducciones" readonly="1" />
+                            <field name="iibb_report_tax_prev_saldo" readonly="1" />
+                            <separator />
+                            <field name="iibb_report_tax_total_saldo" />
+                            <field name="iibb_report_tax_total_to_pay" />
+                        </group>
+                    </page>
+                    <page string="Percepciones">    
+                        <group>
+                            <field nolabel="1" name="iibb_percepciones">
+                                <tree>
+                                    <field name="date" />
+                                    <field name="move_id" />
+                                    <field name="partner_id" />
+                                    <field name="debit" />
+                                    <field name="credit" />
+                                </tree>
+                            </field>
+                        </group>
+                    </page> 
+                    <page string="Percepciones Banco">
+                    </page> 
+                    <page string="Retenciones">
+                    </page> 
+                    <page string="Retenciones Banco">
+                    </page> 
+                </notebook>
 
+                <footer>
+                    <button name="generate_iibb" string="Generar" type="object" class="btn-primary" />
+                </footer>
             </form>
         </field>
     </record>
 
-    <!-- REPORTE DE IIBB ARBA - ACTION -->
+    <!-- REPORTE DE IIBB ARBA - WINDOW ACTION -->
     <record id="action_iibb_arba_wizard" model="ir.actions.act_window">
         <field name="name">DD.JJ. ARBA</field>
         <field name="res_model">l10n_ar.iibb.arba.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
     </record>
+
+    <!--
+        res.company
+        Cambiar NIF por informacion de CUIT, IIBB y responsabilidad AFIP
+
+        Configuracion - Contabilidad
+        - Localizacion Fiscal: Monotributistas (chart_template_id)
+        - Impuesto de Ventas: IVA 21%
+        - Impuesto de Compras: IVA 21%
+        - Moneda: ARS
+
+    -->
 
 </odoo>
