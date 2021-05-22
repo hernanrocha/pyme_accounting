@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record model="ir.ui.view" id="res_company_list_view">
+        <field name="name">pyme_accounting.res.company.tree</field>
+        <field name="model">res.company</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="phone" />
+                <field name="email" />
+                <field name="vat" />
+                <field name="l10n_ar_afip_responsibility_type_id" />
+                <field name="l10n_ar_gross_income_type" />
+                <field name="l10n_ar_gross_income_number" />
+                <!-- TODO: Fecha de inicio de actividades, mes de cierre ejercicio fiscal -->
+                <!-- TODO: l10n_ar_afip_start_date -->
+            </tree>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="res_company_list_form">
+        <field name="name">pyme_accounting.res.company.form</field>
+        <field name="model">res.company</field>
+        <field name="priority">1</field>
+        <field name="arch" type="xml">
+            <form string="Compañía" modifiers="{}">
+                <sheet modifiers="{}">
+                    <field name="logo" widget="image" class="oe_avatar" modifiers="{}" id="logo"/>
+                    <field name="partner_gid" invisible="True" modifiers="{'invisible':true,'readonly':true}" id="partner_gid"/>
+                    <div class="oe_title" modifiers="{}">
+                        <label for="name" class="oe_edit_only" modifiers="{}"/>
+                        <h1 modifiers="{}">
+                            <!-- <field name="name" widget="field_partner_autocomplete" modifiers="{'required':true}" id="name"/> -->
+                            <field name="name" modifiers="{'required':true}" id="name"/>
+                        </h1>
+                    </div>
+                    <notebook colspan="4" modifiers="{}">
+                        <page string="Información General" name="general_info" modifiers="{}">
+                            <group modifiers="{}">
+                                <group modifiers="{}">
+                                    <!-- TODO: tal vez es necesario definir un contacto si es inscripto -->
+                                    <field name="partner_id" invisible="1" string="Contacto" readonly="1" required="0" on_change="1" can_create="true" can_write="true" modifiers="{'readonly':true}" id="partner_id"/>
+                                    <label for="street" string="Dirección" modifiers="{}"/>
+                                    <div class="o_address_format" modifiers="{}">
+                                        <field name="street" placeholder="Calle" class="o_address_street" modifiers="{}" id="street"/>
+                                        <field name="street2" placeholder="Número" class="o_address_street" modifiers="{}" id="street2"/>
+                                        <field name="city" placeholder="Ciudad" class="o_address_city" modifiers="{}" id="city"/>
+                                        <field name="state_id" class="o_address_state" placeholder="Provincia" options="{'no_open': True}" on_change="1" can_create="true" can_write="true" modifiers="{}" id="state_id"/>
+                                        <field name="zip" placeholder="C.P." class="o_address_zip" modifiers="{}" id="zip"/>
+                                        <field name="country_id" placeholder="País" class="o_address_country" options="{'no_open': True}" on_change="1" can_create="true" can_write="true" modifiers="{}" id="country_id"/>
+                                        <field name="country_code" invisible="1" modifiers="{'invisible':true,'readonly':true}" id="country_code"/>
+                                    </div>
+                                    <field name="phone" class="o_force_ltr" modifiers="{}" id="phone"/>
+                                    <field name="email" modifiers="{}" id="email"/>
+                                    <field name="website" string="Sitio web" widget="url" placeholder="e.j. https://www.odoo.com" modifiers="{}" id="website"/>
+                                </group>
+                                <group modifiers="{}">
+                                    <field name="vat" string="CUIT" required="1" modifiers="{}" id="vat"/>
+                                    <field name="l10n_ar_afip_responsibility_type_id" string="Responsabilidad AFIP" required="1" options="{'no_open': True, 'no_create': True}" attrs="{'invisible': [('country_code', '!=', 'AR')]}" can_create="false" can_write="false" modifiers="{'invisible':[['country_code','!=','AR']]}" id="l10n_ar_afip_responsibility_type_id"/>
+                                    <label for="l10n_ar_gross_income_number" string="Ingresos Brutos" attrs="{'invisible': [('country_code', '!=', 'AR')]}" modifiers="{'invisible':[['country_code','!=','AR']]}"/>
+                                    
+                                    <!-- TODO: Agregar actividades en AFIP-->
+                                    <div attrs="{'invisible': [('country_code', '!=', 'AR')]}" name="gross_income" modifiers="{'invisible':[['country_code','!=','AR']]}">
+                                        <field name="l10n_ar_gross_income_type" class="oe_inline" modifiers="{}" id="l10n_ar_gross_income_type"/>
+                                        <field name="l10n_ar_gross_income_number" placeholder="Número..." class="oe_inline" attrs="{'invisible': [('l10n_ar_gross_income_type', 'in', [False, 'exempt'])], 'required': [('l10n_ar_gross_income_type', 'not in', [False, 'exempt'])]}" modifiers="{'invisible':[['l10n_ar_gross_income_type','in',[false,'exempt']]],'required':[['l10n_ar_gross_income_type','not in',[false,'exempt']]]}" id="l10n_ar_gross_income_number"/>
+                                    </div>
+                                    <field name="l10n_ar_afip_start_date" attrs="{'invisible': [('country_code', '!=', 'AR')]}" modifiers="{'invisible':[['country_code','!=','AR']]}" id="l10n_ar_afip_start_date"/>
+                                    <!-- <field name="company_registry" modifiers="{}" id="company_registry"/> -->
+                                    <!-- <field name="currency_id" options="{'no_create': True, 'no_open': True}" id="company_currency" context="{'active_test': False}" can_create="true" can_write="true" modifiers="{'required':true}"/> -->
+                                    <!-- <field name="parent_id" can_create="true" can_write="true" modifiers="{}" id="parent_id"/> -->
+                                    <field name="sequence" invisible="1" modifiers="{'invisible':true}" id="sequence"/>
+                                    <!-- <field name="favicon" widget="image" class="float-left oe_avatar" modifiers="{}" id="favicon"/> -->
+                                    <!-- <field name="firm_client" /> -->
+                                </group>
+                                <group name="social_media" modifiers="{}"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

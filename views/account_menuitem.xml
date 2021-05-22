@@ -4,6 +4,9 @@
     <record model="ir.ui.menu" id="account.menu_action_move_in_invoice_type">
         <field name="active" eval="False"/>
     </record>
+
+    <!-- TODO: this doesn't work -->
+    <menuitem id="account.menu_finance" name="Facturación" />
     
     <record id="view_account_invoice_filter" model="ir.ui.view">
     <field name="name">account.invoice.select</field>
@@ -81,20 +84,96 @@
         parent="account.menu_finance_payables"
         sequence="1"/>
 
+    <!-- MENU Facturacion/Mi Estudio  -->
+    <menuitem id="menu_firm" name="Mi Estudio" parent="account.menu_finance" sequence="1">
+        <!-- MENU Facturacion/Mi Estudio/Mis Datos  -->
+        <menuitem name="Mis Datos" sequence="1" 
+            id="menu_firm_company" action="action_firm_company" />
+        
+        <!-- MENU Facturacion/Mi Estudio/Actividades  -->
+        <menuitem name="Actividades" sequence="2" 
+            id="menu_firm_activities" action="action_firm_activities" />
+
+        <!-- MENU Facturacion/Mi Estudio/Clientes  -->
+        <menuitem name="Clientes" sequence="3" 
+            id="menu_firm_clients" action="action_firm_clients" />
+        
+        <!-- MENU Facturacion/Mi Estudio/Emails  -->
+        <menuitem name="Emails Enviados" sequence="4" 
+            id="menu_firm_email_sent" action="action_firm_email_sent" />
+            
+    </menuitem>
+
     <!-- MENU Facturacion/Importar  -->
     <menuitem id="menu_import" name="Importar" parent="account.menu_finance" sequence="10">
-    
-        <!-- MENU Facturacion/Importar/Compras  -->
-        <menuitem name="Compras" sequence="1" 
-            id="menu_import_purchases" action="action_move_in_invoice_type" />
-        
-        <!-- MENU Facturacion/Importar/Ventas  -->
-        <menuitem name="Ventas" sequence="2"
-            id="menu_import_sales" action="action_afip_import_sale_wizard" />
-        
-        <!-- MENU Facturacion/Importar  -->
-        <menuitem name="Importar AFIP" sequence="3"
-            id="menu_import_afip" action="action_arba_afip_upload"/>
+
+        <!-- MENU Facturacion/Importar/Compras -->
+        <menuitem id="menu_import_purchases" name="Compras" sequence="1">
+
+            <!-- MENU Facturacion/Importar/Compras/AFIP-ARBA  -->
+            <menuitem name="Importar AFIP" sequence="1"
+                id="menu_import_afip" action="action_arba_afip_upload"/>
+
+            <!-- MENU Facturacion/Importar/Compras/Comprobantes Emitidos  -->
+            <menuitem name="[N] Mis Comprobantes Recibidos" sequence="1" 
+                id="menu_import_purchases_comp_recibidos" action="action_move_in_invoice_type" />
+                
+            <menuitem name="[N] Deducciones ARBA" sequence="2" 
+                id="menu_import_purchases_perc_arba" action="action_move_in_invoice_type" />
+
+            <!-- <menuitem name="[N] Archivo RG3685" sequence="3" 
+                id="menu_import_purchases_rg3685" action="action_move_in_invoice_type" /> -->
+
+            <menuitem name="[N] Archivo Excel" sequence="4" 
+                id="menu_import_purchases_excel" action="action_move_in_invoice_type" />
+
+        </menuitem>
+
+        <!-- MENU Facturacion/Importar/Ventas -->
+        <menuitem id="menu_import_sales" name="Ventas" sequence="2">
+
+            <!-- MENU Facturacion/Importar/Ventas  -->
+            <menuitem name="Mis Comprobantes Emitidos" sequence="2"
+                id="menu_import_sales_comp_emitidos" action="action_afip_import_sale_wizard" />
+                            
+            <!-- MENU Facturacion/Importar/Ventas  -->
+            <menuitem name="Comprobantes en Linea" sequence="3"
+                id="menu_import_sales_comp_en_linea" action="action_afip_import_sale_wizard" />
+                
+            <!-- MENU Facturacion/Importar/Controlador Fiscal (*.PEM) -->
+            <menuitem name="Archivo Controlador Fiscal (*.PEM)" sequence="4" 
+                id="menu_import_sale_pem" action="action_wizard_import_sale_pem" />
+            
+            <!-- MENU Facturacion/Importar/Consulta WebService de AFIP  -->
+            <menuitem name="Consulta WebService de AFIP" sequence="5" 
+                id="menu_import_sale_afip_ws" action="action_wizard_import_sale_pem" />
+
+            <menuitem name="[N] Archivo Excel" sequence="6" 
+                id="menu_import_sale_excel" action="action_move_in_invoice_type" />
+            <!-- 
+                TODO: Proveedor, Fecha Factura/Contable/Vencimiento, Diario, Tipo de doc, Numero de Doc. 
+                Producto, Descripcion, Cuenta, Cantidad, Precio, Impuestos (IVA, IIBB)
+            -->
+                
+            <!-- <menuitem name="Ventas de MercadoLibre" sequence="7" 
+                id="menu_import_sale_meli" action="action_wizard_import_sale_pem" /> -->
+
+            <!-- <menuitem name="Ventas de MP, etc" sequence="8" 
+                id="menu_import_sale_meli" action="action_wizard_import_sale_pem" /> -->
+
+            <!-- <menuitem name="Archivo RG3685" sequence="9" 
+                id="menu_import_sale_rg3685" action="action_wizard_import_sale_pem" /> -->
+
+        </menuitem>
+
+        <!-- MENU Facturacion/Importar/Banco -->
+        <menuitem id="menu_import_bank" name="Bancos" sequence="3">
+                
+            <!-- MENU Facturacion/Importar/Banco/Resumen Bancario -->
+            <menuitem name="Resumen Bancario" sequence="2"
+                id="menu_import_bank_statement" action="action_afip_import_sale_wizard" />
+
+        </menuitem>
 
     </menuitem>
 
@@ -117,5 +196,52 @@
                 id="menu_tax_report" action="action_tax_report"/>
         </menuitem>
     </menuitem>
+
+    <!-- TODO:
+        Mi Estudio:
+        - Estudio
+        - Empresas: nombre, alias, CUIT (consultar por CUIT, tramitar WS, constancia),
+            resp ante AFIP, ARBA, bancos, 
+            - Periodos fiscales (autogenerar?). Solo un admin puede reabrirlo. Chequear al importar datos
+            - Cuentas bancarias: codigos y nombre. => son los diarios banco
+            - Compras/Ventas: tipo de actividad
+              - Ordenar por Proveedor-Fecha o Fecha-Proveedor
+              - Validar Factura en AFIP
+        - Actividades: propios de la empresa principal
+
+        Ventas:
+        - Comprobantes
+        - ??? Notas de Credito
+        - Cobros
+        - Productos de Venta
+        - Clientes
+
+        Compras:
+        - Comprobantes
+        - ??? Facturas rectificativas
+        - Pagos
+        - Productos de Compra
+        - Proveedores
+
+        AFIP:
+        - Cotizaciones de monedas
+        - Validar Comprobantes
+
+        Exportar:
+        - Libro IVA Digital Compras (ALICUOTA, CBTE)
+        - Libro IVA Digital Ventas (ALICUOTA, CBTE)
+        - IIBB
+        - SIRE, multilateral ???
+
+        Reportes:
+        - Compras-Ventas
+
+        Contabilidad:
+        - Asientos Manuales
+        - Libro Diario
+        - Libro Mayor
+        - Resultados Mensuales
+        - Cierre de Ejercicio
+    -->
 
 </odoo>

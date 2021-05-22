@@ -133,6 +133,8 @@ class IngresosBrutosArbaWizard(models.Model):
         ])
         print(len(in_invoices), in_invoices)
 
+        # TODO: tener en cuenta las in_refund
+
         # Buscar Facturas de Ventas
         out_invoices = self.env['account.move'].search([
             ('move_type', '=', 'out_invoice'),

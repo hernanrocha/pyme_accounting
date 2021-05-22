@@ -4,3 +4,4 @@ aac_invoice,ARBA IMPORT INVOICE,model_l10n_ar_invoice_line,account.group_account
 security_afip_import_sale_account_manager,Importacion Ventas AFIP,model_l10n_ar_afip_import_sale,account.group_account_manager,1,1,1,1
 security_afip_import_sale_line_account_manager,Linea de importacion Ventas AFIP,model_l10n_ar_afip_import_sale_line,account.group_account_manager,1,1,1,1
 security_iibb_arba_wizard_account_manager,Reporte de IIBB ARBA,model_l10n_ar_iibb_arba_wizard,account.group_account_manager,1,1,1,1
+security_import_sale_pem,Importar ventas PEM,model_l10n_ar_import_sale_pem,account.group_account_manager,1,1,1,1

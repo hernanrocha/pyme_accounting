@@ -11,6 +11,7 @@
     'description': "",
     # 'website': 'https://www.odoomates.tech',
     'depends': [
+        'base',
         'account',
         'purchase',
         'sale_management'
@@ -21,6 +22,9 @@
         'wizard/arba_afip_views.xml',
         'wizard/arba_report_views.xml',
         'wizard/afip_import_sales_views.xml',
+        'wizard/import_sale_pem.xml',
+        'views/company_views.xml',
+        'views/firm_views.xml',
         'views/account_menuitem.xml'
     ],
     'images': [], # 'static/description/banner.png'

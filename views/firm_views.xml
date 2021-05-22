@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- TODO: Definir mails de estadisticas (ventas, recordatorios, etc)-->
+
+    <!-- MI ESTUDIO - MIS DATOS - WINDOW ACTION -->
+    <record id="action_firm_company" model="ir.actions.act_window">
+        <field name="name">Mis Datos</field>
+        <field name="res_model">res.company</field>
+        <field name="view_mode">form</field>
+        <field name="res_id">1</field>
+        <field name="target">main</field>
+    </record>
+
+    <!-- MI ESTUDIO - MIS ACTIVIDADES - WINDOW ACTION -->
+    <record id="action_firm_activities" model="ir.actions.act_window">
+        <field name="name">Mis Actividades</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">activity</field>
+        <!-- TODO: Este filtro no esta andando aun -->
+        <!-- <field name="domain">[('company_id.firm_client', '=', 1)]</field> -->
+        <field name="target">main</field>
+    </record>
+    <!-- TODO: Traducir "Overdue" -->
+    <!-- TODO: Filtrar dominio por clientes de Compañia 1 -->
+    <!-- TODO: Cambiar filtros por "Inscriptos, Monotributos"-->
+
+    <!-- MI ESTUDIO - CLIENTES - WINDOW ACTION -->
+    <record id="action_firm_clients" model="ir.actions.act_window">
+        <field name="name">Clientes</field>
+        <field name="res_model">res.company</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="res_company_list_view"></field>
+        <field name="target">main</field>
+        <field name="domain">[('firm_client', '=', 1)]</field>
+        <!-- TODO: esto no esta andando todavia -->
+        <field name="context">{'default_firm_client': True }</field>
+    </record>
+    <!-- TODO: Filtrar por booleano nuevo "firm_client", con default true. No esta funcionando ahora -->
+    <!-- TODO: Agregar "default_firm_client":1 al context -->
+    <!-- TODO: Cambiar campos en la vista -->
+    <!-- TODO: importacion masiva de clientes -->
+    <!-- TODO: default_country_id => argentina -->
+
+    <record id="action_firm_email_sent" model="ir.actions.act_window">
+        <field name="name">Emails Enviados</field>
+        <field name="res_model">mail.mail</field>
+        <field name="view_mode">list,form</field>
+        <field name="target">main</field>
+    </record>
+    <!-- TODO: borrar estados fallido/cancelado en el form -->
+    <!-- TODO: agregar estado en la vista de list -->
+    <!-- TODO: permitir acceso a los mensajes de Odoo -->
+    <!-- TODO: hide admin -->
+    <!-- TODO: Traducir bien "Fecha planeada de envió". -->
+    <!-- TODO: mejorar la vista de adjuntos -->
+    <!-- TODO: no permitir eliminar mensajes enviados -->
+    <!-- TODO: disable odoo period digest -->
+
+</odoo>

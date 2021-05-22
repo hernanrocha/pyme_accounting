@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- IMPORTAR VENTAS PEM - FORM VIEW -->
+    <record id="view_wizard_import_sale_pem_form" model="ir.ui.view">
+        <field name="name">l10n_ar.import.sale.pem.form</field>
+        <field name="model">l10n_ar.import.sale.pem</field>
+        <field name="arch" type="xml">
+            <form string="Importar Ventas PEM">
+
+                <separator string="Archivos" />
+                
+                <div class="card">
+                    <div class="card-body bg-light">
+                        <p>Importar archivo PEM de controlador fiscal. Existen 2 tipos de archivos que pueden ser importados:</p>
+                        <ul>
+                            <li>F8010: importar comprobantes individuales.</li>
+                            <li>F8011: importar comprobantes Z</li>
+                        </ul>
+                        <p>Carga uno de los 2 archivos y presiona el boton Importar</p>
+                    </div>
+                </div>
+
+                <group col="2">
+
+                    <field name="f8010_file" />
+                    <field name="f8011_file" />
+                
+                </group>
+                
+                <button name="compute_f8010" string="Importar F8010" type="object" class="btn-primary" />
+                <button name="compute_f8011" string="Importar F8011" type="object" class="btn-primary" />                
+
+            </form>
+        </field>
+    </record>
+
+
+    <!-- IMPORTAR VENTAS PEM - WINDOW ACTION -->
+    <record id="action_wizard_import_sale_pem" model="ir.actions.act_window">
+        <field name="name">Ventas PEM</field>
+        <field name="res_model">l10n_ar.import.sale.pem</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

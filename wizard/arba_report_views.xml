@@ -119,6 +119,8 @@
                             </field>
                         </group>
                     </page> 
+                    <!-- TODO: agregar percepciones no tomadas del mes anterior -->
+                    <!-- TODO: agregar widget="switch" para tomar/no tomar percepciones -->
                     <page string="Percepciones Banco">
                     </page> 
                     <page string="Retenciones">

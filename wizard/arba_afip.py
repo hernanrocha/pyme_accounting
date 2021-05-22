@@ -3,6 +3,7 @@
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+from odoo.tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 import logging
 import csv
 import io
@@ -11,7 +12,107 @@ import datetime
 
 _logger = logging.getLogger(__name__)
 
+try:
+    import xlrd
+    try:
+        from xlrd import xlsx
+    except ImportError:
+        xlsx = None
+except ImportError:
+    xlrd = xlsx = None
+
 # https://www.odoo.com/es_ES/forum/ayuda-1/how-can-i-log-all-sql-queries-to-a-file-895
+
+FIELDS_RECURSION_LIMIT = 2
+
+# TODO: traducir "file seems to have no content."
+# TODO: mostrar como warning los registros ya existentes
+#  - El valor del campo "name" ya existe (probablemente sea "Nombre de la compañía" en el modelo actual). en 2 diferentes filas:
+#  - Fila2 (Cliente Uno)
+#  - Fila3 (Diego Moreno)
+# TODO: Traducir "This is a preview of the first 10 rows of your file"
+# TODO: Soportar carga masiva por "Consultar CUIT" y definir que campo
+# Override base_import/models/base_import.py
+class BaseImport(models.TransientModel):
+    _inherit = 'base_import.import'
+
+    # read_file calls dynamically to read_xls
+    # read_xls calls to read_xls_book
+
+    # get_fields(self, model, depth=FIELDS_RECURSION_LIMIT):
+    # TODO: Basado en el modelo, deberia devolverse un set predeterminado de campos
+
+    def get_fields(self, model, depth=FIELDS_RECURSION_LIMIT):
+        depth = super(BaseImport, self).get_fields(model, depth)
+
+        print(depth)
+        return depth
+        
+
+    def _read_xls_book(self, book, sheet_name):
+        print("PARSING BOOK")
+
+        sheet = book.sheet_by_name(sheet_name)
+
+        start = 1
+        # start = 5
+
+        # emulate Sheet.get_rows for pre-0.9.4
+        for rowx, row in enumerate(map(sheet.row, range(sheet.nrows)), 1):
+            if rowx < start or rowx > 100:
+                continue
+
+            values = []
+            for colx, cell in enumerate(row, 1):
+                if cell.ctype is xlrd.XL_CELL_NUMBER:
+                    is_float = cell.value % 1 != 0.0
+                    values.append(
+                        str(cell.value)
+                        if is_float
+                        else str(int(cell.value))
+                    )
+                elif cell.ctype is xlrd.XL_CELL_DATE:
+                    is_datetime = cell.value % 1 != 0.0
+                    # emulate xldate_as_datetime for pre-0.9.3
+                    dt = datetime.datetime(*xlrd.xldate.xldate_as_tuple(cell.value, book.datemode))
+                    values.append(
+                        dt.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+                        if is_datetime
+                        else dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
+                    )
+                elif cell.ctype is xlrd.XL_CELL_BOOLEAN:
+                    values.append(u'True' if cell.value else u'False')
+                elif cell.ctype is xlrd.XL_CELL_ERROR:
+                    raise ValueError(
+                        _("Invalid cell value at row %(row)s, column %(col)s: %(cell_value)s") % {
+                            'row': rowx,
+                            'col': colx,
+                            'cell_value': xlrd.error_text_from_code.get(cell.value, _("unknown error code %s", cell.value))
+                        }
+                    )
+                else:
+                    values.append(cell.value)
+            if any(x for x in values if x.strip()):
+                print("ROW", values)
+                yield values
+
+    def do(self, fields, columns, options, dryrun=False):
+        print(fields)
+        print(columns)
+        print(options)
+        print(dryrun)
+
+        return super(BaseImport, self).do(fields, columns, options, dryrun)
+
+        return {
+            'messages': [{
+                'type': 'error',
+                'message': 'Not implemented yet',
+                'record': False,
+            }]
+        }
+
+
 
 class IngresosBrutosReport(models.AbstractModel):
     _name = 'l10n_ar.arba.iibb_report'
@@ -32,7 +133,7 @@ class AccountMove(models.Model):
 
     # invoice_partner_display_name = fields.Char(string="Proveedor")
 
-    arba_cuit = fields.Char(string="CUIT", compute="_compute_arba_cuit")
+    arba_cuit = fields.Char(string='CUIT', related='partner_id.vat')
     arba_pos_number = fields.Char(string="Punto de Venta", compute="_compute_arba_pos_number")
     arba_invoice_number = fields.Char(string="Num. de Factura", compute="_compute_arba_invoice_number")
     arba_iibb = fields.Monetary(string="Percepcion IIBB", compute="_compute_arba_iibb")
@@ -42,11 +143,6 @@ class AccountMove(models.Model):
 
     def _check_balanced(self):
         print('Checking BALANCE')
-    
-    @api.depends('partner_id', 'partner_id.vat')
-    def _compute_arba_cuit(self):
-        for p in self:
-            p.arba_cuit = p.partner_id.vat
     
     @api.depends('name')
     def _compute_arba_pos_number(self):
@@ -67,7 +163,6 @@ class AccountMove(models.Model):
         for p in self:
             for tax in p.invoice_line_ids.tax_ids:
                 if tax.name == "Percepción IIBB ARBA Sufrida":
-                    print("Buscando linea de IIBB")
                     # Contiene IIBB, buscar movimiento asociado
                     line = p.line_ids.filtered(lambda line: line.tax_line_id.id == tax.id)
                     p.arba_iibb = line.amount_currency
@@ -437,11 +532,18 @@ class ImpuestosImporter(models.Model):
             iibb_line = purchase.invoice_ids.line_ids.filtered(lambda line: line.tax_line_id.id == iibb.id)
             
             # Actualizar valor de percepcion IIBB
-            purchase.invoice_ids.write({'line_ids': [(1, iibb_line.id, { 
-                'debit': invoice.percepcion_iibb, 
-                'credit': 0, 
-                'amount_currency': invoice.percepcion_iibb,
-            })]})
+            if invoice.percepcion_iibb >= 0:
+                purchase.invoice_ids.write({'line_ids': [(1, iibb_line.id, { 
+                    'debit': invoice.percepcion_iibb, 
+                    'credit': 0, 
+                    'amount_currency': invoice.percepcion_iibb,
+                })]})
+            else:
+                purchase.invoice_ids.write({'line_ids': [(1, iibb_line.id, { 
+                    'debit': 0, 
+                    'credit': -invoice.percepcion_iibb, 
+                    'amount_currency': -invoice.percepcion_iibb,
+                })]})
 
             # TODO: actualizar valor de IVA por posible error de redondeo
 
@@ -456,11 +558,12 @@ class ImpuestosImporter(models.Model):
             purchase.invoice_ids.l10n_latam_document_number = '{}-{}'.format(invoice.pos_number, invoice.invoice_number)
 
             # Publicar Factura si esta en estado borrador
-            if (purchase.invoice_ids.state == "draft"):
-                if invoice.needs_attention:
-                    print("Marcando factura con diferencia para revisar", invoice.pos_number, invoice.invoice_number)
-                else:
-                    purchase.invoice_ids.action_post()
+            if False:
+                if (purchase.invoice_ids.state == "draft"):
+                    if invoice.needs_attention:
+                        print("Marcando factura con diferencia para revisar", invoice.pos_number, invoice.invoice_number)
+                    else:
+                        purchase.invoice_ids.action_post()
 
             # TODO: en la UI sigue apareciendo el valor viejo de IIBB
 
