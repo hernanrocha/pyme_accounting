@@ -57,4 +57,7 @@
     <!-- TODO: no permitir eliminar mensajes enviados -->
     <!-- TODO: disable odoo period digest -->
 
+    <!-- TODO: Asistente para alta de Puntos de Venta -->
+    <!-- TODO: Cuando es obligatorio IVA No Corresponde? -->
+
 </odoo>

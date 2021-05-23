@@ -11,11 +11,23 @@ import datetime
 
 _logger = logging.getLogger(__name__)
 
+# from odoo.addons.custom_addon_name.models.py_file_name import IMPORT_LIST
+# TODO: No repetir este codigo
+def helper_convert_invoice_type(afip_invoice_type):
+    if afip_invoice_type == '6 - Factura B':
+        return "FA-B"
+    if afip_invoice_type == '8 - Nota de Crédito B':
+        return "NC-B"
+    if afip_invoice_type == '11 - Factura C':
+        return 'FA-C'
+
+# TODO: La informacion de este archivo esta repetida
 class ImportSalesAfipLine(models.TransientModel):
     _name = "l10n_ar.afip.import_sale.line"
     _description = "Linea de venta de AFIP"
 
     date = fields.Date(string="Fecha")
+    invoice_type = fields.Char(string="Tipo de Comprobante")
     pos_number = fields.Char(string="Punto de Venta")
     invoice_number = fields.Char(string="N° Factura")
     cuit = fields.Char(string="CUIT")
@@ -27,6 +39,14 @@ class ImportSalesAfipLine(models.TransientModel):
     total = fields.Float(string="Total")
     import_id = fields.Many2one(comodel_name="l10n_ar.afip.import_sale", ondelete="cascade")
 
+    invoice_display_name = fields.Char(string="Comprobante", compute="_compute_invoice_display_name", invisible=True)
+
+    @api.depends('invoice_type', 'pos_number', 'invoice_number')
+    def _compute_invoice_display_name(self):
+        for line in self:
+            line.invoice_display_name = "{} {}-{}".format(line.invoice_type, line.pos_number, line.invoice_number)
+
+
     @api.depends('taxed_amount', 'iva', 'total')
     def compute_difference(self):
         for line in self:
@@ -34,6 +54,7 @@ class ImportSalesAfipLine(models.TransientModel):
 
     difference = fields.Float(string="Diferencia", compute=compute_difference)
 
+# El metodo parse_sales esta repetido
 class ImportSalesAfip(models.TransientModel):
     _name = "l10n_ar.afip.import_sale"
     _description = "Importar ventas de AFIP"
@@ -61,13 +82,15 @@ class ImportSalesAfip(models.TransientModel):
         spamreader = csv.reader(csvfile, delimiter=',', quotechar='"', )
         
         count = 0
+        total_amount = 0
 
         # Computar ventas AFIP
         for row in spamreader:
                         
             # Crear linea de venta en el wizard
-            self.env['l10n_ar.afip.import_sale.line'].create({ 
+            line = self.env['l10n_ar.afip.import_sale.line'].create({ 
                 'date': datetime.datetime.strptime(row[0], '%d/%m/%Y'),
+                'invoice_type': helper_convert_invoice_type(row[1]),
                 'pos_number': row[2].zfill(4),
                 'invoice_number': row[3].zfill(8),
                 'cuit': row[7],
@@ -81,8 +104,9 @@ class ImportSalesAfip(models.TransientModel):
             })
 
             count += 1
+            total_amount += line.total
 
-        self.notes = "{} facturas cargadas correctamente".format(count)
+        self.notes = "{} facturas cargadas correctamente. Total: ${}".format(count, total_amount)
         
         return {
             'context': self.env.context,
@@ -96,24 +120,38 @@ class ImportSalesAfip(models.TransientModel):
         }
 
     def generate_sales(self):
+        consumidor_final = self.env['res.partner'].search([('name', '=', 'Consumidor Final Anónimo')])
+        print("CONSUMIDOR FINAL", consumidor_final) 
+
+        # TODO: Obtener/Crear diario segun el PdV
+        # TODO: Crear vista de Puntos de Venta en AFIP (opcion a traerlos configurandolo)
+        journal_id = 19
+
         for invoice in self.invoice_ids:
-            # Get or Create Customer Partner (res.partner)
-            partner = self.env['res.partner'].search([('vat', '=', invoice.cuit)])
-            partner_data = { 
-                'type': 'contact',
-                'name': invoice.partner, # TODO: rename this
-                # TODO: set CUIT Consumidor final (20000000003)
-                # 'vat': invoice.cuit,
-                # 'l10n_latam_identification_type_id': cuit_type.id,
-                # 'l10n_ar_afip_responsibility_type_id': afip_resp_inscripto_type.id
-            }
-            if len(partner) == 0:
-                # Crear nuevo cliente
-                partner = self.env['res.partner'].create(partner_data)
+            
+            # TODO: Permitir elegir que hacer con la diferencia
+            invoice.untaxed_amount = invoice.difference
+
+            if invoice.cuit:
+                # Get or Create Customer Partner (res.partner)
+                partner = self.env['res.partner'].search([('vat', '=', invoice.cuit)])
+                partner_data = { 
+                    'type': 'contact',
+                    'name': invoice.partner, # TODO: rename this
+                    # TODO: set CUIT Consumidor final (20000000003)
+                    # 'vat': invoice.cuit,
+                    # 'l10n_latam_identification_type_id': cuit_type.id,
+                    # 'l10n_ar_afip_responsibility_type_id': afip_resp_inscripto_type.id
+                }
+                if len(partner) == 0:
+                    # Crear nuevo cliente
+                    partner = self.env['res.partner'].create(partner_data)
+                else:
+                    # Actualizar datos del cliente
+                    partner = partner[0]
+                    partner.write(partner_data)
             else:
-                # Actualizar datos del cliente
-                partner = partner[0]
-                partner.write(partner_data)
+                partner = consumidor_final
             
             print("Partner", partner)
             
@@ -126,22 +164,24 @@ class ImportSalesAfip(models.TransientModel):
 
             print("Sale", sale)
 
-            # Crear Linea de Factura (sale.order.line)
+            # TODO: Revisar tambien montos gravados y exentos 
+
+            # Crear Linea de Factura (sale.order.line) con monto No Gravado
             line = self.env['sale.order.line'].search([('order_id', '=', sale.id)])
             line_data = {
-                'name': 'Venta de Mercaderia',
+                'name': 'Venta No Gravada',
                 'product_uom_qty': 1,
                 # 'product_uom': 1,
-                'price_unit': invoice.taxed_amount,
+                'price_unit': invoice.untaxed_amount,
                 'currency_id': 19, # TODO: Get currency ID
-                'price_subtotal': invoice.taxed_amount, # TODO: restar del total las percepciones y el IVA para obtener este valor
+                'price_subtotal': invoice.untaxed_amount, # TODO: restar del total las percepciones y el IVA para obtener este valor
                 'price_tax': invoice.iva, # TODO: buscar IVA 0%
                 'price_total': invoice.total,
                 'qty_delivered': 1,
                 # 'qty_received_manual': 1,
                 'order_id': sale.id,
-                'partner_id': partner.id,
-                'product_id': 2, # TODO: obtener producto "Ventas Varias"
+                # 'partner_id': partner.id,
+                'product_id': 2, # TODO: obtener producto "Ventas Varias (No Gravado)"
             }
             if len(line) == 0:
                 # Crear Linea de Venta
@@ -172,7 +212,12 @@ class ImportSalesAfip(models.TransientModel):
             # TODO: creo que esto no es necesario
             # sale.invoice_ids._recompute_payment_terms_lines()
 
-            # Establecer numero de documento
+            # TODO: Establecer tipo de comprobante. Primero hay que cambiar a monotributo
+            # doc_type = self.env['l10n_latam.document.type'].search([('doc_code_prefix', '=', invoice.invoice_type)])
+            # sale.invoice_ids.l10n_latam_document_type_id = doc_type
+
+            # TODO: Revisar numero de secuencia (Y punto de venta usado)
+            # Establecer numero de comprobante
             sale.invoice_ids.l10n_latam_document_number = '{}-{}'.format(invoice.pos_number, invoice.invoice_number)
 
             # Publicar Factura si esta en estado borrador
@@ -190,15 +235,17 @@ class ImportSalesAfip(models.TransientModel):
             #   'payment_date': date.Now() # Fecha de Pago
             # })
 
-        # Mantenerse en la misma vista del asistente
-        return {
-            'context': self.env.context,
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'gob.ar.afip.upload',
-            'res_id': self.id,
-            'view_id': False,
-            'type': 'ir.actions.act_window',
-            'target': 'new',
-        }
+        # TODO: retornar a ventana con el filtro de las facturas hechas recientemente
+
+        # # Mantenerse en la misma vista del asistente
+        # return {
+        #     'context': self.env.context,
+        #     'view_type': 'form',
+        #     'view_mode': 'form',
+        #     'res_model': 'l10n_ar.afip.import_sale',
+        #     'res_id': self.id,
+        #     'view_id': False,
+        #     'type': 'ir.actions.act_window',
+        #     'target': 'new',
+        # }
 

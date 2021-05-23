@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- TODO: Cargar archivo excel de ejemplo y actualizar el mensaje y link de ayuda -->
+
+    <!-- IMPORTAR - COMPRAS - EXCEL - WINDOW ACTION -->
+    <record id="action_import_purchases_excel" model="ir.actions.client">
+        <field name="name">Importar Compras desde Excel</field>
+        <field name="tag">import</field>
+        <field name="params">{'model': 'account.move'}</field>
+        <!-- TODO: Ver si es mejor en new. Hay que configurar un minHeight tambien porque queda chico -->
+        <!-- <field name="target">new</field> -->
+        <!-- TODO: Ver que hacer con move_type -->
+        <!-- <field name="params">{'model': 'account.move', 'default_move_type': in_invoice|in_refund }</field> -->
+    </record>
+
+    <!-- IMPORTAR - VENTAS - EXCEL - WINDOW ACTION -->
+    <record id="action_import_sale_excel" model="ir.actions.client">
+        <field name="name">Importar Ventas dedse Excel</field>
+        <field name="tag">import</field>
+        <field name="params">{'model': 'account.move'}</field>
+        <!-- TODO: Ver que hacer con move_type -->
+        <!-- <field name="params">{'model': 'account.move', 'default_move_type': out_invoice|out_refund }</field> -->
+    </record>
+
+</odoo>

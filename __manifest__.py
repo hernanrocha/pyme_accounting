@@ -24,6 +24,7 @@
         'wizard/afip_import_sales_views.xml',
         'wizard/import_sale_pem.xml',
         'views/company_views.xml',
+        'views/import_views.xml',
         'views/firm_views.xml',
         'views/account_menuitem.xml'
     ],

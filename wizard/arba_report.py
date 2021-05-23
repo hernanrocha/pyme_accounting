@@ -38,6 +38,8 @@ class IngresosBrutosArbaWizard(models.Model):
     iibb_percepciones = fields.Many2many(comodel_name="account.move.line")
 
     def generate_iibb(self):
+        # TODO: Mostrar una seccion con las facturas en borrador
+
         journal_taxes = self.env['account.journal'].search([
             ('name', '=', 'Impuestos')
         ])

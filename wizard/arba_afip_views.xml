@@ -24,38 +24,36 @@
                                 </control> -->
                                 <field name="needs_attention" invisible="1" />
                                 <field name="date" edit="false" />
-                                <field name="pos_number" edit="false" />
-                                <field name="invoice_number" edit="false" />
+                                <field name="invoice_display_name" />
+                                <!-- <field name="invoice_type" edit="false" /> -->
+                                <!-- <field name="pos_number" edit="false" /> -->
+                                <!-- <field name="invoice_number" edit="false" /> -->
                                 <field name="taxed_amount" />
-                                <field name="untaxed_amount" optional="show" />
+                                <field name="untaxed_amount" optional="hide" />
                                 <field name="excempt_amount" optional="hide" />
                                 <field name="iva" />
                                 <field name="percepcion_iibb" />
-                                <field name="difference" optional="show" />
                                 <field name="total" />
+                                <field name="difference" optional="show" />
                                 <field name="vendor" edit="false" />
                                 <field name="cuit" edit="false" />
                             </tree>
                         </field>
                     </page>
-                    <page string="Compras">
-                        <field name="purchase_ids" widget="section_and_note_one2many" options="{'reload_on_button': true}">
-                            <tree editable="false">
-                                <field name="company_id" invisible="1" />
-                                <field name="name" />
-                                <field name="partner_id" />
-                                <field name="state" />
-                            </tree>
-                        </field>
-                    </page>
                 </notebook>
-
+                    
                 <footer>
                     <field name="notes" />
                     <separator />
                     
+                    <!-- TODO: Permitir elegir a que cuenta se mandan las diferencias, los gravados, etc -->
+
+                    <!-- TODO: no muestra el texto -->
+                    <!-- <field name="fix_difference" string="Computar diferencias como No Gravado" /> -->
+                    <separator />
+                    
                     <button name="compute_sheet" string="Cargar" type="object" class="btn-primary"/>
-                    <button name="fix_difference" string="Arreglar Diferencias" type="object" class="btn-primary"/>
+                    <!-- TODO: No mostrar "Generar Facturas" hasta que no este cargado -->
                     <button name="generate_data" string="Generar Facturas" type="object" class="btn-primary" />
                     <button string="Cancelar" class="btn-secondary" special="cancel"/>
                 </footer>

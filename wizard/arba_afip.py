@@ -45,7 +45,7 @@ class BaseImport(models.TransientModel):
     def get_fields(self, model, depth=FIELDS_RECURSION_LIMIT):
         depth = super(BaseImport, self).get_fields(model, depth)
 
-        print(depth)
+        print("[base_import.import] get_fields: {} campos encontrados para el model {}".format(len(depth), model))
         return depth
         
 
@@ -112,6 +112,7 @@ class BaseImport(models.TransientModel):
             }]
         }
 
+# TODO: Crear asistente para importar todo junto
 
 
 class IngresosBrutosReport(models.AbstractModel):
@@ -188,10 +189,12 @@ class PurchaseOrder(models.Model):
 class InvoiceLine(models.Model):
     _name = 'l10n_ar.invoice_line'
     _description = 'Factura importada de AFIP'
+    _order = "cuit asc, date asc, id"
 
     # TODO: parse date
     # datetime.datetime.strptime('02/01/2021', '%d/%m/%Y').strftime('%a %b %d %Y')
     date = fields.Date(string="Fecha")
+    invoice_type = fields.Char(string="Tipo de Comprobante")
     pos_number = fields.Char(string="Punto de Venta")
     invoice_number = fields.Char(string="N° Factura")
     cuit = fields.Char(string="CUIT")
@@ -202,7 +205,7 @@ class InvoiceLine(models.Model):
     iva = fields.Float(string="IVA")
     percepcion_iibb = fields.Float(string="Perc. IIBB")
     total = fields.Float(string="Total")
-    import_id = fields.Many2one(comodel_name="gob.ar.afip.upload", ondelete="cascade")
+    import_id = fields.Many2one(comodel_name="gob.ar.afip.upload", ondelete="cascade", invisible=True)
 
     @api.depends('taxed_amount', 'iva', 'percepcion_iibb', 'untaxed_amount', 'total')
     def compute_difference(self):
@@ -213,9 +216,24 @@ class InvoiceLine(models.Model):
     def compute_needs_attention(self):
         for line in self:
             line.needs_attention = line.difference > 0.01 or line.difference < -0.01
+    
+    @api.depends('invoice_type', 'pos_number', 'invoice_number')
+    def _compute_invoice_display_name(self):
+        for line in self:
+            line.invoice_display_name = "{} {}-{}".format(line.invoice_type, line.pos_number, line.invoice_number)
 
     difference = fields.Float(string="Diferencia", compute=compute_difference)
-    needs_attention = fields.Boolean(string="Necesita Accion", compute="compute_needs_attention")
+    needs_attention = fields.Boolean(string="Necesita Accion", compute="compute_needs_attention", invisible=True)
+    invoice_display_name = fields.Char(string="Comprobante", compute="_compute_invoice_display_name", invisible=True)
+
+# TODO: Usar modelo de Odoo para hacer esta traduccion
+def helper_convert_invoice_type(afip_invoice_type):
+    if afip_invoice_type == '6 - Factura B':
+        return "FA-B"
+    if afip_invoice_type == '8 - Nota de Crédito B':
+        return "NC-B"
+    if afip_invoice_type == '11 - Factura C':
+        return 'FA-C'
 
 class ImpuestosImporter(models.Model):
     _name = 'gob.ar.afip.upload'
@@ -223,9 +241,10 @@ class ImpuestosImporter(models.Model):
 
     afip_file = fields.Binary(string="Archivo de Compras AFIP (*.csv)")
     iibb_file = fields.Binary(string="Archivo de Percepciones IIBB (*.txt)")
-    notes = fields.Char(string="Notas", readonly=True)
+    fix_difference = fields.Boolean(string="Computar diferencias como No Gravado", default=True)
+    
     invoice_ids = fields.One2many(string="Facturas", comodel_name="l10n_ar.invoice_line", inverse_name="import_id")
-    purchase_ids = fields.One2many(string="Compras", comodel_name="purchase.order", inverse_name="import_id")
+    notes = fields.Char(string="Notas", readonly=True)    
 
     def compute_sheet(self):
         [data] = self.read()
@@ -235,6 +254,8 @@ class ImpuestosImporter(models.Model):
 
         if not data['iibb_file']:
             raise UserError("Debes cargar un archivo de percepciones de IIBB")
+
+        # self.invoice_ids = []
 
         # Leer archivo AFIP de compras
         file_content = base64.decodestring(data['afip_file'])
@@ -267,7 +288,7 @@ class ImpuestosImporter(models.Model):
         
         count = 0
 
-        # Computar compras AFIP
+        # Computar Mis Comprobantes Recibidos AFIP
         for row in spamreader:
             num = row[2].zfill(4) + "-" + row[3].zfill(8)
             
@@ -276,15 +297,15 @@ class ImpuestosImporter(models.Model):
 
             # Calcular importe de percepcion
             imp = float(perc["importe_percepcion"]) if perc else 0
-
-            # if perc:
-            #     imp = float(perc["importe_percepcion"])
             
             # print(row[0], row[1], row[2].zfill(4), row[3].zfill(8), row[7], row[8], row[11], row[14], row[15], imp, sep=",")
-            
+
+            # TODO: borrar registros viejos la segunda vez que se carga
+
             # Crear linea de compra en el wizard
             wizard_invoice_line = self.env['l10n_ar.invoice_line'].create({ 
                 'date': datetime.datetime.strptime(row[0], '%d/%m/%Y'),
+                'invoice_type': helper_convert_invoice_type(row[1]),
                 'pos_number': row[2].zfill(4),
                 'invoice_number': row[3].zfill(8),
                 'cuit': row[7],
@@ -299,12 +320,6 @@ class ImpuestosImporter(models.Model):
             })
 
             count += 1
-
-            # TODO: Agregar lineas para los que tienen solo percepciones pero no aparecen en AFIP
-            print("------------ PERCEPCIONES PENDIENTES INICIO ------------")
-            for p in percepciones.items():
-                print(p[1]["fecha"], p[1]["tipo_comprobante"] + p[1]["letra_comprobante"], p[0], p[1]["cuit"], "", "", "", "", "", p[1]["importe_percepcion"], sep=",")
-            print("------------ PERCEPCIONES PENDIENTES FIN ------------")
 
             continue
 
@@ -372,7 +387,26 @@ class ImpuestosImporter(models.Model):
             
             # afip_barcode al descargar PDF
 
-        self.notes = "{} facturas cargadas correctamente".format(count)
+        facturas_con_diferencia = 0
+        perc_sin_factura = 0
+
+        for invoice in self.invoice_ids:
+            if invoice.needs_attention:
+                # invoice.untaxed_amount = invoice.difference
+                facturas_con_diferencia += 1
+
+        # TODO: Agregar lineas para los que tienen solo percepciones pero no aparecen en AFIP
+        print("------------ PERCEPCIONES PENDIENTES INICIO ------------")
+        for p in percepciones.items():
+            perc_sin_factura += 1
+            print(p[1]["fecha"], p[1]["tipo_comprobante"] + p[1]["letra_comprobante"], p[0], p[1]["cuit"], "", "", "", "", "", p[1]["importe_percepcion"], sep=",")
+        print("------------ PERCEPCIONES PENDIENTES FIN ------------")
+        # { 'description': 'Varios', 'price_unit': 0, iva: 'IVA No Corresponde' + 'Percepcion IIBB' }
+
+        self.notes = """{} facturas cargadas correctamente.
+{} de ellas contienen diferencias entre los diferentes montos y el total.
+
+NOTA: Existen {} percepciones que no tienen factura correspondiente.""".format(count, facturas_con_diferencia, perc_sin_factura)
         
         return {
             'context': self.env.context,
@@ -385,27 +419,6 @@ class ImpuestosImporter(models.Model):
             'target': 'new',
         }
         # return {'type': 'ir.actions.act_window_close'}
-
-    def fix_difference(self):
-        count = 0
-
-        for invoice in self.invoice_ids:
-            if invoice.needs_attention:
-                invoice.untaxed_amount = invoice.difference
-                count += 1
-
-        self.notes = "{} facturas actualizadas correctamente".format(count)
-
-        return {
-            'context': self.env.context,
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'gob.ar.afip.upload',
-            'res_id': self.id,
-            'view_id': False,
-            'type': 'ir.actions.act_window',
-            'target': 'new',
-        }
     
     def generate_data(self):
         [data] = self.read()
@@ -429,6 +442,10 @@ class ImpuestosImporter(models.Model):
         iibb = iibb[0]
 
         for invoice in self.invoice_ids:
+            # Compute difference as untaxed
+            if invoice.needs_attention:
+                invoice.untaxed_amount = invoice.difference
+
             # Get or Create Vendor Partner (res.partner)
             partner = self.env['res.partner'].search([('vat', '=', invoice.cuit)])
             partner_data = { 
@@ -457,12 +474,17 @@ class ImpuestosImporter(models.Model):
                 'partner_id': partner.id,
                 'import_id': self.id,
             }
-            if len(purchase) == 0:
-                # Crear nueva orden de compra
-                purchase = self.env['purchase.order'].create(purchase_data)
-            else:
-                # Obtener orden de compra existente
-                purchase = purchase[0]
+            # if len(purchase) == 0:
+            #     # Crear nueva orden de compra
+            #     purchase = self.env['purchase.order'].create(purchase_data)
+            # else:
+            #     # Obtener orden de compra existente
+            #     purchase = purchase[0]
+
+            # TODO: Remove this line y descomentar el codigo anterior
+            purchase = self.env['purchase.order'].create(purchase_data)
+
+            # TODO: No actualizar una compra ya existente
 
             print("Purchase", purchase)
 
@@ -513,8 +535,8 @@ class ImpuestosImporter(models.Model):
                 }
 
                 print(line_data)
-                line = self.env['purchase.order.line'].create(line_data)
-                print("Creada linea de compra no gravada", invoice.untaxed_amount)
+                line_untaxed = self.env['purchase.order.line'].create(line_data)
+                print("Creada linea de compra no gravada", invoice.untaxed_amount, line_untaxed)
 
             # Confirmar compra si esta en borrador
             if purchase.state == 'draft':
@@ -554,7 +576,11 @@ class ImpuestosImporter(models.Model):
             # Actualizar factura (modifica valor de pago a proveedores)
             purchase.invoice_ids._recompute_payment_terms_lines()
 
-            # Establecer numero de documento
+            # Establecer tipo de comprobante
+            doc_type = self.env['l10n_latam.document.type'].search([('doc_code_prefix', '=', invoice.invoice_type)])
+            purchase.invoice_ids.l10n_latam_document_type_id = doc_type
+
+            # Establecer numero de comprobante 
             purchase.invoice_ids.l10n_latam_document_number = '{}-{}'.format(invoice.pos_number, invoice.invoice_number)
 
             # Publicar Factura si esta en estado borrador
@@ -574,6 +600,10 @@ class ImpuestosImporter(models.Model):
             #   'payment_date': date.Now() # Fecha de Pago
             # })
 
+            # TODO: remove this
+            break
+
+        # TODO: Redirigir a la vista de los elementos creados
         # Mantenerse en la misma vista del asistente
         return {
             'context': self.env.context,
