@@ -22,6 +22,7 @@ def helper_convert_invoice_type(afip_invoice_type):
         return 'FA-C'
 
 # TODO: La informacion de este archivo esta repetida
+# TODO: renombrar archivos para seguir un naming convention
 class ImportSalesAfipLine(models.TransientModel):
     _name = "l10n_ar.afip.import_sale.line"
     _description = "Linea de venta de AFIP"
@@ -34,6 +35,7 @@ class ImportSalesAfipLine(models.TransientModel):
     partner = fields.Char()
     taxed_amount = fields.Float(string="Gravado")
     untaxed_amount = fields.Float(string="No Gravado")
+    # TODO: renombrar a exempt
     excempt_amount = fields.Float(string="Exento")
     iva = fields.Float(string="IVA")
     total = fields.Float(string="Total")

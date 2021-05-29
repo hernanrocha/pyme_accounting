@@ -14,19 +14,38 @@
         'base',
         'account',
         'purchase',
-        'sale_management'
+        'sale_management',
+        'multi_step_wizard',
+        'l10n_ar_afipws_fe'
     ],
     'data': [
-        # 'security/hr_payroll_security.xml',
         'security/ir.model.access.csv',
+
         'wizard/arba_afip_views.xml',
         'wizard/arba_report_views.xml',
-        'wizard/afip_import_sales_views.xml',
+        
+        # Import
+        'wizard/import_purchase_excel.xml',
+        'wizard/import_sale_compemitidos.xml',
+        'wizard/import_sale_compenlinea.xml',
         'wizard/import_sale_pem.xml',
+        'wizard/import_sale_webservice.xml',
+        'wizard/import_sale_excel.xml',
+
+        # Reports
+        'report/basic_report.xml',
+
+        # AFIP
+        'wizard/afip_certificates_views.xml',
+
         'views/company_views.xml',
         'views/import_views.xml',
         'views/firm_views.xml',
-        'views/account_menuitem.xml'
+
+        # Menu
+        'views/account_menuitem.xml',
+
+        "data/l10n_ar.afip.cuit.apocrifo.csv"
     ],
     'images': [], # 'static/description/banner.png'
     'application': True,

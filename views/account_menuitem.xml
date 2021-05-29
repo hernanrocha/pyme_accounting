@@ -94,12 +94,16 @@
         <menuitem name="Actividades" sequence="2" 
             id="menu_firm_activities" action="action_firm_activities" />
 
+        <!-- MENU Facturacion/Mi Estudio/Actividades  -->
+        <menuitem name="Calendario" sequence="3" 
+            id="menu_firm_calendar" action="action_firm_calendar" />
+
         <!-- MENU Facturacion/Mi Estudio/Clientes  -->
-        <menuitem name="Clientes" sequence="3" 
+        <menuitem name="Clientes" sequence="4" 
             id="menu_firm_clients" action="action_firm_clients" />
         
         <!-- MENU Facturacion/Mi Estudio/Emails  -->
-        <menuitem name="Emails Enviados" sequence="4" 
+        <menuitem name="Emails Enviados" sequence="5" 
             id="menu_firm_email_sent" action="action_firm_email_sent" />
 
         <!-- TODO: Agregar Calendario (y cumpleaños) -->
@@ -120,14 +124,14 @@
             <menuitem name="[N] Mis Comprobantes Recibidos" sequence="1" 
                 id="menu_import_purchases_comp_recibidos" action="action_move_in_invoice_type" />
                 
-            <menuitem name="[N] Deducciones ARBA" sequence="2" 
-                id="menu_import_purchases_perc_arba" action="action_move_in_invoice_type" />
+            <menuitem name="Deducciones ARBA" sequence="2" 
+                id="menu_import_purchase_perc_arba" action="action_move_in_invoice_type" />
 
             <!-- <menuitem name="[N] Archivo RG3685" sequence="3" 
                 id="menu_import_purchases_rg3685" action="action_move_in_invoice_type" /> -->
 
-            <menuitem name="[N] Archivo Excel" sequence="4" 
-                id="menu_import_purchases_excel" action="action_import_purchases_excel" />
+            <menuitem name="Archivo Excel" sequence="4" 
+                id="menu_import_purchase_excel" action="action_import_purchase_excel" />
 
         </menuitem>
 
@@ -140,7 +144,7 @@
                             
             <!-- MENU Facturacion/Importar/Ventas  -->
             <menuitem name="Comprobantes en Linea" sequence="3"
-                id="menu_import_sales_comp_en_linea" action="action_afip_import_sale_wizard" />
+                id="menu_import_sale_compenlinea" action="action_wizard_import_sale_compenlinea" />
                 
             <!-- MENU Facturacion/Importar/Controlador Fiscal (*.PEM) -->
             <menuitem name="Archivo Controlador Fiscal (*.PEM)" sequence="4" 
@@ -148,10 +152,11 @@
             
             <!-- MENU Facturacion/Importar/Consulta WebService de AFIP  -->
             <menuitem name="Consulta WebService de AFIP" sequence="5" 
-                id="menu_import_sale_afip_ws" action="action_wizard_import_sale_pem" />
+                id="menu_import_sale_webservice" action="action_wizard_import_sale_webservice" />
 
-            <menuitem name="[N] Archivo Excel" sequence="6" 
+            <menuitem name="Archivo Excel" sequence="6" 
                 id="menu_import_sale_excel" action="action_import_sale_excel" />
+            
             <!-- 
                 TODO: Proveedor, Fecha Factura/Contable/Vencimiento, Diario, Tipo de doc, Numero de Doc. 
                 Producto, Descripcion, Cuenta, Cantidad, Precio, Impuestos (IVA, IIBB)
@@ -197,7 +202,36 @@
             <menuitem name="Reportes" sequence="3"
                 id="menu_tax_report" action="action_tax_report"/>
         </menuitem>
+
+
+        <menuitem id="menu_taxes_report_base" name="Reporte Monotributo" 
+            sequence="2" action="report_basic" />
+
     </menuitem>
+
+    <!-- MENU Facturacion/AFIP  -->
+    <menuitem id="menu_afip" name="AFIP" parent="account.menu_finance" sequence="12">
+
+        <!-- MENU Facturacion/Impuestos/IIBB/ARBA  -->
+        <menuitem name="Administrar Certificados" sequence="1"
+            id="menu_afip_certificates" action="action_afip_certificates"/>
+
+        <!-- TODO: cotización de divisas -->
+
+        <!-- TODO: Validar CUIT: WebService + apocrifos --> 
+
+    </menuitem>
+
+    <!--
+        Dashboard:
+        - [Monotributo]: categoria actual, actividades, inicio de actividades (boton para conectar con AFIP)
+
+        - Compras y Ventas en grafico de barras (ultimos 12 meses)
+        - Compras y Ventas en tabla (ultimos 12 meses)
+        - [Monotributo] mostrar categoria calculada, limite, pago
+
+
+    -->
 
     <!-- TODO:
         Mi Estudio:
@@ -226,6 +260,7 @@
         - Proveedores
 
         AFIP:
+        - Administrar certificados
         - Cotizaciones de monedas
         - Validar Comprobantes
 
@@ -235,8 +270,6 @@
         - IIBB
         - SIRE, multilateral ???
 
-        Reportes:
-        - Compras-Ventas
 
         Contabilidad:
         - Asientos Manuales

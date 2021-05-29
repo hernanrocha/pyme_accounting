@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- IMPORTAR VENTAS PEM - FORM VIEW -->
-    <record id="view_wizard_import_sale_pem_form" model="ir.ui.view">
-        <field name="name">l10n_ar.import.sale.pem.form</field>
-        <field name="model">l10n_ar.import.sale.pem</field>
+    <!-- IMPORTAR COMPROBANTES EN LINEA - FORM VIEW -->
+    <record id="view_wizard_import_sale_compenlinea_form" model="ir.ui.view">
+        <field name="name">l10n_ar.import.sale.compenlinea.form</field>
+        <field name="model">l10n_ar.import.sale.compenlinea</field>
         <field name="arch" type="xml">
             <form>
                 
-                <div class="card bg-primary">
+                <!-- <div class="card bg-primary">
                     <div class="card-body">
                         <p>Existen 2 tipos de archivos que pueden ser importados:</p>
                         <ul>
@@ -18,29 +18,30 @@
                         <p>Por el momento, el sistema solo permite importar el archivo F8011.</p>
                         <p>Se generará un comprobante por cada Z, comúnmente generado al finalizar cada día.</p>
                     </div>
-                </div>
+                </div> -->
 
                 <group string="Archivo" col="2">
 
-                    <!-- <field name="f8010_file" /> -->
-                    <field name="f8011_file" />
+                    <field name="zip_file" />
                 
                 </group>
 
-                <!-- Datos del F8011 -->
-                <group string="Datos Cargados" col="4" attrs="{'invisible': [('f8011_pos', '=', 0)]}">
-                    <field name="f8011_cuit" />
+                <!-- Datos -->
+                <!-- <group string="Datos Cargados" col="4" attrs="{'invisible': [('f8011_pos', '=', 0)]}"> -->
+                <group string="Datos Cargados" col="4">
+                    <!-- <field name="f8011_cuit" />
                     <field name="f8011_pos" />
                     <field name="f8011_start_date" />
                     <field name="f8011_start_number" />
                     <field name="f8011_end_date" />
-                    <field name="f8011_end_number" />
+                    <field name="f8011_end_number" /> -->
                 </group>
 
-                <field name="invoice_ids" mode="tree" widget="section_and_note_one2many" 
-                    readonly="1" attrs="{'invisible': [('f8011_pos', '=', 0)]}">                                                
+                <!-- <field name="invoice_ids" mode="tree" widget="section_and_note_one2many" 
+                    readonly="1" attrs="{'invisible': [('f8011_pos', '=', 0)]}">     -->
+                <field name="invoice_ids" mode="tree" widget="section_and_note_one2many" readonly="1">                                                
                     <tree>
-                        <field name="number" />
+                        <!-- <field name="number" />
                         <field name="range" />
                         <field name="date" />
                         <field name="taxed" />
@@ -48,16 +49,15 @@
                         <field name="exempt" />
                         <field name="tax_6" />
                         <field name="tax_21" />
-                        <field name="total" />
+                        <field name="total" /> -->
                     </tree>
                 </field>
 
                 <footer>
-                    <!-- <button name="compute_f8010" string="Importar F8010" type="object" class="btn-primary" /> -->
                     <!-- TODO: convertir a action -->
-                    <button name="compute_f8011" string="Cargar" type="object" class="btn-primary" />
-                    <button name="generate_f8011" string="Generar Facturas" type="object" class="btn-primary" 
-                        attrs="{'invisible': [('f8011_pos', '=', 0)]}" />
+                    <button name="compute" string="Cargar" type="button" class="btn-primary" />
+                    <!-- <button name="generate" string="Generar Facturas" type="object" class="btn-primary" 
+                        attrs="{'invisible': [('f8011_pos', '=', 0)]}" /> -->
                     <button string="Cancelar" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
@@ -65,10 +65,10 @@
     </record>
 
 
-    <!-- IMPORTAR VENTAS PEM - WINDOW ACTION -->
-    <record id="action_wizard_import_sale_pem" model="ir.actions.act_window">
-        <field name="name">Importar Ventas de Controlador Fiscal</field>
-        <field name="res_model">l10n_ar.import.sale.pem</field>
+    <!-- IMPORTAR COMPROBANTES EN LINEA - WINDOW ACTION -->
+    <record id="action_wizard_import_sale_compenlinea" model="ir.actions.act_window">
+        <field name="name">Importar Ventas de Comprobantes en Linea</field>
+        <field name="res_model">l10n_ar.import.sale.compenlinea</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
     </record>

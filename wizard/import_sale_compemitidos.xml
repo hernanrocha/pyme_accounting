@@ -21,8 +21,8 @@
                             <!-- <field name="pos_number" edit="false" /> -->
                             <!-- <field name="invoice_number" edit="false" /> -->
                             <field name="taxed_amount" />
-                            <field name="untaxed_amount" optional="hide" />
-                            <field name="excempt_amount" optional="hide" />
+                            <field name="untaxed_amount" optional="show" />
+                            <field name="excempt_amount" optional="show" />
                             <field name="iva" />
                             <field name="difference" optional="hide" />
                             <field name="total" />

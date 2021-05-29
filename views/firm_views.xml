@@ -11,16 +11,27 @@
         <field name="res_id">1</field>
         <field name="target">main</field>
     </record>
+    <!-- TODO: Traducir "Resp AFIP" a "Condicion Fiscal" -->
+    <!-- TODO: Numero de IIBB es igual en tipo "Local" -->
 
-    <!-- MI ESTUDIO - MIS ACTIVIDADES - WINDOW ACTION -->
-    <record id="action_firm_activities" model="ir.actions.act_window">
+    <!-- MI ESTUDIO - MIS ACTIVIDADES - SERVER ACTION -->
+    <record id="action_firm_activities" model="ir.actions.server">
         <field name="name">Mis Actividades</field>
-        <field name="res_model">res.partner</field>
-        <field name="view_mode">activity</field>
-        <!-- TODO: Este filtro no esta andando aun -->
-        <!-- <field name="domain">[('company_id.firm_client', '=', 1)]</field> -->
-        <field name="target">main</field>
+        <field name="model_id" ref="model_res_company"></field>
+        <field name="state">code</field>
+        <!-- Se debe definir un action para que se ejecute -->
+        <field name="code">action = model.action_company_activities()</field>
     </record>
+
+    <!-- MI ESTUDIO - CALENDARIO - SERVER ACTION -->
+    <record id="action_firm_calendar" model="ir.actions.server">
+        <field name="name">Calendario</field>
+        <field name="model_id" ref="model_res_company"></field>
+        <field name="state">code</field>
+        <!-- Se debe definir un action para que se ejecute -->
+        <field name="code">action = model.action_company_calendar()</field>
+    </record>
+
     <!-- TODO: Traducir "Overdue" -->
     <!-- TODO: Filtrar dominio por clientes de Compañia 1 -->
     <!-- TODO: Cambiar filtros por "Inscriptos, Monotributos"-->
@@ -41,6 +52,10 @@
     <!-- TODO: Cambiar campos en la vista -->
     <!-- TODO: importacion masiva de clientes -->
     <!-- TODO: default_country_id => argentina -->
+    <!-- TODO: Agregar Notas, Honorarios, Contactos, Actividades, Cumpleaños -->
+    <!-- TODO: Agregar filtro por Monotributista, Exento, Resp. Inscripto -->
+    
+    <!-- TODO: Seguimiento de pagos -->
 
     <record id="action_firm_email_sent" model="ir.actions.act_window">
         <field name="name">Emails Enviados</field>
@@ -60,4 +75,25 @@
     <!-- TODO: Asistente para alta de Puntos de Venta -->
     <!-- TODO: Cuando es obligatorio IVA No Corresponde? -->
 
+    <!-- TODO: Asistente para certificados AFIP -->
+    <!-- TODO: definir actividades de IIBB y de AFIP. Las de IIBB deben usarse para configurar productos de venta -->
+
+    <!-- TODO: Deshabilitar menu Contabilidad casi por completo -->
+    <!-- TODO: En el listado de facturas, mostrar "Neto Gravado", "IVA", "Total" -->
+    <!-- TODO: En el listado de facturas, sacar "Venc", "actividades", "Estado pago" -->
+    <!-- TODO: Al importar PEM, validar asientos automaticamente -->
+
+    <!-- TODO: definir actividades por compañia / punto de venta / producto -->
+
+    <!-- TODO: en reporte de IIBB, la alicuota de IIBB puede ser cualquier valor -->
+    <!-- TODO: en reporte de IIBB, cambiar "Deducciones" por "Total Deducciones" -->
+
+    <!-- 
+        TODO: reportes de compra y venta para monotributo. 
+        Incluir ultimos 12 meses, valor a pagar, categoria, valor maximo de categoria
+    -->
+
+    <!-- TODO: Registro de facturas apocrifas
+        https://servicioscf.afip.gob.ar/Facturacion/facturasApocrifas/default.aspx
+    -->
 </odoo>

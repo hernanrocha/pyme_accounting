@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- TODO: convertir a multistep https://github.com/OCA/server-ux/tree/14.0/multi_step_wizard -->
+
+    <!-- ADMINISTRAR CERTIFICADOS AFIP - FORM VIEW -->
+    <record id="view_afip_certificates_form" model="ir.ui.view">
+        <field name="name">l10n_ar.afip.certificates.wizard.form</field>
+        <field name="model">l10n_ar.afip.certificates.wizard</field>
+        <field name="mode">primary</field>
+        <field name="inherit_id" ref="multi_step_wizard.multi_step_wizard_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//footer" position="before">
+
+            <!-- <form string="Administrar Certificados AFIP"> -->
+            
+                <!-- TODO: Traducir a español los nombres de los botones. Agregar header? y funciones para customizar titulo y footer -->
+
+                <!-- PASO 1: Inicio -->
+                <div class="card" attrs="{'invisible': [('state', '!=', 'start')]}">
+                    <div class="card-body bg-light">
+                        <p>Los certificados AFIP autorizan al sistema a realizar acciones como consultar el padrón o generar una factura de forma automatizada, sin necesidad de ingresar en AFIP</p>
+                        <p>Este proceso debe realizarse la primera vez, y consta de 2 pasos:</p>
+                        <ul>
+                            <li>Crear certificado en AFIP</li>
+                            <li>Delegar servicios al certificado creado</li>
+                        </ul>
+                        <p>El proceso completo dura alrededor de 10 minutos. Este asistente te ayudará a completarlo y validar el correcto funcionamiento</p> 
+                    </div>
+
+                    <!-- TODO: indicar CUIT a generar autenticacion. Por defecto, la empresa actual -->
+                </div>
+
+                <!-- PASO 2: Certificado -->
+                <div attrs="{'invisible': [('state', '!=', 'certificate')]}">
+                    <div class="card">
+                        <!-- TODO: onclick => selectAll() and copy() -->
+                        <field name="auth_req" />
+                    </div>
+
+                    <p>Copia este código completo, y pegalo en AFIP en <a href="https://www.afip.gob.ar/sitio/externos/default.asp">https://www.afip.gob.ar</a> </p>
+
+                    <p>A continuación, pegá el código generado por AFIP. Este código sirve para autenticarse con AFIP.</p>
+                    
+                    <p>NOTA: el sistema solo podrá utilizar los servicios que definas en el paso siguiente</p>
+
+                    <field name="auth_resp" />
+                </div>
+                
+                <!-- PASO 3: Delegacion -->
+                <group col="2" attrs="{'invisible': [('state', '!=', 'delegation')]}">
+                    <field name="delegate_1" />
+                    <field name="delegate_2" />
+                    <field name="delegate_3" />
+                    <field name="delegate_4" />
+                </group>
+
+                <!-- TODO: PASO 4/5: Importar Puntos de Venta y Comprobantes -->
+                <button name="action_get_currency" string="Cotizacion" type="object" class="btn-primary" />
+                <button name="action_list_pos" string="Puntos De Venta" type="object" class="btn-primary" />
+                <button name="action_validate_invoice" string="Validar Comprobante" type="object" class="btn-primary" />
+
+                <div attrs="{'invisible': [('state', '!=', 'final')]}">
+                    <p>Proceso Completado. Ya podes utilizar los webservices</p>
+                </div>
+            <!-- </form> -->
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ADMINISTRAR CERTIFICADOS AFIP - WINDOW ACTION -->
+    <record id="action_afip_certificates" model="ir.actions.act_window">
+        <field name="name">Certificados AFIP</field>
+        <field name="res_model">l10n_ar.afip.certificates.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>
