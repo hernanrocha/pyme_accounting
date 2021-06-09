@@ -6,16 +6,49 @@ from dateutil.parser import parse
 import os
 import xml.etree.ElementTree as ET
 
-# TODO: crear diario "Ventas Controlador Fiscal"
-# TODO: crear IVA 6%: 
-# - Nombre: IVA 6%
-# - Tipo de Impuestos: Ventas
-# - Importe: 6,0000%
-# - Distribucion de facturas: 100% Impuesto a cuenta IVA Debito Fiscal
-# - Distribucion de notas de credito: 100% Impuesto a cuenta IVA Credito Fiscal
-# - Etiquetas en facturas: IVA 6%
-# - Grupo de Impuestos: IVA 6%
-# - Incluir en el precio: Si 
+# PRECONDICIONES:
+# - El CUIT debe ser el mismo de la compañia
+# - Se debe haber instalado el plan contable resp. inscripto
+# - Se deben configurar los IVAs para incluir en el precio de venta (price_include, include_base_amount)
+
+class AccountMixin(models.AbstractModel):
+    _name = 'mixin.l10n_ar.account'
+
+    def get_pos(self, pos_number):
+        print('Getting PuntoDeVenta', pos_number)
+
+        # TODO: Sacar de account.chart.template
+        account_sale = self.env['account.account'].search([
+            ('code', '=', '4.1.1.01.010'),
+            ('name', '=', 'Venta de mercadería'),
+        ])
+
+        journal = self.env['account.journal'].search([
+            ('l10n_ar_afip_pos_number', '=', pos_number)
+        ])
+
+        if len(journal) > 1:
+            raise UserError('No puede haber más de 1 punto de venta con el mismo número')
+
+        if len(journal) == 0:
+            # Create new journal for this POS
+            journal = self.env['account.journal'].create({
+                # TODO: make this generic
+                'name': 'PDV {} - Controlador Fiscal'.format(pos_number),
+                'type': 'sale',
+                'l10n_latam_use_documents': True,
+                'l10n_ar_afip_pos_number': pos_number,
+                # TODO: definir si es factura en linea (RLI_RLM), webservice, CF
+                'l10n_ar_afip_pos_system': 'RLI_RLM',
+                'l10n_ar_afip_pos_partner_id': self.env.company.id,
+                'default_account_id': account_sale.id,
+                'code': str(pos_number).zfill(5),
+            })
+
+        print("Journal encontrado/creado: ", journal)
+        
+        return journal
+
 # BUG: El informe de IVA no muestra el 6% y muestra de todas las compañias.
 # TODO: crear impuestos IVA 21%, 6%, No Gravado, Exento para ventas/compras en empresas nuevas.
 # TODO: incluir en el precio para las ventas 
@@ -33,7 +66,7 @@ class SaleImportPEMLine(models.TransientModel):
     date = fields.Date(string="Fecha")
     
     # TODO: convertir a monetary
-    number = fields.Integer(string="Comprobante Z")
+    number = fields.Integer(string="Z")
     range_from = fields.Integer(string="Comprobante Desde")
     range_to = fields.Integer(string="Comprobante Hasta")
     taxed = fields.Float(string="Gravado")
@@ -55,8 +88,9 @@ class SaleImportPEMLine(models.TransientModel):
 class SaleImportPEM(models.TransientModel):
     _name = "l10n_ar.import.sale.pem"
     _description = "Importar archivo de Controlador Fiscal PEM"
+    _inherit = [ 'mixin.l10n_ar.account' ]
 
-    # TODO
+    # TODO: soportar comprobante f8010
     # pem_type = fields.Select(string="Tipo", options=['f8010', 'f8011'])
 
     # Listado de comprobantes individuales
@@ -82,28 +116,31 @@ class SaleImportPEM(models.TransientModel):
 
     def _find_relations(self):
         # Taxes
+        # TODO: sacar de computed
         self.tax_21 = self.env['account.tax'].search([
             ('type_tax_use', '=', 'sale'),
             ('name', '=', 'IVA 21%'),
         ])
+        if len(self.tax_21) != 1:
+            raise UserError("Debe haber un impuesto de Ventas IVA 21%")
         self.tax_untaxed = self.env['account.tax'].search([
             ('type_tax_use', '=', 'sale'),
             ('name', '=', 'IVA No Gravado'),
         ])
+        if len(self.tax_untaxed) != 1:
+            raise UserError("Debe haber un impuesto de Ventas IVA No Gravado")
         self.tax_exempt = self.env['account.tax'].search([
             ('type_tax_use', '=', 'sale'),
             ('name', '=', 'IVA Exento'),
         ])
+        if len(self.tax_exempt) != 1:
+            raise UserError("Debe haber un impuesto de Ventas IVA Exento")
 
         # Account
+        # TODO: Sacar de account.chart.template
         self.account_sale = self.env['account.account'].search([
             ('code', '=', '4.1.1.01.010'),
             ('name', '=', 'Venta de mercadería'),
-        ])
-
-        # Journal
-        self.journal = self.env['account.journal'].search([
-            ('name', '=', 'Ventas Controlador Fiscal'),
         ])
 
     def _parse_pem(self, pem):
@@ -124,6 +161,7 @@ class SaleImportPEM(models.TransientModel):
         tree = ET.parse('/tmp/odoo/{}.xml'.format(xmlfile))
         return tree.getroot()
 
+    # TODO: Not working today
     def compute_f8010(self):
 
         # TODO: chequear CUIT con compañia
@@ -168,8 +206,6 @@ class SaleImportPEM(models.TransientModel):
             ('name', '=', 'Ventas Controlador Fiscal'),
         ])
 
-        # TODO: Add preview
-
         grupoComprobantes = root.find('arrayGruposComprobantesFiscales').find('grupoComprobantes')
         for detalleComprobante in grupoComprobantes.find('arrayDetallesComprobantes').findall('detalleComprobante'):
             numeroComprobante = detalleComprobante.findtext('numeroComprobante')
@@ -190,8 +226,6 @@ class SaleImportPEM(models.TransientModel):
             })
 
             # print('Descripcion              Gravado   IVA %    IVA     Total')
-
-            # TODO: Forma de pago
 
             # Items
             for item in detalleComprobante.find('arrayItems').findall('item'):
@@ -227,8 +261,8 @@ class SaleImportPEM(models.TransientModel):
             move._recompute_payment_terms_lines()
             move._compute_amount()
 
-    # @api.onchange('f8011_file')
     # TODO: seems to be a bug in Odoo 14.0 https://github.com/odoo/odoo/pull/59740
+    @api.depends('f8011_file')
     def compute_f8011(self):
         [data] = self.read()
 
@@ -236,6 +270,9 @@ class SaleImportPEM(models.TransientModel):
             raise UserError("Debes cargar el archivo de ventas F8011")
 
         # TODO: error handling si el formato es incorrecto o es otro formulario
+        # TODO: borrar los registros cargados anteriormente
+        # TODO: Chequear CUIT con el de la empresa o tirar error
+        # TODO: Chequear siguiente comprobante con el metodo _get_last_sequence()
 
         # Convertir PEM a XML
         root = self._parse_pem(data['f8011_file'])
@@ -317,12 +354,15 @@ class SaleImportPEM(models.TransientModel):
                         invoice_data['tax_21'] = float(text_vat_subtotal)
                     elif text_vat_percentage == '6.00':
                         invoice_data['tax_6'] = float(text_vat_subtotal)
+                    else:
+                        raise UserError("IVA desconocido {}".format(text_vat_percentage))
 
                 self.env["l10n_ar.import.sale.pem.line"].create(invoice_data)
                 print()
 
         # Fill relations
         self._find_relations()
+        self.journal = self.get_pos(int(text_pdv))
 
         return {
             'context': self.env.context,
@@ -336,6 +376,8 @@ class SaleImportPEM(models.TransientModel):
         }
 
     def generate_f8011(self):
+        # Obtener tique
+        tique = self.env.ref('l10n_ar.dc_t')
 
         for invoice in self.invoice_ids:
             # Create Invoice
@@ -345,8 +387,8 @@ class SaleImportPEM(models.TransientModel):
                 'journal_id': self.journal.id,
                 'date': invoice.date,
                 'invoice_date': invoice.date,
-                'l10n_latam_document_type_id': 58, # TODO: Tique
-                # TODO: Chequear (y validar) secuencia en PG 
+                'l10n_latam_document_type_id': tique.id,
+                # TODO: Chequear (y validar) secuencia en PG
                 'l10n_latam_document_number': '{}-{}'.format(self.f8011_pos, invoice.number),
             })
 
@@ -355,37 +397,42 @@ class SaleImportPEM(models.TransientModel):
             # total = fields.Float(string="Total")
 
             # IVA 21%
-            line = move.line_ids.create({
-                'move_id': move.id,
-                'name': 'Monto Gravado al 21%',
-                'account_id': self.account_sale.id,
-                'quantity': 1,
-                # TODO: chequear que el impuesto este incluido en el precio
-                'price_unit': invoice.taxed + invoice.tax_21,
-            })
-            line.tax_ids += self.tax_21
+            if (invoice.tax_21 > 0):
+                line = move.line_ids.create({
+                    'move_id': move.id,
+                    'name': 'Monto Gravado al 21%',
+                    'account_id': self.account_sale.id,
+                    'quantity': 1,
+                    # TODO: chequear que el impuesto este incluido en el precio
+                    'price_unit': invoice.taxed + invoice.tax_21,
+                })
+                line.tax_ids += self.tax_21
 
             # IVA No Gravado
-            line = move.line_ids.create({
-                'move_id': move.id,
-                'name': 'Monto No Gravado',
-                'account_id': self.account_sale.id,
-                'quantity': 1,
-                'price_unit': invoice.untaxed,
-            })
-            line.tax_ids += self.tax_untaxed
+            if invoice.untaxed > 0:
+                line = move.line_ids.create({
+                    'move_id': move.id,
+                    'name': 'Monto No Gravado',
+                    'account_id': self.account_sale.id,
+                    'quantity': 1,
+                    'price_unit': invoice.untaxed,
+                })
+                line.tax_ids += self.tax_untaxed
 
             # IVA Exento
-            line = move.line_ids.create({
-                'move_id': move.id,
-                'name': 'Monto Exento',
-                'account_id': self.account_sale.id,
-                'quantity': 1,
-                'price_unit': invoice.exempt,
-            })
-            line.tax_ids += self.tax_exempt
+            if invoice.exempt > 0:
+                line = move.line_ids.create({
+                    'move_id': move.id,
+                    'name': 'Monto Exento',
+                    'account_id': self.account_sale.id,
+                    'quantity': 1,
+                    'price_unit': invoice.exempt,
+                })
+                line.tax_ids += self.tax_exempt
 
             # TODO: Handle IVA 6%
+            if invoice.tax_6 > 0:
+                raise UserError('El archivo contiene facturas con IVA 6%')
 
             # TODO: Add note with invoice range
             # display_type = line_note
@@ -395,8 +442,20 @@ class SaleImportPEM(models.TransientModel):
             move._recompute_payment_terms_lines()
             move._compute_amount()
 
+            # Post Entry
             move.action_post()
 
-        # TODO: el codigo debe ser TI-Z y no TI-X
-
-        # TODO: retornar vista de los tiques creados
+        # TODO: retornar vista de los tiques creados. Asi retorna una lista generica
+        return {
+            # 'context': self.env.context,
+            'name': 'Comprobantes Emitidos',
+            'view_mode': 'tree,form',
+            # 'view_type': 'form',
+            'res_model': 'account.move',
+            # 'res_ids': [ 1, 2 ],
+            # 'view_id': self.env.ref('pyme_accounting.action_move_out_invoice_type').id,
+            'type': 'ir.actions.act_window',
+            'target': 'primary',
+            'domain': [('move_type', '=', 'out_invoice')],
+            'default_move_type': 'out_invoice',
+        }

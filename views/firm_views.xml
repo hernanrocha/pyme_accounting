@@ -11,8 +11,12 @@
         <field name="res_id">1</field>
         <field name="target">main</field>
     </record>
-    <!-- TODO: Traducir "Resp AFIP" a "Condicion Fiscal" -->
     <!-- TODO: Numero de IIBB es igual en tipo "Local" -->
+    <!-- TODO: default IIBB "local" -->
+    <!-- TODO: Agregar Actividad Principal y secundarias en AFIP (y ARBA) -->
+    <!-- TODO: Agregar campo "Notas", "Honorarios", "Contactos", "Cumpleaños" -->
+    <!-- TODO: Agregar filtro por Condición Fiscal -->
+    <!-- TODO: Seguimiento de honorarios -->
 
     <!-- MI ESTUDIO - MIS ACTIVIDADES - SERVER ACTION -->
     <record id="action_firm_activities" model="ir.actions.server">
@@ -54,6 +58,10 @@
     <!-- TODO: default_country_id => argentina -->
     <!-- TODO: Agregar Notas, Honorarios, Contactos, Actividades, Cumpleaños -->
     <!-- TODO: Agregar filtro por Monotributista, Exento, Resp. Inscripto -->
+    <!-- TODO: Al crear compañia nueva, instalar plan contable
+     - Resp. Inscripto (uno solo para todos?)
+     - Modificar IVAs para que incluyan el precio 
+    -->
     
     <!-- TODO: Seguimiento de pagos -->
 

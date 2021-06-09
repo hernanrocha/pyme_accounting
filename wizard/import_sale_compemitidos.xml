@@ -22,7 +22,7 @@
                             <!-- <field name="invoice_number" edit="false" /> -->
                             <field name="taxed_amount" />
                             <field name="untaxed_amount" optional="show" />
-                            <field name="excempt_amount" optional="show" />
+                            <field name="exempt_amount" optional="show" />
                             <field name="iva" />
                             <field name="difference" optional="hide" />
                             <field name="total" />
@@ -35,6 +35,9 @@
                 <!-- TODO: agregar totales y deshabilitar nuevas lineas -->
 
                 <!-- TODO: agregar vista de form de las lineas de factura -->
+
+                <!-- TODO: Explicar que las diferencias se van a marcar como no gravado,
+                y que mas adelante se pueden cargar las percepciones -->
 
                 <footer>
                     <field name="notes" />

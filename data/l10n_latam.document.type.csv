@@ -1,0 +1,4 @@
+id,code,name,doc_code_prefix
+l10n_ar.dc_a_t,81,TIQUE - FACTURA A,TF-A
+l10n_ar.dc_b_t,82,TIQUE - FACTURA B,TF-B
+l10n_ar.dc_t,83,TIQUE,TI-Z

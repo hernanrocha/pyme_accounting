@@ -29,7 +29,7 @@ class IngresosBrutosArbaWizard(models.Model):
     
     iibb_report_percepciones = fields.Float(string="Percepciones", compute="_compute_iibb_report_percepciones")
 
-    iibb_report_deducciones = fields.Float(string="Deducciones", compute="_compute_iibb_report_deducciones")
+    iibb_report_deducciones = fields.Float(string="Total Deducciones", compute="_compute_iibb_report_deducciones")
     iibb_report_tax_prev_saldo = fields.Float(string="Saldo a favor del periodo anterior")
 
     iibb_report_tax_total_saldo = fields.Float(string="Saldo a favor del período", compute="_compute_iibb_report_tax_total_saldo")

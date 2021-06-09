@@ -4,7 +4,7 @@
     <template id="report_payslip">
         <t t-call="web.html_container">
 
-            <t t-foreach="docs" t-as="o">
+            <!-- <t t-foreach="docs" t-as="o"> -->
                 <t t-call="web.external_layout">
 
 <div class="page">
@@ -26,16 +26,58 @@
         }
     </style>
 
-    <h3 t-field="o.name"></h3>
-
-    <h4>Tituloooooo</h4>
+    <div class="text-center">
+        <h3 t-esc="name"></h3>
+    </div>
 
     <!-- https://fontawesome.com/v4.7/examples/ -->
-    <div>
+    <!-- <div>
         <i class="fa fa-camera-retro"></i> fa-camera-retro
+    </div> -->
+
+    <div class="row">
+        <!-- TODO: compras y ventas de los ultimos 12 meses. Categoria, pago mensual, max categoria -->
+
+        <!-- <div class="col-md-3">
+            <div class="card">asd</div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">A3</div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">A5</div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">A7</div>
+        </div> -->
     </div>
 
     <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <table class="table table-sm table-bordered table-hover">
+                <thead>
+                    <tr class="table-primary">
+                        <th scope="col">Mes</th>
+                        <th scope="col">Total Ventas</th>
+                        <th scope="col">Total Compras</th>
+                        <th scope="col">Ganancia Bruta</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="docs" t-as="o">
+                        <tr>
+                            <th scope="row"><t t-esc="o['date']"></t></th>
+                            <td><t t-esc="o['total_sales']"></t></td>
+                            <td><t t-esc="o['total_purchases']"></t></td>
+                            <td><t t-esc="o['balance']"></t></td>
+                        </tr>
+                    </t>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- <div class="row">
         <div class="col-md-6">
             <canvas id="myChart" width="400" height="200"></canvas>
 
@@ -91,7 +133,7 @@
         </table>
 
         </div>
-    </div>
+    </div> -->
 
 
 </div>
@@ -140,12 +182,12 @@ var myChart = new Chart(ctx, {
 });
     </script>
                 </t>
-            </t>
+            <!-- </t> -->
         </t>
     </template>
 
     <record id="report_basic" model="ir.actions.report">
-        <field name="name">Invoice</field>
+        <field name="name">'Invoice' % (object.name)</field>
         <field name="model">account.move</field>
         <field name="report_type">qweb-html</field>
         <field name="report_name">pyme_accounting.report_payslip</field>
@@ -154,5 +196,12 @@ var myChart = new Chart(ctx, {
         <field name="binding_type">report</field> 
     </record>
 
+    <!-- <record id="action_print_report_general_ledger_html" model="ir.actions.report">
+        <field name="name">General Ledger</field>
+        <field name="model">general.ledger.report.wizard</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">account_financial_report.general_ledger</field>
+        <field name="report_file">account_financial_report.general_ledger</field>
+    </record> -->
 
 </odoo>

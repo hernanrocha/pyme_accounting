@@ -1,11 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Desactivar MENU Facturacion/Proveedores/Facturas -->
-    <record model="ir.ui.menu" id="account.menu_action_move_in_invoice_type">
+
+    <!-- TODOs:
+        - Borrar Conversaciones, Calendario, Contactos, Empleados??, Ausencias??, Tableros??
+        - Reemplazar Facturacion/Contabilidad por Mi Estudio y Empresa??
+        - Mi Estudio:
+            - Agregar "autochange company"
+            - Actividades: no tiene permisos
+            - Clientes: no aparece la lista ni se puede editar
+        - Ventas: 
+            - Comprobantes: agregar columnas faltantes
+            - Clientes: filtrar por compañia y mostrar solo la lista
+        - Contabilidad:
+            - Agregar menus faltantes
+        - Importar:
+            - Agregar permiso a los import habilitados
+        - Informes:
+            - Terminar Reporte Monotributo
+            - Terminar Reporte IIBB
+            - Terminar Libro IVA Digital
+    -->
+
+    <!-- Desactivar MENU Facturacion/Clientes -->
+    <record model="ir.ui.menu" id="account.menu_finance_receivables">
         <field name="active" eval="False"/>
     </record>
 
-    <!-- TODO: this doesn't work -->
+    <!-- Desactivar MENU Facturacion/Proveedores -->
+    <record model="ir.ui.menu" id="account.menu_finance_payables">
+        <field name="active" eval="False"/>
+    </record>
+
+    <!-- TODO: Desactivar MENU Facturacion/Contabilidad -->
+    <!-- <record model="ir.ui.menu" id="account.menu_finance_payables">
+        <field name="active" eval="False"/>
+    </record> -->
+
+    <!-- TODO: Crear menu diferente para Mi estudio -->
+    <!-- TODO: Crear menu diferente para Clientes -->
+
+    <!-- TODO: Deshabilitar menu Facturacion -->
     <menuitem id="account.menu_finance" name="Facturación" />
     
     <record id="view_account_invoice_filter" model="ir.ui.view">
@@ -67,7 +101,7 @@
         <field name="target">main</field>
     </record>
 
-        <!-- Reportes -->
+    <!-- Reportes -->
     <record id="action_tax_report" model="ir.actions.act_window">
         <field name="name">Reportes</field>
         <field name="res_model">account.tax.report</field>
@@ -76,13 +110,6 @@
         <!-- <field name="view_id" ref="view_iibb_arba_asientos_tree" /> -->
         <field name="target">main</field>
     </record>
-
-    <!-- MENU Facturacion/Proveedores/Facturas --> 
-    <menuitem id="menu_account_view_in_invoice"
-        name="Facturas"
-        action="action_move_in_invoice_type"
-        parent="account.menu_finance_payables"
-        sequence="1"/>
 
     <!-- MENU Facturacion/Mi Estudio  -->
     <menuitem id="menu_firm" name="Mi Estudio" parent="account.menu_finance" sequence="1">
@@ -94,21 +121,77 @@
         <menuitem name="Actividades" sequence="2" 
             id="menu_firm_activities" action="action_firm_activities" />
 
-        <!-- MENU Facturacion/Mi Estudio/Actividades  -->
-        <menuitem name="Calendario" sequence="3" 
-            id="menu_firm_calendar" action="action_firm_calendar" />
+        <!-- TODO: MENU Facturacion/Mi Estudio/Actividades  -->
+        <!-- <menuitem name="Calendario" sequence="3" 
+            id="menu_firm_calendar" action="action_firm_calendar" /> -->
 
         <!-- MENU Facturacion/Mi Estudio/Clientes  -->
         <menuitem name="Clientes" sequence="4" 
             id="menu_firm_clients" action="action_firm_clients" />
         
-        <!-- MENU Facturacion/Mi Estudio/Emails  -->
-        <menuitem name="Emails Enviados" sequence="5" 
-            id="menu_firm_email_sent" action="action_firm_email_sent" />
+        <!-- TODO: MENU Facturacion/Mi Estudio/Emails  -->
+        <!-- <menuitem name="Emails Enviados" sequence="5" 
+            id="menu_firm_email_sent" action="action_firm_email_sent" /> -->
 
         <!-- TODO: Agregar Calendario (y cumpleaños) -->
-
     </menuitem>
+
+    <!-- TODO: MENU Facturacion/Dashboard
+        Dashboard:
+        - [Monotributo]: categoria actual, actividades, inicio de actividades (boton para conectar con AFIP)
+
+        - Compras y Ventas en grafico de barras (ultimos 12 meses)
+        - Compras y Ventas en tabla (ultimos 12 meses)
+        - [Monotributo] mostrar categoria calculada, limite, pago
+    -->
+
+    <!-- MENU Facturacion/Ventas -->
+    <menuitem id="menu_sales" name="Ventas" parent="account.menu_finance" sequence="2">
+        <menuitem id="menu_action_move_out_invoice_type" name="Comprobantes Emitidos" action="action_move_out_invoice_type" sequence="1"/>
+        <!-- TODO: Unificar estos 2 -->
+        <menuitem id="menu_action_move_out_refund_type" name="Notas de Crédito" action="action_move_out_refund_type" sequence="2"/>
+        <!-- <menuitem id="menu_action_move_out_receipt_type" action="action_move_out_receipt_type" groups="account.group_sale_receipts" sequence="3"/> -->
+        <!-- <menuitem id="menu_action_account_payments_receivable" action="action_account_payments" sequence="15"/> -->
+        <menuitem id="product_product_menu_sellable" name="Productos" action="account.product_product_action_sellable" sequence="100"/>
+        <menuitem id="menu_account_customer" name="Clientes" action="account.res_partner_action_customer" sequence="110"/>
+    </menuitem>
+
+    <!-- MENU Facturacion/Compras --> 
+    <menuitem id="menu_finance_payables" name="Compras" parent="account.menu_finance" sequence="3">
+        <menuitem id="menu_action_move_in_invoice_type" name="Comprobantes Recibidos" action="action_move_in_invoice_type" sequence="1"/>
+        <!-- TODO: Unificar estos 2 -->
+        <menuitem id="menu_action_move_in_refund_type" action="action_move_in_refund_type" sequence="2"/>
+        <!-- <menuitem id="menu_action_move_in_receipt_type" action="action_move_in_receipt_type" groups="account.group_purchase_receipts" sequence="3"/> -->
+        <!-- <menuitem id="menu_action_account_payments_payable" action="action_account_payments_payable" sequence="20"/> -->
+        <menuitem id="product_product_menu_purchasable" name="Productos" action="account.product_product_action_purchasable" sequence="100"/>
+        <menuitem id="menu_account_supplier" name="Proveedores" action="account.res_partner_action_supplier" sequence="200"/>
+    </menuitem>
+
+    <!-- MENU Facturacion/Contabilidad  -->
+    <menuitem id="menu_accountancy" name="Contabilidad" parent="account.menu_finance" sequence="4">
+
+        <!-- MENU Facturacion/Contabilidad/Subdiarios-->
+        <menuitem id="menu_accountancy_journals" name="Subdiarios" sequence="1">
+                
+            <!-- MENU Facturacion/Contabilidad/Subdiarios/Compras -->
+            <menuitem id="menu_accountancy_journals_purchases" name="Compras" 
+                sequence="1" action="report_basic" />
+
+            <!-- MENU Facturacion/Contabilidad/Subdiarios/Ventas -->
+            <menuitem id="menu_accountancy_journals_sales" name="Ventas" 
+                sequence="2" action="report_basic" />
+                
+        </menuitem>
+        
+        <!-- TODO:
+            - Asientos Manuales
+            - Libro Diario
+            - Libro Mayor
+            - Resultados Mensuales
+            - Cierre de Ejercicio
+        -->
+
+    </menuitem>       
 
     <!-- MENU Facturacion/Importar  -->
     <menuitem id="menu_import" name="Importar" parent="account.menu_finance" sequence="10">
@@ -116,22 +199,28 @@
         <!-- MENU Facturacion/Importar/Compras -->
         <menuitem id="menu_import_purchases" name="Compras" sequence="1">
 
+            <!-- TODO: Borrar este y dividir en 2 partes -->
             <!-- MENU Facturacion/Importar/Compras/AFIP-ARBA  -->
             <menuitem name="Importar AFIP" sequence="1"
                 id="menu_import_afip" action="action_arba_afip_upload"/>
 
+            <!-- TODO -->
             <!-- MENU Facturacion/Importar/Compras/Comprobantes Emitidos  -->
-            <menuitem name="[N] Mis Comprobantes Recibidos" sequence="1" 
+            <menuitem name="Mis Comprobantes Recibidos" sequence="1" 
                 id="menu_import_purchases_comp_recibidos" action="action_move_in_invoice_type" />
                 
+            <!-- TODO -->
+            <!-- MENU Facturacion/Importar/Compras/Deducciones ARBA -->
             <menuitem name="Deducciones ARBA" sequence="2" 
                 id="menu_import_purchase_perc_arba" action="action_move_in_invoice_type" />
 
-            <!-- <menuitem name="[N] Archivo RG3685" sequence="3" 
+            <!-- <menuitem name="Archivo RG3685" sequence="3" 
                 id="menu_import_purchases_rg3685" action="action_move_in_invoice_type" /> -->
 
             <menuitem name="Archivo Excel" sequence="4" 
                 id="menu_import_purchase_excel" action="action_import_purchase_excel" />
+
+            <!-- TODO: Definir actividad para importar productos (Pto Vta o Producto) -->
 
         </menuitem>
 
@@ -142,18 +231,23 @@
             <menuitem name="Mis Comprobantes Emitidos" sequence="2"
                 id="menu_import_sales_comp_emitidos" action="action_afip_import_sale_wizard" />
                             
-            <!-- MENU Facturacion/Importar/Ventas  -->
-            <menuitem name="Comprobantes en Linea" sequence="3"
-                id="menu_import_sale_compenlinea" action="action_wizard_import_sale_compenlinea" />
+            <!-- TODO: MENU Facturacion/Importar/Ventas  -->
+            <!-- <menuitem name="Comprobantes en Linea" sequence="3"
+                id="menu_import_sale_compenlinea" action="action_wizard_import_sale_compenlinea" /> -->
                 
+            <!-- TODO: MENU Facturacion/Importar/Retenciones AFIP  -->
+            <!-- <menuitem name="[RevisarNombre] Retenciones AFIP" sequence="9" 
+                id="menu_import_sale_rg3685" action="action_wizard_import_sale_pem" /> -->
+
             <!-- MENU Facturacion/Importar/Controlador Fiscal (*.PEM) -->
             <menuitem name="Archivo Controlador Fiscal (*.PEM)" sequence="4" 
                 id="menu_import_sale_pem" action="action_wizard_import_sale_pem" />
             
-            <!-- MENU Facturacion/Importar/Consulta WebService de AFIP  -->
-            <menuitem name="Consulta WebService de AFIP" sequence="5" 
-                id="menu_import_sale_webservice" action="action_wizard_import_sale_webservice" />
+            <!-- TODO: MENU Facturacion/Importar/Consulta WebService de AFIP  -->
+            <!-- <menuitem name="Consulta WebService de AFIP" sequence="5" 
+                id="menu_import_sale_webservice" action="action_wizard_import_sale_webservice" /> -->
 
+            <!-- MENU Facturacion/Importar/Archivo Excel -->
             <menuitem name="Archivo Excel" sequence="6" 
                 id="menu_import_sale_excel" action="action_import_sale_excel" />
             
@@ -176,23 +270,38 @@
         <!-- MENU Facturacion/Importar/Banco -->
         <menuitem id="menu_import_bank" name="Bancos" sequence="3">
                 
-            <!-- MENU Facturacion/Importar/Banco/Resumen Bancario -->
-            <menuitem name="Resumen Bancario" sequence="2"
-                id="menu_import_bank_statement" action="action_afip_import_sale_wizard" />
+            <!-- TODO: MENU Facturacion/Importar/Banco/Resumen Bancario -->
+            <!-- <menuitem name="Resumen Bancario" sequence="2"
+                id="menu_import_bank_statement" action="action_afip_import_sale_wizard" /> -->
 
         </menuitem>
 
     </menuitem>
 
-    <!-- MENU Facturacion/Impuestos  -->
-    <menuitem id="menu_taxes" name="Impuestos" parent="account.menu_finance" sequence="11">
+    <!-- MENU Facturacion/Informes  -->
+    <menuitem id="menu_taxes" name="Informes" parent="account.menu_finance" sequence="11">
 
+        <!-- MENU Facturacion/Informes/Monotributo-->
+        <menuitem id="menu_reports_monotributo" name="Monotributo" sequence="1">
+
+            <!-- MENU Facturacion/Informes/Monotributo/Reporte Mensual-->
+            <menuitem id="menu_taxes_report_monotributo_mensual" name="Reporte Mensual" 
+                sequence="1" action="report_basic" />
+
+            <!-- MENU Facturacion/Informes/Monotributo/Reporte Ultimos 12 Meses-->
+            <menuitem id="menu_taxes_report_monotributo_anual" name="Últimos 12 Meses"
+                sequence="2" action="report_basic" />
+
+            <!-- TODO: compras y ventas de los ultimos 12 meses. Categoria, pago mensual, max categoria -->
+
+        </menuitem>      
+        
         <!-- MENU Facturacion/Impuestos/IIBB -->
-        <menuitem id="menu_taxes_iibb" name="Ingresos Brutos" sequence="1">
+        <menuitem id="menu_taxes_iibb" name="Ingresos Brutos" sequence="3">
         
             <!-- MENU Facturacion/Impuestos/IIBB/ARBA  -->
-            <menuitem name="Asientos IIBB" sequence="1"
-                id="menu_iibb_arba_asientos" action="action_iibb_arba_asientos"/>
+            <!-- <menuitem name="Asientos IIBB" sequence="1"
+                id="menu_iibb_arba_asientos" action="action_iibb_arba_asientos"/> -->
 
             <!-- MENU Facturacion/Impuestos/IIBB/ARBA  -->
             <menuitem name="DD.JJ. ARBA" sequence="2"
@@ -201,37 +310,59 @@
             <!-- MENU Facturacion/Impuestos/IIBB/ARBA  -->
             <menuitem name="Reportes" sequence="3"
                 id="menu_tax_report" action="action_tax_report"/>
+
+            <!-- TODO: la alicuota puede ser cualquier valor. -->
+
+            <!-- MENU Facturacion/Impuestos/IIBB/SIFERE  -->
+            <!-- <menuitem name="Convenio Multlateral" sequence="4"
+                id="menu_tax_sifere" action="action_tax_report"/> -->
         </menuitem>
+        
+        <menuitem id="menu_reports_afip" name="AFIP" sequence="5">
+
+            <!-- MENU Facturacion/Informes/AFIP/Reporte Mensual-->
+            <!-- TODO: Compras (ALICUOTA, CBTE), Ventas (ALICUOTA, CBTE), TURIVA -->
+            <menuitem id="menu_taxes_report_afip_iva_digital" name="Libro IVA Digital" 
+                sequence="1" action="report_basic" />
+
+            <!-- MENU: Facturacion/Informes/AFIP/DD. JJ. IVA -->
+            <menuitem id="menu_taxes_report_afip_iva_web" name="DD. JJ. IVA (F. 2002)" 
+                sequence="2" action="report_basic" />
 
 
-        <menuitem id="menu_taxes_report_base" name="Reporte Monotributo" 
-            sequence="2" action="report_basic" />
+            <!-- MENU Facturacion/Informes/AFIP/Reporte Ultimos 12 Meses-->
+            <!-- <menuitem id="menu_taxes_report_afip_anual" name="Últimos 12 Meses"
+                sequence="2" action="report_basic" /> -->
+
+            <!-- TODO: SIRE -->
+
+            <!-- TODO: Chequear estado de AFIP (WebService + reporte de caido)-->
+
+            <!-- TODO: Vista de Puntos de Venta en AFIP (opcion a traerlos configurandolo) -->
+
+        </menuitem>  
 
     </menuitem>
 
     <!-- MENU Facturacion/AFIP  -->
     <menuitem id="menu_afip" name="AFIP" parent="account.menu_finance" sequence="12">
 
-        <!-- MENU Facturacion/Impuestos/IIBB/ARBA  -->
+        <!-- TODO: terminar wizard -->
+        <!-- MENU Facturacion/AFIP/Administrar Certificados -->
+        <!-- TODO: mostrar estado de la conexion AFIP y los webservices individuales -->
         <menuitem name="Administrar Certificados" sequence="1"
             id="menu_afip_certificates" action="action_afip_certificates"/>
 
         <!-- TODO: cotización de divisas -->
+        <!-- MENU Facturacion/AFIP/Cotizacion de Divisas -->
+        <!-- <menuitem name="Cotización de Divisas" sequence="2"
+            id="menu_afip_cotizacion" action="action_afip_cotizacion"/> -->
 
         <!-- TODO: Validar CUIT: WebService + apocrifos --> 
+        <!-- <menuitem name="Consultar CUIT" sequence="3"
+            id="menu_afip_consultar_cuit" action="action_afip_consultar_cuit"/> -->
 
     </menuitem>
-
-    <!--
-        Dashboard:
-        - [Monotributo]: categoria actual, actividades, inicio de actividades (boton para conectar con AFIP)
-
-        - Compras y Ventas en grafico de barras (ultimos 12 meses)
-        - Compras y Ventas en tabla (ultimos 12 meses)
-        - [Monotributo] mostrar categoria calculada, limite, pago
-
-
-    -->
 
     <!-- TODO:
         Mi Estudio:
@@ -246,37 +377,42 @@
         - Actividades: propios de la empresa principal
 
         Ventas:
-        - Comprobantes
-        - ??? Notas de Credito
         - Cobros
-        - Productos de Venta
-        - Clientes
 
         Compras:
-        - Comprobantes
-        - ??? Facturas rectificativas
         - Pagos
-        - Productos de Compra
-        - Proveedores
+    -->
 
-        AFIP:
-        - Administrar certificados
-        - Cotizaciones de monedas
-        - Validar Comprobantes
-
-        Exportar:
-        - Libro IVA Digital Compras (ALICUOTA, CBTE)
-        - Libro IVA Digital Ventas (ALICUOTA, CBTE)
-        - IIBB
-        - SIRE, multilateral ???
-
-
-        Contabilidad:
-        - Asientos Manuales
-        - Libro Diario
-        - Libro Mayor
-        - Resultados Mensuales
-        - Cierre de Ejercicio
+    <!-- CONTABILIDAD:
+        - Subdiario Compras: <ventas>, Perc. IIBB, Perc. IVA, Perc. Ganancias
+        - Subdiario Ventas: Fecha, CUIT, Proveedor, Factura, Total, Gravado, IVA, No Gravado, Exento
+          Si sos agente de percepcion, tambien van las columnas de perc.
+          Todo separado por actividad
+        - Asientos manuales: modelos de asientos para:
+          - devengamiento de impuestos (IIBB, IVA, TSH)
+          - compras, ventas (1 solo mensual)
+          - caja, banco, anulacion de movimientos entre caja/banco
+          - sueldos
+          - apertura, refundicion de resultados, cierre
+        - Libro Mayor (como esta)
+        - Cuenta corriente de proveedores (libro mayor de empresa, filtro por proveedores)
+        - Cuenta corriente de clientes (libro mayor de empresa, filtro por clientes)
+        - Estados de los asientos: "Borrador", "Confirmado", "Cancelado"
+        - Plan de Cuentas: editable
+            - cuentas separadas por rubro (sub cuentas?)
+            - renombrar "Valor neto" a "Patrimonio Neto"
+        - Activos (no se dice asi) 
+            => Bienes de uso: 
+                - nombre
+                - categoria (muebles y utiles, maquinaria, equipos de computacion)
+                  Cada categoria tiene reglas por ley sobre la amortizacion
+        - Extracto Bancario y conciliacion bancaria
+        - Cheques
+        - Fecha Tope
+        - Informes: Estado de Resultados, Balance de Sumas y Saldos (OCA esta bien), balance integrado
+        - Renombrar "Tipos de Documento" a "Tipos de Comprobante" (solo lectura)
+        - Diarios contables: NO. Convertir a "Puntos de Venta"
+        - Posiciones fiscales: NO
     -->
 
 </odoo>

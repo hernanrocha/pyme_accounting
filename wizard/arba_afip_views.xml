@@ -29,8 +29,8 @@
                                 <!-- <field name="pos_number" edit="false" /> -->
                                 <!-- <field name="invoice_number" edit="false" /> -->
                                 <field name="taxed_amount" />
-                                <field name="untaxed_amount" optional="hide" />
-                                <field name="excempt_amount" optional="hide" />
+                                <field name="untaxed_amount" />
+                                <field name="exempt_amount" />
                                 <field name="iva" />
                                 <field name="percepcion_iibb" />
                                 <field name="total" />

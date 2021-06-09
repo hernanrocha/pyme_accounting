@@ -57,8 +57,8 @@
                                 </group>
                                 <group modifiers="{}">
                                     <field name="vat" string="CUIT" required="1" modifiers="{}" id="vat"/>
-                                    <field name="l10n_ar_afip_responsibility_type_id" string="Responsabilidad AFIP" required="1" options="{'no_open': True, 'no_create': True}" attrs="{'invisible': [('country_code', '!=', 'AR')]}" can_create="false" can_write="false" modifiers="{'invisible':[['country_code','!=','AR']]}" id="l10n_ar_afip_responsibility_type_id"/>
-                                    <label for="l10n_ar_gross_income_number" string="Ingresos Brutos" attrs="{'invisible': [('country_code', '!=', 'AR')]}" modifiers="{'invisible':[['country_code','!=','AR']]}"/>
+                                    <field name="l10n_ar_afip_responsibility_type_id" required="1" options="{'no_open': True, 'no_create': True}" attrs="{'invisible': [('country_code', '!=', 'AR')]}" can_create="false" can_write="false" modifiers="{'invisible':[['country_code','!=','AR']]}" id="l10n_ar_afip_responsibility_type_id"/>
+                                    <label for="l10n_ar_gross_income_number" attrs="{'invisible': [('country_code', '!=', 'AR')]}" modifiers="{'invisible':[['country_code','!=','AR']]}"/>
                                     
                                     <!-- TODO: Agregar actividades en AFIP-->
                                     <div attrs="{'invisible': [('country_code', '!=', 'AR')]}" name="gross_income" modifiers="{'invisible':[['country_code','!=','AR']]}">

@@ -3,3 +3,4 @@
 from . import wizard
 from . import views
 from . import models
+from . import report

@@ -15,7 +15,8 @@
         'account',
         'purchase',
         'sale_management',
-        'multi_step_wizard',
+        'multi_step_wizard', # https://github.com/OCA/server-ux@14.0
+        'l10n_ar',
         'l10n_ar_afipws_fe'
     ],
     'data': [
@@ -41,11 +42,16 @@
         'views/company_views.xml',
         'views/import_views.xml',
         'views/firm_views.xml',
+        'views/sales_views.xml',
 
         # Menu
         'views/account_menuitem.xml',
 
-        "data/l10n_ar.afip.cuit.apocrifo.csv"
+        # Data
+        "data/l10n_ar.afip.cuit.apocrifo.csv",
+        "data/l10n_latam.document.type.csv",
+        "data/product.template.csv",
+        "data/product_template.xml"
     ],
     'images': [], # 'static/description/banner.png'
     'application': True,

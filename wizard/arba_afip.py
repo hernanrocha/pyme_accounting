@@ -201,7 +201,7 @@ class InvoiceLine(models.Model):
     vendor = fields.Char(string="Proveedor")
     taxed_amount = fields.Float(string="Gravado")
     untaxed_amount = fields.Float(string="No Gravado")
-    excempt_amount = fields.Float(string="Exento")
+    exempt_amount = fields.Float(string="Exento")
     iva = fields.Float(string="IVA")
     percepcion_iibb = fields.Float(string="Perc. IIBB")
     total = fields.Float(string="Total")
@@ -247,6 +247,25 @@ class ImpuestosImporter(models.Model):
     notes = fields.Char(string="Notas", readonly=True)    
 
     def compute_sheet(self):
+        # TODO: Remove this
+
+        self.ensure_one()
+        report_name = 'pyme_accounting.report_payslip'
+        report_type = 'qweb-html'
+        data = {
+            'name': 'Template name'
+        } # ....
+        return (
+            self.env["ir.actions.report"]
+            .search(
+                [("report_name", "=", report_name), ("report_type", "=", report_type)],
+                limit=1,
+            )
+            .report_action(self, data=data)
+        )
+
+        ## TODO: End remove
+
         [data] = self.read()
 
         if not data['afip_file']:
@@ -312,7 +331,7 @@ class ImpuestosImporter(models.Model):
                 'vendor': row[8],
                 'taxed_amount': row[11], 
                 'untaxed_amount': row[12],
-                'excempt_amount': row[13],
+                'exempt_amount': row[13],
                 'iva': row[14],
                 'percepcion_iibb': imp,
                 'total': row[15],
