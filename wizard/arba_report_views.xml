@@ -98,6 +98,9 @@
                             <field name="iibb_report_tax_subtotal" />
                             <separator />
                             <field name="iibb_report_percepciones" readonly="1" />
+                            <field name="iibb_report_retenciones" readonly="1" />
+                            <field name="iibb_report_retenciones_bancarias" readonly="1" />
+                            <field name="iibb_report_devoluciones_bancarias" readonly="1" />
                             <separator />
                             <field name="iibb_report_deducciones" readonly="1" />
                             <field name="iibb_report_tax_prev_saldo" readonly="1" />
@@ -121,12 +124,36 @@
                     </page> 
                     <!-- TODO: agregar percepciones no tomadas del mes anterior -->
                     <!-- TODO: agregar widget="switch" para tomar/no tomar percepciones -->
-                    <page string="Percepciones Banco">
-                    </page> 
                     <page string="Retenciones">
+                        <group>
+                            <field nolabel="1" name="iibb_retenciones">
+                                <tree>
+                                    <field name="date" />
+                                    <field name="amount" />
+                                </tree>
+                            </field>
+                        </group>
                     </page> 
-                    <page string="Retenciones Banco">
-                    </page> 
+                    <page string="Retenciones Bancarias">
+                        <group>
+                            <field nolabel="1" name="iibb_retenciones_bancarias">
+                                <tree>
+                                    <field name="date" />
+                                    <field name="amount" />
+                                </tree>
+                            </field>
+                        </group>
+                    </page>
+                    <page string="Devoluciones Bancarias">
+                        <group>
+                            <field nolabel="1" name="iibb_devoluciones_bancarias">
+                                <tree>
+                                    <field name="date" />
+                                    <field name="amount" />
+                                </tree>
+                            </field>
+                        </group>
+                    </page>
                 </notebook>
 
                 <footer>

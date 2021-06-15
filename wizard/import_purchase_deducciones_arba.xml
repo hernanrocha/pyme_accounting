@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- IMPORTAR DEDUCCIONES COMPRA ARBA - FORM -->
+    <record id="view_import_purchase_deducciones_arba_form" model="ir.ui.view">
+        <field name="name">l10n_ar.import.purchase.deducciones.arba.form</field>
+        <field name="model">l10n_ar.import.purchase.deducciones.arba</field>
+        <field name="arch" type="xml">
+            <form string="Importar Deducciones de ARBA">
+
+                <group string="Archivo" col="2">
+                    <field name="arba_file" />
+                </group>
+                
+                <notebook string="Deducciones Cargadas" col="2">
+                    <page string="Percepciones">
+
+                    </page>
+                    <page string="Retenciones">
+                        <field name="retenciones" nolabel="1" widget="section_and_note_one2many" options="{'reload_on_button': true}">
+                            <tree>
+                                <field name="date" edit="false" />
+                                <field name="amount" edit="false" />
+                            </tree>
+                        </field>
+                    </page>
+                    <page string="Retenciones Bancarias">
+                        <field name="retenciones_bancarias" nolabel="1" widget="section_and_note_one2many" options="{'reload_on_button': true}">
+                            <tree>
+                                <field name="date" edit="false" />
+                                <field name="amount" edit="false" />
+                            </tree>
+                        </field>
+                    </page>
+                    <page string="Devoluciones Bancarias">
+                        <field name="devoluciones_bancarias" nolabel="1" widget="section_and_note_one2many" options="{'reload_on_button': true}">
+                            <tree>
+                                <field name="date" edit="false" />
+                                <field name="amount" edit="false" />
+                            </tree>
+                        </field>
+                    </page>
+                </notebook>
+
+                <footer>
+                    <field name="notes" />
+                    <separator />
+                    <button name="parse_purchases" string="Cargar" type="object" class="btn-primary" />
+                    <button name="generate_purchases" string="Actualizar Comprobantes" type="object" class="btn-primary" />
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+
+            </form>
+        </field>
+    </record>
+
+    <!-- IMPORTAR DEDUCCIONES COMPRA ARBA - ACTION -->
+    <record id="action_import_purchase_deducciones_arba" model="ir.actions.act_window">
+        <field name="name">Deducciones de ARBA</field>
+        <field name="res_model">l10n_ar.import.purchase.deducciones.arba</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

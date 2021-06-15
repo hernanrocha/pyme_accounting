@@ -46,7 +46,7 @@
                         <field name="taxed" />
                         <field name="untaxed" />
                         <field name="exempt" />
-                        <!-- <field name="tax_6" /> -->
+                        <field name="tax_6" optional="hide" />
                         <field name="tax_21" />
                         <field name="total" />
                     </tree>

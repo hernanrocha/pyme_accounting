@@ -11,13 +11,12 @@
     'description': "",
     # 'website': 'https://www.odoomates.tech',
     'depends': [
-        'base',
-        'account',
-        'purchase',
-        'sale_management',
-        'multi_step_wizard', # https://github.com/OCA/server-ux@14.0
-        'l10n_ar',
-        'l10n_ar_afipws_fe'
+        # Odoo Base Modules
+        'base',            # Base
+        'account',         # Contabilidad
+        'purchase',        # Compras
+        'l10n_ar',         # Localizacion Argentina
+        'sale_management', # Ventas
     ],
     'data': [
         'security/ir.model.access.csv',
@@ -27,18 +26,18 @@
         
         # Import
         'wizard/import_purchase_excel.xml',
+        'wizard/import_purchase_deducciones_arba.xml',
         'wizard/import_sale_compemitidos.xml',
         'wizard/import_sale_compenlinea.xml',
         'wizard/import_sale_pem.xml',
         'wizard/import_sale_webservice.xml',
         'wizard/import_sale_excel.xml',
+        'wizard/import_bank_bapro.xml',
 
         # Reports
         'report/basic_report.xml',
 
-        # AFIP
-        'wizard/afip_certificates_views.xml',
-
+        # Menu - Mi Estudio
         'views/company_views.xml',
         'views/import_views.xml',
         'views/firm_views.xml',
@@ -50,6 +49,7 @@
         # Data
         "data/l10n_ar.afip.cuit.apocrifo.csv",
         "data/l10n_latam.document.type.csv",
+        "data/account.tax.template.csv",
         "data/product.template.csv",
         "data/product_template.xml"
     ],

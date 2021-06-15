@@ -209,11 +209,6 @@
             <menuitem name="Mis Comprobantes Recibidos" sequence="1" 
                 id="menu_import_purchases_comp_recibidos" action="action_move_in_invoice_type" />
                 
-            <!-- TODO -->
-            <!-- MENU Facturacion/Importar/Compras/Deducciones ARBA -->
-            <menuitem name="Deducciones ARBA" sequence="2" 
-                id="menu_import_purchase_perc_arba" action="action_move_in_invoice_type" />
-
             <!-- <menuitem name="Archivo RG3685" sequence="3" 
                 id="menu_import_purchases_rg3685" action="action_move_in_invoice_type" /> -->
 
@@ -243,10 +238,6 @@
             <menuitem name="Archivo Controlador Fiscal (*.PEM)" sequence="4" 
                 id="menu_import_sale_pem" action="action_wizard_import_sale_pem" />
             
-            <!-- TODO: MENU Facturacion/Importar/Consulta WebService de AFIP  -->
-            <!-- <menuitem name="Consulta WebService de AFIP" sequence="5" 
-                id="menu_import_sale_webservice" action="action_wizard_import_sale_webservice" /> -->
-
             <!-- MENU Facturacion/Importar/Archivo Excel -->
             <menuitem name="Archivo Excel" sequence="6" 
                 id="menu_import_sale_excel" action="action_import_sale_excel" />
@@ -267,12 +258,19 @@
 
         </menuitem>
 
+        <menuitem id="menu_import_iibb" name="IIBB" sequence="3">
+            <!-- MENU Facturacion/Importar/Compras/Deducciones ARBA -->
+            <menuitem name="Deducciones ARBA" sequence="1" 
+                id="menu_import_purchase_deducciones_arba" action="action_import_purchase_deducciones_arba" />
+
+        </menuitem>
+
         <!-- MENU Facturacion/Importar/Banco -->
-        <menuitem id="menu_import_bank" name="Bancos" sequence="3">
+        <menuitem id="menu_import_bank" name="Bancos" sequence="4">
                 
-            <!-- TODO: MENU Facturacion/Importar/Banco/Resumen Bancario -->
-            <!-- <menuitem name="Resumen Bancario" sequence="2"
-                id="menu_import_bank_statement" action="action_afip_import_sale_wizard" /> -->
+            <!-- MENU Facturacion/Importar/Banco/Resumen Bancario -->
+            <menuitem name="Resumen Banco Provincia" sequence="2"
+                id="menu_import_bank_bapro" action="action_import_bank_bapro" />
 
         </menuitem>
 
@@ -341,26 +339,6 @@
             <!-- TODO: Vista de Puntos de Venta en AFIP (opcion a traerlos configurandolo) -->
 
         </menuitem>  
-
-    </menuitem>
-
-    <!-- MENU Facturacion/AFIP  -->
-    <menuitem id="menu_afip" name="AFIP" parent="account.menu_finance" sequence="12">
-
-        <!-- TODO: terminar wizard -->
-        <!-- MENU Facturacion/AFIP/Administrar Certificados -->
-        <!-- TODO: mostrar estado de la conexion AFIP y los webservices individuales -->
-        <menuitem name="Administrar Certificados" sequence="1"
-            id="menu_afip_certificates" action="action_afip_certificates"/>
-
-        <!-- TODO: cotización de divisas -->
-        <!-- MENU Facturacion/AFIP/Cotizacion de Divisas -->
-        <!-- <menuitem name="Cotización de Divisas" sequence="2"
-            id="menu_afip_cotizacion" action="action_afip_cotizacion"/> -->
-
-        <!-- TODO: Validar CUIT: WebService + apocrifos --> 
-        <!-- <menuitem name="Consultar CUIT" sequence="3"
-            id="menu_afip_consultar_cuit" action="action_afip_consultar_cuit"/> -->
 
     </menuitem>
 
