@@ -17,7 +17,6 @@ security_import_sale_compenlinea,Importar Comprobantes en Linea,model_l10n_ar_im
 security_import_sale_compenlinea_line,Linea de Comprobantes en Linea,model_l10n_ar_import_sale_compenlinea_line,account.group_account_user,1,1,1,1
 security_import_sale_excel,Importar Comprobantes desde Excel,model_l10n_ar_import_sale_excel,account.group_account_user,1,1,1,1
 security_import_bank_bapro,Importar Extracto Banco Provincia,model_l10n_ar_import_bank_bapro,account.group_account_user,1,1,1,1
-security_admin_afip_certificate,Administrar certificados AFIP,model_l10n_ar_afip_certificates_wizard,account.group_account_user,1,1,1,1
 security_arba_retencion,ARBA Retenciones,model_l10n_ar_arba_retencion,account.group_account_user,1,1,1,1
 security_arba_retencion_bancaria,ARBA Retenciones Bancarias,model_l10n_ar_arba_retencion_bancaria,account.group_account_user,1,1,1,1
 security_arba_devolucion_bancaria,ARBA Devoluciones Bancarias,model_l10n_ar_arba_devolucion_bancaria,account.group_account_user,1,1,1,1
