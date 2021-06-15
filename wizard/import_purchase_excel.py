@@ -3,7 +3,7 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
-class PurchaseImportWebService(models.TransientModel):
+class PurchaseImportExcel(models.TransientModel):
     _name = "l10n_ar.import.purchase.excel"
     _description = "Importar compras desde archivo Excel"
 
