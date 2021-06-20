@@ -26,6 +26,7 @@
         <!-- Se debe definir un action para que se ejecute -->
         <field name="code">action = model.action_company_activities()</field>
     </record>
+    <!-- TODO: definir tipos de actividades -->
 
     <!-- MI ESTUDIO - CALENDARIO - SERVER ACTION -->
     <record id="action_firm_calendar" model="ir.actions.server">
@@ -60,8 +61,9 @@
     <!-- TODO: Agregar filtro por Monotributista, Exento, Resp. Inscripto -->
     <!-- TODO: Al crear compañia nueva, instalar plan contable
      - Resp. Inscripto (uno solo para todos?)
-     - Modificar IVAs para que incluyan el precio 
+     - Agregar a todos los usuarios 
     -->
+    <!-- TODO: Solo aparecen en la lista las compañias activas -->
     
     <!-- TODO: Seguimiento de pagos -->
 

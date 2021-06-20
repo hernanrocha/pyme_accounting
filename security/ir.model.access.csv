@@ -3,22 +3,23 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 aac_arba,ARBA IMPORT,model_gob_ar_afip_upload,account.group_account_manager,1,1,1,1
 aac_invoice,ARBA IMPORT INVOICE,model_l10n_ar_invoice_line,account.group_account_manager,1,1,1,1
 
-security_afip_import_sale_account_manager,Importacion Ventas AFIP,model_l10n_ar_afip_import_sale,account.group_account_user,1,1,1,1
-security_afip_import_sale_line_account_manager,Linea de importacion Ventas AFIP,model_l10n_ar_afip_import_sale_line,account.group_account_user,1,1,1,1
-security_iibb_arba_wizard_account_manager,Reporte de IIBB ARBA,model_l10n_ar_iibb_arba_wizard,account.group_account_user,1,1,1,1
-security_import_purchase_excel,Importar Compras desde Excel,model_l10n_ar_import_purchase_excel,account.group_account_user,1,1,1,1
-security_import_purchase_deducciones_arba,Importar deducciones de ARBA,model_l10n_ar_import_purchase_deducciones_arba,account.group_account_user,1,1,1,1
-security_import_purchase_deducciones_arba_rline,Importar deducciones de ARBA - R,model_l10n_ar_import_purchase_deducciones_arba_rline,account.group_account_user,1,1,1,1
-security_import_purchase_deducciones_arba_rbline,Importar deducciones de ARBA - RB,model_l10n_ar_import_purchase_deducciones_arba_rbline,account.group_account_user,1,1,1,1
-security_import_purchase_deducciones_arba_dbline,Importar deducciones de ARBA - DB,model_l10n_ar_import_purchase_deducciones_arba_dbline,account.group_account_user,1,1,1,1
-security_import_sale_pem,Importar ventas PEM,model_l10n_ar_import_sale_pem,account.group_account_user,1,1,1,1
-security_import_sale_pem_line,Linea de venta de archivo PEM,model_l10n_ar_import_sale_pem_line,account.group_account_user,1,1,1,1
-security_import_sale_compenlinea,Importar Comprobantes en Linea,model_l10n_ar_import_sale_compenlinea,account.group_account_user,1,1,1,1
-security_import_sale_compenlinea_line,Linea de Comprobantes en Linea,model_l10n_ar_import_sale_compenlinea_line,account.group_account_user,1,1,1,1
-security_import_sale_excel,Importar Comprobantes desde Excel,model_l10n_ar_import_sale_excel,account.group_account_user,1,1,1,1
-security_import_bank_bapro,Importar Extracto Banco Provincia,model_l10n_ar_import_bank_bapro,account.group_account_user,1,1,1,1
-security_arba_retencion,ARBA Retenciones,model_l10n_ar_arba_retencion,account.group_account_user,1,1,1,1
-security_arba_retencion_bancaria,ARBA Retenciones Bancarias,model_l10n_ar_arba_retencion_bancaria,account.group_account_user,1,1,1,1
-security_arba_devolucion_bancaria,ARBA Devoluciones Bancarias,model_l10n_ar_arba_devolucion_bancaria,account.group_account_user,1,1,1,1
+security_afip_import_sale_account_manager,Importacion Ventas AFIP,model_l10n_ar_afip_import_sale,account.group_account_manager,1,1,1,1
+security_afip_import_sale_line_account_manager,Linea de importacion Ventas AFIP,model_l10n_ar_afip_import_sale_line,account.group_account_manager,1,1,1,1
+security_iibb_arba_wizard_account_manager,Reporte de IIBB ARBA,model_l10n_ar_iibb_arba_wizard,account.group_account_manager,1,1,1,1
+security_import_purchase_excel,Importar Compras desde Excel,model_l10n_ar_import_purchase_excel,account.group_account_manager,1,1,1,1
+security_import_purchase_deducciones_arba,Importar deducciones de ARBA,model_l10n_ar_import_purchase_deducciones_arba,account.group_account_manager,1,1,1,1
+security_import_purchase_deducciones_arba_rline,Importar deducciones de ARBA - R,model_l10n_ar_import_purchase_deducciones_arba_rline,account.group_account_manager,1,1,1,1
+security_import_purchase_deducciones_arba_rbline,Importar deducciones de ARBA - RB,model_l10n_ar_import_purchase_deducciones_arba_rbline,account.group_account_manager,1,1,1,1
+security_import_purchase_deducciones_arba_dbline,Importar deducciones de ARBA - DB,model_l10n_ar_import_purchase_deducciones_arba_dbline,account.group_account_manager,1,1,1,1
+security_import_sale_pem,Importar ventas PEM,model_l10n_ar_import_sale_pem,account.group_account_manager,1,1,1,1
+security_import_sale_pem_line,Linea de venta de archivo PEM,model_l10n_ar_import_sale_pem_line,account.group_account_manager,1,1,1,1
+security_import_sale_pem_f8080_line,Linea de venta de archivo PEM F8010,model_l10n_ar_import_sale_pem_f8010_line,account.group_account_manager,1,1,1,1
+security_import_sale_compenlinea,Importar Comprobantes en Linea,model_l10n_ar_import_sale_compenlinea,account.group_account_manager,1,1,1,1
+security_import_sale_compenlinea_line,Linea de Comprobantes en Linea,model_l10n_ar_import_sale_compenlinea_line,account.group_account_manager,1,1,1,1
+security_import_sale_excel,Importar Comprobantes desde Excel,model_l10n_ar_import_sale_excel,account.group_account_manager,1,1,1,1
+security_import_bank_bapro,Importar Extracto Banco Provincia,model_l10n_ar_import_bank_bapro,account.group_account_manager,1,1,1,1
+security_arba_retencion,ARBA Retenciones,model_l10n_ar_arba_retencion,account.group_account_manager,1,1,1,1
+security_arba_retencion_bancaria,ARBA Retenciones Bancarias,model_l10n_ar_arba_retencion_bancaria,account.group_account_manager,1,1,1,1
+security_arba_devolucion_bancaria,ARBA Devoluciones Bancarias,model_l10n_ar_arba_devolucion_bancaria,account.group_account_manager,1,1,1,1
 
-security_res_company_user,Administrador de Clientes,model_res_company,account.group_account_user,1,1,1,1
+security_user_company,Manejo de Compañias,model_res_company,account.group_account_manager,1,1,1,1

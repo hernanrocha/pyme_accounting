@@ -22,10 +22,34 @@
 
                 <group string="Archivo" col="2">
 
-                    <!-- <field name="f8010_file" /> -->
+                    <field name="f8010_file" />
                     <field name="f8011_file" />
                 
                 </group>
+
+                <!-- Datos del F8010 -->
+                <group string="Datos Cargados" col="4" attrs="{'invisible': [('f8010_pos', '=', 0)]}">
+                    <field name="f8010_cuit" />
+                    <field name="f8010_pos" />
+                    <field name="f8010_start_date" />
+                    <field name="f8010_end_date" />
+                </group>
+
+                <field name="f8010_invoice_ids" mode="tree" widget="section_and_note_one2many" 
+                    readonly="1" attrs="{'invisible': [('f8010_pos', '=', 0)]}">                                                
+                    <tree>
+                        <field name="number" />
+                        <field name="date" />
+                        <field name="description" />
+                        <field name="taxed_21" />
+                        <field name="tax_21" />
+                        <field name="taxed_6" optional="hide" />
+                        <field name="tax_6" optional="hide" />
+                        <field name="untaxed" />
+                        <field name="exempt" />
+                        <field name="total" />
+                    </tree>
+                </field>
 
                 <!-- Datos del F8011 -->
                 <group string="Datos Cargados" col="4" attrs="{'invisible': [('f8011_pos', '=', 0)]}">
@@ -44,6 +68,7 @@
                         <field name="range" />
                         <field name="date" />
                         <field name="taxed" />
+                        <field name="taxed_6" optional="hide" />
                         <field name="untaxed" />
                         <field name="exempt" />
                         <field name="tax_6" optional="hide" />
@@ -52,10 +77,14 @@
                     </tree>
                 </field>
 
+                <!-- TODO: Agregar una nota diciendo que el IVA 6% se va a convertir a 21% y No Gravado -->
+                <!-- TODO: Agregar campos z_desde y z_hasta -->
+
                 <footer>
-                    <!-- <button name="compute_f8010" string="Importar F8010" type="object" class="btn-primary" /> -->
+                    <button name="compute_f8010" string="Cargar F8010" type="object" class="btn-primary" />
                     <!-- TODO: convertir a action -->
-                    <button name="compute_f8011" string="Cargar" type="object" class="btn-primary" />
+                    <!-- TODO: Fusionar botones -->
+                    <button name="compute_f8011" string="Cargar F8011" type="object" class="btn-primary" />
                     <button name="generate_f8011" string="Generar Facturas" type="object" class="btn-primary" 
                         attrs="{'invisible': [('f8011_pos', '=', 0)]}" />
                     <button string="Cancelar" class="btn-secondary" special="cancel"/>
@@ -63,7 +92,6 @@
             </form>
         </field>
     </record>
-
 
     <!-- IMPORTAR VENTAS PEM - WINDOW ACTION -->
     <record id="action_wizard_import_sale_pem" model="ir.actions.act_window">

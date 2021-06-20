@@ -78,6 +78,7 @@ class ImportSalesAfip(models.TransientModel):
 
     notes = fields.Char(string="Notas", readonly=True)
 
+    # TODO: usar el mixin creado para esto
     def get_pos(self, pos_number):
         journal = self.env['account.journal'].search([
             ('l10n_ar_afip_pos_number', '=', pos_number)
@@ -87,6 +88,12 @@ class ImportSalesAfip(models.TransientModel):
             raise UserError('No puede haber más de 1 punto de venta con el mismo número')
 
         if len(journal) == 0:
+            # TODO: Sacar de account.chart.template
+            account_sale = self.env['account.account'].search([
+                ('code', '=', '4.1.1.01.010'),
+                ('name', '=', 'Venta de mercadería'),
+            ])
+
             # Create new journal for this POS
             journal = self.env['account.journal'].create({
                 'name': 'PDV %s - Comprobantes Emitidos'.format(pos_number),
@@ -96,8 +103,7 @@ class ImportSalesAfip(models.TransientModel):
                 # TODO: definir si es factura en linea (RLI_RLM) o webservice
                 'l10n_ar_afip_pos_system': 'RLI_RLM',
                 'l10n_ar_afip_pos_partner_id': self.env.company.id,
-                # TODO: Search this
-                'default_account_id': 1,
+                'default_account_id': account_sale.id,
                 'code': str(pos_number).zfill(5),
             })
         
@@ -162,7 +168,124 @@ class ImportSalesAfip(models.TransientModel):
         consumidor_final = self.env['res.partner'].search([('name', '=', 'Consumidor Final Anónimo')])
         print("CONSUMIDOR FINAL", consumidor_final) 
 
-        if len(self.invoice_ids == 0):
+        if len(self.invoice_ids) == 0:
+            raise UserError('No hay facturas cargadas')
+
+        # TODO: Validar que el CUIT sea correcto
+
+        # USAR MIXIN
+        account_sale = self.env['account.account'].search([
+            ('code', '=', '4.1.1.01.010'),
+            ('name', '=', 'Venta de mercadería'),
+        ])
+        tax_untaxed = self.env['account.tax'].search([
+            ('type_tax_use', '=', 'sale'),
+            ('name', '=', 'IVA No Gravado'),
+        ])
+
+        for invoice in self.invoice_ids:
+            # Obtener/Crear diario segun el PdV automaticamente
+            journal_id = self.get_pos(invoice.pos_number)
+
+            # TODO: Permitir elegir que hacer con la diferencia
+            invoice.untaxed_amount = invoice.difference
+
+            if invoice.cuit:
+                # Get or Create Customer Partner (res.partner)
+                partner = self.env['res.partner'].search([('vat', '=', invoice.cuit)])
+                partner_data = { 
+                    'type': 'contact',
+                    'name': invoice.partner, # TODO: rename this
+                    # TODO: set CUIT Consumidor final (20000000003)
+                    # 'vat': invoice.cuit,
+                    # 'l10n_latam_identification_type_id': cuit_type.id,
+                    # 'l10n_ar_afip_responsibility_type_id': afip_resp_inscripto_type.id
+                }
+                if len(partner) == 0:
+                    raise UserError('Cliente con CUIT %s no encontrado'.format(invoice.cuit))
+
+                    # TODO: Crear nuevo cliente
+                    # partner = self.env['res.partner'].create(partner_data)
+                else:
+                    # Actualizar datos del cliente
+                    partner = partner[0]
+                    partner.write(partner_data)
+            else:
+                partner = consumidor_final
+            
+            print("Partner", partner)
+            
+            # # Crear Orden de Venta (sale.order)
+            # sale_data = {
+            #     'date_order': invoice.date,
+            #     'partner_id': partner.id,
+            # }
+            # sale = self.env['sale.order'].create(sale_data)
+
+            # print("Sale", sale)
+
+            # TODO: Revisar tambien montos gravados y exentos 
+
+            product_untaxed = self.env.ref('pyme_accounting.prod_varios_no_gravado')
+
+            # Create Invoice
+            # TODO: mejorar esta query
+            doc_type = self.env['l10n_latam.document.type'].search([('doc_code_prefix', '=', invoice.invoice_type)])
+            
+            move_data = {
+                'move_type': 'out_invoice',
+                'partner_id': partner.id,
+                'journal_id': journal_id,
+                'date': invoice.date,
+                'invoice_date': invoice.date,
+                'l10n_latam_document_type_id': doc_type.id,
+                # TODO: Chequear (y validar) secuencia en PG
+                'l10n_latam_document_number': '{}-{}'.format(invoice.pos_number, invoice.invoice_number),
+            }
+            print("Invoice Data", move_data)
+            move = self.env['account.move'].create(move_data)
+            print("Invoice", move)
+
+            # IVA No Gravado
+            if invoice.untaxed_amount > 0:
+                line = move.line_ids.create({
+                    'move_id': move.id,
+                    'name': 'Monto No Gravado',
+                    'account_id': account_sale.id,
+                    'quantity': 1,
+                    'price_unit': invoice.untaxed_amount,
+                })
+                line.tax_ids += tax_untaxed
+                print("LINE", line)
+
+            # Recalculate totals
+            move._recompute_dynamic_lines(recompute_all_taxes=True, recompute_tax_base_amount=True)
+            move._recompute_payment_terms_lines()
+            move._compute_amount()
+
+            # Post Entry
+            move.action_post()
+
+            # TODO: que pasa si faltan facturas?? al ser correlativas deberian coincidir
+
+        # TODO: retornar a ventana con el filtro de las facturas hechas recientemente
+        # return {
+        #     'context': self.env.context,
+        #     'view_type': 'list',
+        #     'view_mode': 'list',
+        #     'res_model': 'account.move',
+        #     'res_ids': [ 1, 2 ],
+        #     'view_id': False,
+        #     'type': 'ir.actions.act_window',
+        #     'target': 'main',
+        # }
+
+    # TODO: generar solo facturas y no comprobante de venta
+    def generate_sales_deprecated(self):
+        consumidor_final = self.env['res.partner'].search([('name', '=', 'Consumidor Final Anónimo')])
+        print("CONSUMIDOR FINAL", consumidor_final) 
+
+        if len(self.invoice_ids) == 0:
             raise UserError('No hay facturas cargadas')
 
         # TODO: Validar que el CUIT sea correcto
@@ -255,9 +378,8 @@ class ImportSalesAfip(models.TransientModel):
             self.invoice_ids.journal_id = journal_id
             sale.invoice_ids.l10n_latam_document_number = '{}-{}'.format(invoice.pos_number, invoice.invoice_number)
 
-            # TODO: Publicar Factura si esta en estado borrador
-            # if (sale.invoice_ids.state == "draft"):
-            #     sale.invoice_ids.action_post()
+            # TODO: Publicar Factura
+            sale.invoice_ids.action_post()
 
             # TODO: que pasa si faltan facturas?? al ser correlativas deberian coincidir
 

@@ -143,7 +143,9 @@ class AccountMove(models.Model):
     amount_subtotal_unsigned = fields.Monetary(string="Subtotal", compute="_compute_amount_subtotal_unsigned")
 
     def _check_balanced(self):
-        print('Checking BALANCE')
+        # TODO: remove this
+        # print('Checking BALANCE')
+        pass
     
     @api.depends('name')
     def _compute_arba_pos_number(self):

@@ -7,7 +7,7 @@
         <t t-call="web.html_container">
 
             <!-- <t t-foreach="docs" t-as="o"> -->
-                <t t-call="web.external_layout">
+                <!-- <t t-call="web.external_layout"> -->
 
 <div class="page">
 
@@ -38,7 +38,6 @@
     </div> -->
 
     <div class="row">
-        <!-- TODO: compras y ventas de los ultimos 12 meses. Categoria, pago mensual, max categoria -->
 
         <!-- <div class="col-md-3">
             <div class="card">asd</div>
@@ -52,6 +51,12 @@
         <div class="col-md-3">
             <div class="card">A7</div>
         </div> -->
+
+        <!-- <p>Facturación Anual: <p/> -->
+        <!-- <p>Categoria Calculada: </p> -->
+        <!-- <p>Maximo de la categoria </p> -->
+        <!-- <p>Pago Mensual: <p/> -->
+        <!-- <p>Warning si es una diferente a la configurada. Boton para actualizar</p> -->
     </div>
 
     <div class="row">
@@ -183,17 +188,17 @@ var myChart = new Chart(ctx, {
     }
 });
     </script>
-                </t>
+                <!-- </t> -->
             <!-- </t> -->
         </t>
     </template>
 
     <record id="report_basic" model="ir.actions.report">
-        <field name="name">'Invoice' % (object.name)</field>
+        <field name="name">Reporte Monotributo</field>
         <field name="model">account.move</field>
         <field name="report_type">qweb-html</field>
         <field name="report_name">pyme_accounting.report_payslip</field>
-        <field name="print_report_name">'Base - %s' % (object.name)</field>
+        <field name="print_report_name">Base</field>
         <field name="binding_model_id" ref="model_account_move" />
         <field name="binding_type">report</field> 
     </record>

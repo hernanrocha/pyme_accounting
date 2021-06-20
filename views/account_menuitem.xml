@@ -21,27 +21,27 @@
             - Terminar Libro IVA Digital
     -->
 
-    <!-- Desactivar MENU Facturacion/Clientes -->
-    <record model="ir.ui.menu" id="account.menu_finance_receivables">
-        <field name="active" eval="False"/>
-    </record>
-
-    <!-- Desactivar MENU Facturacion/Proveedores -->
-    <record model="ir.ui.menu" id="account.menu_finance_payables">
-        <field name="active" eval="False"/>
-    </record>
-
-    <!-- TODO: Desactivar MENU Facturacion/Contabilidad -->
-    <!-- <record model="ir.ui.menu" id="account.menu_finance_payables">
-        <field name="active" eval="False"/>
-    </record> -->
 
     <!-- TODO: Crear menu diferente para Mi estudio -->
     <!-- TODO: Crear menu diferente para Clientes -->
 
     <!-- TODO: Deshabilitar menu Facturacion -->
-    <menuitem id="account.menu_finance" name="Facturación" />
-    
+    <!-- <menuitem id="account.menu_finance" name="Facturación" /> -->
+
+    <menuitem name="Mi Estudio"
+        id="menu_miestudio"
+        groups="account.group_account_readonly,account.group_account_invoice"
+        web_icon="account,static/description/icon.png"
+        sequence="41">
+    </menuitem>
+
+    <menuitem name="Empresas"
+        id="menu_finance"
+        groups="account.group_account_readonly,account.group_account_invoice"
+        web_icon="account,static/description/icon.png"
+        sequence="42">
+    </menuitem>
+
     <record id="view_account_invoice_filter" model="ir.ui.view">
     <field name="name">account.invoice.select</field>
     <field name="model">account.move.line</field>
@@ -111,8 +111,8 @@
         <field name="target">main</field>
     </record>
 
-    <!-- MENU Facturacion/Mi Estudio  -->
-    <menuitem id="menu_firm" name="Mi Estudio" parent="account.menu_finance" sequence="1">
+    <!-- MENU Mi Estudio/Mi Estudio  -->
+    <menuitem id="menu_firm" name="Mi Estudio" parent="menu_miestudio" sequence="1">
         <!-- MENU Facturacion/Mi Estudio/Mis Datos  -->
         <menuitem name="Mis Datos" sequence="1" 
             id="menu_firm_company" action="action_firm_company" />
@@ -145,8 +145,29 @@
         - [Monotributo] mostrar categoria calculada, limite, pago
     -->
 
+    <record id="open_account_journal_dashboard_kanban" model="ir.actions.act_window">
+        <field name="name">Accounting Dashboard</field>
+        <field name="res_model">account.journal</field>
+        <field name="view_mode">kanban,form</field>
+        <field name="view_id" ref="account.account_journal_dashboard_kanban_view"/>
+        <field name="usage">menu</field>
+        <field name="context">{'search_default_dashboard':1}</field>
+        <field name="domain">[]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_neutral_face">
+                This is the accounting dashboard
+            </p>
+        </field>
+    </record>
+
+    <!-- MENU Facturacion/Dashboard -->
+    <menuitem id="menu_dashboard" name="Dashboard" parent="menu_finance" sequence="1" action="open_account_journal_dashboard_kanban" />
+    <!-- TODO: Borrar diarios creados por defecto que no se usan: Ventas preimpreso -->
+    <!-- TODO: sacar botones que no se usen. CF seria readonly -->
+    <!-- TODO: hacer graficos por mes y no por cobros -->
+
     <!-- MENU Facturacion/Ventas -->
-    <menuitem id="menu_sales" name="Ventas" parent="account.menu_finance" sequence="2">
+    <menuitem id="menu_sales" name="Ventas" parent="menu_finance" sequence="2">
         <menuitem id="menu_action_move_out_invoice_type" name="Comprobantes Emitidos" action="action_move_out_invoice_type" sequence="1"/>
         <!-- TODO: Unificar estos 2 -->
         <menuitem id="menu_action_move_out_refund_type" name="Notas de Crédito" action="action_move_out_refund_type" sequence="2"/>
@@ -157,8 +178,9 @@
     </menuitem>
 
     <!-- MENU Facturacion/Compras --> 
-    <menuitem id="menu_finance_payables" name="Compras" parent="account.menu_finance" sequence="3">
+    <menuitem id="menu_finance_payables" name="Compras" parent="menu_finance" sequence="3">
         <menuitem id="menu_action_move_in_invoice_type" name="Comprobantes Recibidos" action="action_move_in_invoice_type" sequence="1"/>
+        <!-- TODO: Los proveedores no pueden ser compartidos. Aparecen todos los proveedores al momento de crear una factura -->
         <!-- TODO: Unificar estos 2 -->
         <menuitem id="menu_action_move_in_refund_type" action="action_move_in_refund_type" sequence="2"/>
         <!-- <menuitem id="menu_action_move_in_receipt_type" action="action_move_in_receipt_type" groups="account.group_purchase_receipts" sequence="3"/> -->
@@ -168,7 +190,7 @@
     </menuitem>
 
     <!-- MENU Facturacion/Contabilidad  -->
-    <menuitem id="menu_accountancy" name="Contabilidad" parent="account.menu_finance" sequence="4">
+    <menuitem id="menu_accountancy" name="Contabilidad" parent="menu_finance" sequence="4">
 
         <!-- MENU Facturacion/Contabilidad/Subdiarios-->
         <menuitem id="menu_accountancy_journals" name="Subdiarios" sequence="1">
@@ -194,7 +216,7 @@
     </menuitem>       
 
     <!-- MENU Facturacion/Importar  -->
-    <menuitem id="menu_import" name="Importar" parent="account.menu_finance" sequence="10">
+    <menuitem id="menu_import" name="Importar" parent="menu_finance" sequence="10">
 
         <!-- MENU Facturacion/Importar/Compras -->
         <menuitem id="menu_import_purchases" name="Compras" sequence="1">
@@ -277,7 +299,7 @@
     </menuitem>
 
     <!-- MENU Facturacion/Informes  -->
-    <menuitem id="menu_taxes" name="Informes" parent="account.menu_finance" sequence="11">
+    <menuitem id="menu_taxes" name="Informes" parent="menu_finance" sequence="11">
 
         <!-- MENU Facturacion/Informes/Monotributo-->
         <menuitem id="menu_reports_monotributo" name="Monotributo" sequence="1">
@@ -322,6 +344,12 @@
             <!-- TODO: Compras (ALICUOTA, CBTE), Ventas (ALICUOTA, CBTE), TURIVA -->
             <menuitem id="menu_taxes_report_afip_iva_digital" name="Libro IVA Digital" 
                 sequence="1" action="report_basic" />
+            <!-- TODO: 
+                - Sacar "Anomimo"
+                - Sacar acentos en el nombre
+                - En los comprobantes Z, poner el desde/hasta de los comprobantes individuales, 
+                para no exceder el monto maximo permitido por comprobante
+            -->
 
             <!-- MENU: Facturacion/Informes/AFIP/DD. JJ. IVA -->
             <menuitem id="menu_taxes_report_afip_iva_web" name="DD. JJ. IVA (F. 2002)" 

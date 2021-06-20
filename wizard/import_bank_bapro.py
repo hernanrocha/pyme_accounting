@@ -26,6 +26,9 @@ class PurchaseImportBankBapro(models.TransientModel):
         print(sheet_name)
         sheet = book.sheet_by_name(sheet_name)
 
+        # TODO: crear un diario por Banco???
+        # TODO: Definir tipo de banco la informacion del diario
+        # TODO: generar un solo "importador"
         bank_journal = self.env['account.journal'].search([('name', '=', 'Banco')])
 
         statement = self.env['account.bank.statement'].create({

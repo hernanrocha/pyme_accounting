@@ -17,6 +17,12 @@
         'purchase',        # Compras
         'l10n_ar',         # Localizacion Argentina
         'sale_management', # Ventas
+        # 'web'            # Web Backend
+        # 'portal'         # Web Login
+
+        # Localizacion Argentina
+        # 'l10n_ar_reports',           # Reportes Argentinos
+        # 'l10n_ar_account_iva_digital', # IVA Digital
     ],
     'data': [
         'security/ir.model.access.csv',
