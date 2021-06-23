@@ -78,7 +78,13 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
         }
         
     def generate_purchases(self):
+        # TODO: actualizar compras con las percepciones encontradas
         # self._generate_percepciones()
+
+        # TODO: generar cobros/devoluciones para las retenciones.
+        # Las retenciones pueden ser validadas manualmente
+        # Las retenciones bancarias y devoluciones bancarias pueden validarse por conciliacion bancaria,
+        # cargando en el sistema los extractos bancarios
         self._generate_retenciones()
         self._generate_retenciones_bancarias()
         self._generate_devoluciones_bancarias()
@@ -91,6 +97,9 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
         # 0 Tipo comprobante, 1 Letra comprobante, 2 Sucursal, 3 Emision, 4 CUIT Agente
         # 5 Fecha Percepcion Agente, 6 Importe percepcion agente, 
         # 7 Fecha Percepcion contrib., 8 Importe contrib., 9 Estado
+        #
+        # Agente es lo declarado por el agente. Contribuyente lo declarado por el contribuyente
+        # Al comienzo ambos tienen el mismo valor, una vez presentada la DDJJ pueden diferir
         rows = table.findall('ss:Row', ns)[1:]
         for row in rows:
             cells = row.findall('ss:Cell', ns)
@@ -99,7 +108,6 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
             # letra_comprobante = cell_data(cells, 1) # A,B,C
             numero_comprobante = "{}-{}".format(cell_data(cells, 2).zfill(5), cell_data(cells, 3).zfill(8))
             cuit = cell_data(cells, 4)
-            # Chequear si es importe de agente o de contribuyente
             fecha = cell_data(cells, 7)
             importe = cell_data(cells, 8)
             
@@ -114,6 +122,9 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
         # 0 Sucursal, 1 Emision, 2 CUIT Agente
         # 3 Fecha Retencion agente, 4 Importe retencion agente
         # 5 Fecha Retencion contrib., 6 Importe retencion contrib., 7 Estado
+        #
+        # Agente es lo declarado por el agente. Contribuyente lo declarado por el contribuyente
+        # Al comienzo ambos tienen el mismo valor, una vez presentada la DDJJ pueden diferir
         for row in rows:
             cells = row.findall('ss:Cell', ns)
 
@@ -123,7 +134,6 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
             sucursal = cell_data(cells, 0)     # 1
             emision = cell_data(cells, 1)      # 55589978 (id correlativo para el agente??)
             cuit_agente = cell_data(cells, 2)  # 30703000534
-            # Chequear si es importe de agente o de contribuyente
             fecha = cell_data(cells, 5)        # 19/04/2021
             importe = cell_data(cells, 6)      # 5.00
             estado = cell_data(cells, 7)       # Debe ser "Alta"
@@ -147,6 +157,9 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
         # 3 Tipo de cuenta agente, 4 Tipo de moneda agente, 5 Importe retencion agente
         # 6 Tipo de cuenta contrib., 7 Tipo de moneda contrib., 8 Importe retencion contrib.
         # 9 Estado
+        #
+        # Agente es lo declarado por el agente. Contribuyente lo declarado por el contribuyente
+        # Al comienzo ambos tienen el mismo valor, una vez presentada la DDJJ pueden diferir
         for row in rows:
             cells = row.findall('ss:Cell', ns)
 
@@ -184,9 +197,6 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
                 'amount': float(importe),
                 'import_id': self.id,
             })
-
-            # for i in range(len(cells)):
-            #     print(cell_data(cells, i))
 
     # TODO: Percepciones aduaneras
     # def _parse_percepciones_aduaneras(self, root):

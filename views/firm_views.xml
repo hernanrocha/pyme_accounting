@@ -10,6 +10,7 @@
         <field name="view_mode">form</field>
         <field name="res_id">1</field>
         <field name="target">main</field>
+        <field name="context">{'create': False, 'delete': False}</field>
     </record>
     <!-- TODO: Numero de IIBB es igual en tipo "Local" -->
     <!-- TODO: default IIBB "local" -->

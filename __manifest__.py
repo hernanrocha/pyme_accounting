@@ -23,9 +23,14 @@
         # Localizacion Argentina
         # 'l10n_ar_reports',           # Reportes Argentinos
         # 'l10n_ar_account_iva_digital', # IVA Digital
+
+        # Mantenimiento
+        # Session Manager
     ],
     'data': [
+        # Security Records
         'security/ir.model.access.csv',
+        'security/record_rules.xml',
 
         'wizard/arba_afip_views.xml',
         'wizard/arba_report_views.xml',
@@ -41,6 +46,7 @@
 
         # Reports
         'report/basic_report.xml',
+        # 'views/report_iibb.xml', # Asientos contables relacionados con IIBB
 
         # Menu - Mi Estudio
         'views/company_views.xml',
@@ -51,13 +57,22 @@
         # Menu
         'views/account_menuitem.xml',
 
-        # Data
+        # Cross-Company Data
         "data/l10n_ar.afip.cuit.apocrifo.csv",
         "data/l10n_latam.document.type.csv",
         "data/account.tax.template.csv",
-        "data/product.template.csv",
-        "data/product_template.xml"
+
+        # Company Dependent Data
+        # TODO: si es necesario, se debe hacer por empresa, o crear primero los impuestos.
+        # El producto no tiene company_id, pero los impuestos no estan creados aun
+        # "data/product.template.csv",
+        # "data/product_template.xml"
     ],
     'images': [], # 'static/description/banner.png'
+    'qweb': [
+        'static/src/xml/base.xml'
+    ],
     'application': True,
+    # 'active': True, # This indicates whether this module must install automatically or not.
+    # 'pre_init_hook': 'pre_init', takes a cursor as its only argument, this function is executed prior to the module’s installation.
 }

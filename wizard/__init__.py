@@ -12,3 +12,5 @@ from . import import_sale_compemitidos
 from . import import_sale_excel
 
 from . import import_bank_bapro
+from . import import_bank_bna
+from . import import_bank_hsbc

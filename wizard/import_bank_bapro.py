@@ -10,9 +10,19 @@ class PurchaseImportBankBapro(models.TransientModel):
     _name = "l10n_ar.import.bank.bapro"
     _description = "Importar extracto bancario Bco. Provincia"
 
-    file = fields.Binary(string="Resumen (*.xls)")
+    # TODO: unificar con bank_id
+    bank = fields.Selection(
+        [("bapro", "Banco Provincia"), ('other', 'Otro')], 
+        string="Banco",
+        default="bapro",
+        required=True)
+    
+    file = fields.Binary(string="Resumen Bancario")
 
     def parse(self):
+        self.parse_bapro()
+
+    def parse_bapro(self):
         [data] = self.read()
 
         if not data['file']:
@@ -28,14 +38,22 @@ class PurchaseImportBankBapro(models.TransientModel):
 
         # TODO: crear un diario por Banco???
         # TODO: Definir tipo de banco la informacion del diario
-        # TODO: generar un solo "importador"
         bank_journal = self.env['account.journal'].search([('name', '=', 'Banco')])
 
-        statement = self.env['account.bank.statement'].create({
+        # { 'acc_number', 'bank_id' }
+        # { show_on_dashboard: True, type: 'bank' }
+        # <menuitem id="menu_action_account_bank_journal_form" action="action_new_bank_setting" groups="account.group_account_manager" sequence="1"/>
+        # (res.company).setting_init_bank_account_action()
+        # model account.setup.bank.manual.config
+        # create({ 'new_journal_name': 'Banco HSBC XXXX', 'acc_number': XXXXXXXXXXXX, bank_id })
+        # validate()
+
+        statement_data = {
+            # TODO: nombrar con el mes
             'name': 'Extracto Bco. Provincia',
             'journal_id': bank_journal.id,
+            # TODO: Ultimo dia del mes del extracto
             'date': datetime.date.today(),
-            'accounting_date': datetime.date.today(),
             # TODO: obtener estos valores
             'balance_start': 0,
             'balance_end_real': 0,
@@ -50,12 +68,31 @@ class PurchaseImportBankBapro(models.TransientModel):
             # En el dashboard:
             # - Saldo en el Libro Mayor    $ 12.393,74
             # - Último extracto          $ -261.445,59
-        })
+        }
+        print("Statement", statement_data)
+        statement = self.env['account.bank.statement'].create(statement_data)
+
+        lines_data = []
 
         for rowx, row in enumerate(map(sheet.row, range(sheet.nrows)), 1):
             values = []
 
-            # Skip first 5 lines
+            if rowx == 2:
+                # 'Fecha: 01/07/2019  Hora: 08:51'
+                d = datetime.datetime.strptime(row[1].value[7:17], "%d/%m/%Y").date()
+                print("Fecha", d)
+                statement.write({ 'date': d })
+                continue
+
+            if rowx == 4:
+                # TODO: primero parsear el extracto bancario y luego obtener el journal o crearlo
+                # TODO: si se va a crear uno nuevo, mostrar una advertencia
+                # 'Cuenta: 6177-11893/4'
+                acc = row[1].value[8:]
+                print("Cuenta", acc)
+                continue
+
+            # Skip first 3 lines
             if rowx < 6:
                 print("Skipping line", rowx)
                 continue
@@ -93,12 +130,16 @@ class PurchaseImportBankBapro(models.TransientModel):
 
             # 0 Vacio, 1 Fecha, 2 Descripcion, 3 Monto, 4 Acumulado
             # Create statement line
-            statement.line_ids.create({
+            lines_data.append({
                 'date': values[1],
                 'payment_ref': values[2],
                 'amount': float(values[3]),
                 'statement_id': statement.id,
             })
+
+        # Agregar todas las lineas del extracto para aumentar la eficiencia
+        print("Creando ", len(lines_data), "lineas")
+        self.env['account.bank.statement.line'].create(lines_data)
 
         # Tipos de movimiento encontrados:
         # - AFIP RE.R4289L234179002 ID.30627000983	
@@ -121,5 +162,5 @@ class PurchaseImportBankBapro(models.TransientModel):
             'res_id': statement.id,
             'view_id': False,
             'type': 'ir.actions.act_window',
-            'target': 'primary',
+            'target': 'main',
         }

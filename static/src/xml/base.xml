@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates>
+
+    <!-- <t t-inherit="UserMenu.Actions" t-inherit-mode="extension"> -->
+    <!-- <t t-name="UserMenu.Actions" t-inherit="web.UserMenu.Actions" t-inherit-mode="extension" owl="1">
+        <xpath expr="//a[0]" position="before">
+            <a role="menuitem" href="#" data-menu="documentation" class="dropdown-item">Documentación</a>
+            <a role="menuitem" href="#" data-menu="support" class="dropdown-item">SOOOPORTE</a>
+            <div role="separator" class="dropdown-divider" />
+        </xpath>
+    </t> -->
+
+    <!-- <?xml version="1.0"?>
+    <data name="User Sign In" inherit_id="portal.placeholder_user_sign_in">
+        <xpath expr="." position="inside">
+            <li groups="base.group_public" t-attf-class="#{_item_class} o_no_autohide_item">
+                <a t-attf-href="/web/login" t-attf-class="#{_link_class}">Sign in</a>
+            </li>
+        </xpath>
+    </data> -->
+
+</templates>

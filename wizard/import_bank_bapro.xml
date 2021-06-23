@@ -7,6 +7,10 @@
         <field name="model">l10n_ar.import.bank.bapro</field>
         <field name="arch" type="xml">
             <form string="Importar Resumen Bancario Bco. Provincia">
+            
+                <group col="2">
+                    <field name="bank" />
+                </group>
 
                 <group string="Archivo" col="2">
                     <field name="file" />
@@ -21,9 +25,9 @@
         </field>
     </record>
 
-    <!-- IMPORTAR EXTRACTO BANCARIO BAPRO - ACTION -->
+    <!-- IMPORTAR EXTRACTO BANCARIO - ACTION -->
     <record id="action_import_bank_bapro" model="ir.actions.act_window">
-        <field name="name">Resumen Bancario Bco. Provincia</field>
+        <field name="name">Importar Resumen Bancario</field>
         <field name="res_model">l10n_ar.import.bank.bapro</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>

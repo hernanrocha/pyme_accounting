@@ -1,5 +1,7 @@
 <odoo>
-    <record model="product.template" id="prod_varios_no_gravado">
+    <!-- TODO: de ser necesario, se debe crear por empresa -->
+    
+    <!-- <record model="product.template" id="prod_varios_no_gravado">
         <field name="supplier_taxes_id" eval="[(6, 0, [ref('l10n_ar.ri_tax_vat_no_gravado_compras')])]" />
         <field name="taxes_id" eval="[(6, 0, [ref('l10n_ar.ri_tax_vat_no_gravado_ventas')])]" />
     </record> 
@@ -12,5 +14,5 @@
     <record model="product.template" id="prod_varios_gravado_10_5">
         <field name="supplier_taxes_id" eval="[(6, 0, [ref('l10n_ar.ri_tax_vat_10_compras')])]" />
         <field name="taxes_id" eval="[(6, 0, [ref('l10n_ar.ri_tax_vat_10_ventas')])]" />
-    </record> 
+    </record>  -->
 </odoo>

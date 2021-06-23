@@ -180,6 +180,8 @@ class IngresosBrutosArbaWizard(models.Model):
 
         # TODO: obtener deducciones no tomadas del periodo anterior
 
+        # TODO: Permitir "tomarse" o no tomarse deducciones con un widget=boolean_toggle
+
         # TODO: agregar "intereses al generar el pago"
 
         # TODO: crear helper para mantenerse en la misma ventana o revisar los recalculate existentes

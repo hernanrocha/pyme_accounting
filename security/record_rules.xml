@@ -1,0 +1,9 @@
+<odoo>
+
+    <delete id="account.account_comp_rule" model="ir.rule"/>
+
+    <!-- TODO:
+        - No permitir que se borre la empresa principal
+    -->
+
+</odoo>

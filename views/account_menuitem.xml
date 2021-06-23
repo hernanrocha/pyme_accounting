@@ -2,28 +2,22 @@
 <odoo>
 
     <!-- TODOs:
-        - Borrar Conversaciones, Calendario, Contactos, Empleados??, Ausencias??, Tableros??
-        - Reemplazar Facturacion/Contabilidad por Mi Estudio y Empresa??
+        - Borrar Conversaciones, Contactos, Ventas, Facturacion
+
         - Mi Estudio:
             - Agregar "autochange company"
             - Actividades: no tiene permisos
-            - Clientes: no aparece la lista ni se puede editar
+            - Clientes: aparece la compañia propia en la lista
         - Ventas: 
             - Comprobantes: agregar columnas faltantes
-            - Clientes: filtrar por compañia y mostrar solo la lista
+            - Clientes: filtrar por compañia y mostrar solo la vista de lista
         - Contabilidad:
             - Agregar menus faltantes
-        - Importar:
-            - Agregar permiso a los import habilitados
         - Informes:
             - Terminar Reporte Monotributo
             - Terminar Reporte IIBB
             - Terminar Libro IVA Digital
     -->
-
-
-    <!-- TODO: Crear menu diferente para Mi estudio -->
-    <!-- TODO: Crear menu diferente para Clientes -->
 
     <!-- TODO: Deshabilitar menu Facturacion -->
     <!-- <menuitem id="account.menu_finance" name="Facturación" /> -->
@@ -42,65 +36,6 @@
         sequence="42">
     </menuitem>
 
-    <record id="view_account_invoice_filter" model="ir.ui.view">
-    <field name="name">account.invoice.select</field>
-    <field name="model">account.move.line</field>
-    <field name="arch" type="xml">
-        <search string="Search Invoice">
-            <field name="date" string="Period"/>
-            <filter string="ARBA" name="filter_tax_tag_ids"
-                domain="[('tax_tag_ids', 'contains', 'ARBA')]" />
-            <filter name="filter_date" date="date" string="Fecha" default_period="last_month" />
-            <!-- <filter domain="[('invoice_user_id', '=', uid)]" name="myinvoices" help="My Invoices"/>
-            <separator/>
-            <filter name="draft" string="Draft" domain="[('state','=','draft')]"/>
-            <filter name="posted" string="Posted" domain="[('state', '=', 'posted')]"/>
-            <filter name="cancel" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
-            <separator/>
-            <filter string="To Check" name="to_check" domain="[('to_check', '=', True)]"/>
-            <separator/>
-            <filter name="in_payment" string="In Payment" domain="[('payment_state', '=', 'in_payment'), ('state', '=', 'posted')]"/>
-            <filter name="partial" string="Partially Paid" domain="[('payment_state', '=', 'partial'), ('state', '=', 'posted')]"/>
-            <filter name="paid" string="Paid" domain="[('payment_state', '=', 'paid'), ('state', '=', 'posted')]"/>
-            <filter name="unpaid" string="Not Paid" domain="[('payment_state', '=', 'not_paid'), ('state', '=', 'posted')]"/>
-            <filter name="reversed" string="Reversed" domain="[('payment_state', '=', 'reversed'), ('state', '=', 'posted')]"/>
-            <filter name="late" string="Overdue" domain="['&amp;', ('invoice_date_due', '&lt;', time.strftime('%%Y-%%m-%%d')), ('state', '=', 'posted'), ('payment_state', 'in', ('not_paid', 'partial'))]" help="Overdue invoices, maturity date passed"/>
-            <separator/>
-            <filter name="invoice_date" string="Invoice Date" date="invoice_date"/>
-            <filter name="due_date" string="Due Date" date="invoice_date_due"/>
-            <separator/>
-            <filter invisible="1" string="Late Activities" name="activities_overdue"
-                domain="[('activity_ids.date_deadline', '&lt;', context_today().strftime('%Y-%m-%d'))]"
-                help="Show all records which has next action date is before today"/>
-            <filter invisible="1" string="Today Activities" name="activities_today"
-                domain="[('activity_ids.date_deadline', '=', context_today().strftime('%Y-%m-%d'))]"/>
-            <filter invisible="1" string="Future Activities" name="activities_upcoming_all"
-                domain="[('activity_ids.date_deadline', '&gt;', context_today().strftime('%Y-%m-%d'))]"/> -->
-            <group expand="1" string="Agrupar P...">
-                <!-- <filter string="Salesperson" name="salesperson" context="{'group_by':'invoice_user_id'}"/> -->
-                <filter name="group_account_id" string="Cuenta" context="{'group_by':'account_id'}"/>
-                <separator/>
-                <!-- parent_state -->
-                <!-- <filter string="Invoice Date" name="invoicedate" context="{'group_by': 'invoice_date'}"/>
-                <filter string="Due Date" name="duedate" context="{'group_by': 'invoice_date_due'}"/> -->
-            </group>
-        </search>
-    </field>
-</record>
-    
-    <!-- Asientos IIBB -->
-    <record id="action_iibb_arba_asientos" model="ir.actions.act_window">
-        <field name="name">Asientos IIBB</field>
-        <field name="res_model">account.move.line</field>
-        <field name="view_mode">tree</field>
-        <!-- <field name="context">{}</field> -->
-        <!-- <field name="view_id" ref="view_iibb_arba_asientos_tree" /> -->
-        <field name="search_view_id" ref="view_account_invoice_filter"></field>
-        <field name="context">{'search_default_group_account_id': 1, 'search_default_filter_date': 1}</field>
-        <field name="domain">[]</field>
-        <field name="target">main</field>
-    </record>
-
     <!-- Reportes -->
     <record id="action_tax_report" model="ir.actions.act_window">
         <field name="name">Reportes</field>
@@ -113,6 +48,7 @@
 
     <!-- MENU Mi Estudio/Mi Estudio  -->
     <menuitem id="menu_firm" name="Mi Estudio" parent="menu_miestudio" sequence="1">
+
         <!-- MENU Facturacion/Mi Estudio/Mis Datos  -->
         <menuitem name="Mis Datos" sequence="1" 
             id="menu_firm_company" action="action_firm_company" />
@@ -169,7 +105,6 @@
     <!-- MENU Facturacion/Ventas -->
     <menuitem id="menu_sales" name="Ventas" parent="menu_finance" sequence="2">
         <menuitem id="menu_action_move_out_invoice_type" name="Comprobantes Emitidos" action="action_move_out_invoice_type" sequence="1"/>
-        <!-- TODO: Unificar estos 2 -->
         <menuitem id="menu_action_move_out_refund_type" name="Notas de Crédito" action="action_move_out_refund_type" sequence="2"/>
         <!-- <menuitem id="menu_action_move_out_receipt_type" action="action_move_out_receipt_type" groups="account.group_sale_receipts" sequence="3"/> -->
         <!-- <menuitem id="menu_action_account_payments_receivable" action="action_account_payments" sequence="15"/> -->
@@ -181,7 +116,6 @@
     <menuitem id="menu_finance_payables" name="Compras" parent="menu_finance" sequence="3">
         <menuitem id="menu_action_move_in_invoice_type" name="Comprobantes Recibidos" action="action_move_in_invoice_type" sequence="1"/>
         <!-- TODO: Los proveedores no pueden ser compartidos. Aparecen todos los proveedores al momento de crear una factura -->
-        <!-- TODO: Unificar estos 2 -->
         <menuitem id="menu_action_move_in_refund_type" action="action_move_in_refund_type" sequence="2"/>
         <!-- <menuitem id="menu_action_move_in_receipt_type" action="action_move_in_receipt_type" groups="account.group_purchase_receipts" sequence="3"/> -->
         <!-- <menuitem id="menu_action_account_payments_payable" action="action_account_payments_payable" sequence="20"/> -->
@@ -204,6 +138,47 @@
                 sequence="2" action="report_basic" />
                 
         </menuitem>
+
+        <!-- MENU: Empresas/Contabilidad/Libros -->
+        <menuitem id="menu_accountancy_ledger" name="Libros" sequence="2">
+
+            <!-- MENU: Empresas/Contabilidad/Libros/Libro Mayor -->
+            <menuitem name="Libro Mayor" 
+                id="menu_action_account_moves_ledger_general" 
+                action="account.action_account_moves_ledger_general" 
+                groups="account.group_account_readonly,account.group_account_manager" 
+                sequence="1" />
+
+            <!-- MENU: Empresas/Contabilidad/Libros/Cta. Cte. Clientes -->
+            <!-- TODO: filtrar solo por clientes -->
+            <menuitem name="Cuenta Corriente de Clientes"
+                id="menu_action_account_moves_ledger_partner" 
+                action="account.action_account_moves_ledger_partner" 
+                groups="account.group_account_readonly,account.group_account_manager" 
+                sequence="2"/>
+
+            <!-- MENU: Empresas/Contabilidad/Libros/Cta. Cte. Proveedores -->
+            <!-- TODO: filtrar solo por proveedores -->
+            <menuitem name="Cuenta Corriente de Proveedores"
+                id="menu_action_account_moves_ledger_partner" 
+                action="account.action_account_moves_ledger_partner" 
+                groups="account.group_account_readonly,account.group_account_manager" 
+                sequence="3"/>
+        
+        </menuitem>
+
+        <!-- MENU: Empresas/Contabilidad/Banco y Caja -->
+        <menuitem id="menu_accountancy_bank" name="Banco y caja" sequence="3">
+                <!-- <menuitem 
+                    id="menu_action_account_bank_journal_form" 
+                    action="account.action_new_bank_setting" 
+                    sequence="1" /> -->
+
+                <!-- <menuitem 
+                    id="action_account_reconcile_model_menu" 
+                    action="account.action_account_reconcile_model" sequence="3" /> -->
+
+        </menuitem>
         
         <!-- TODO:
             - Asientos Manuales
@@ -211,6 +186,8 @@
             - Libro Mayor
             - Resultados Mensuales
             - Cierre de Ejercicio
+            - Extractos bancarios
+            - Conciliacion bancaria
         -->
 
     </menuitem>       
@@ -291,7 +268,7 @@
         <menuitem id="menu_import_bank" name="Bancos" sequence="4">
                 
             <!-- MENU Facturacion/Importar/Banco/Resumen Bancario -->
-            <menuitem name="Resumen Banco Provincia" sequence="2"
+            <menuitem name="Resumen Bancario" sequence="2"
                 id="menu_import_bank_bapro" action="action_import_bank_bapro" />
 
         </menuitem>
@@ -355,6 +332,19 @@
             <menuitem id="menu_taxes_report_afip_iva_web" name="DD. JJ. IVA (F. 2002)" 
                 sequence="2" action="report_basic" />
 
+            <!-- TODO: mejorar -->
+            <!-- MENU: Informes/Libro IVA Digital Compras -->
+            <menuitem id="menu_account_purchase_vat_ledger"
+                name="Libro IVA Digital Compras"
+                action="l10n_ar_reports.action_account_purchase_vat_ledger"
+                sequence="4"/>
+
+            <!-- MENU: Informes/Libro IVA Digital Ventas -->
+            <menuitem id="menu_account_sale_vat_ledger"
+                name="Libro IVA Digital Ventas"
+                action="l10n_ar_reports.action_account_sale_vat_ledger"
+                sequence="5"/>
+
 
             <!-- MENU Facturacion/Informes/AFIP/Reporte Ultimos 12 Meses-->
             <!-- <menuitem id="menu_taxes_report_afip_anual" name="Últimos 12 Meses"
@@ -415,6 +405,7 @@
         - Extracto Bancario y conciliacion bancaria
         - Cheques
         - Fecha Tope
+        - Tipos de Comprobante: readonly
         - Informes: Estado de Resultados, Balance de Sumas y Saldos (OCA esta bien), balance integrado
         - Renombrar "Tipos de Documento" a "Tipos de Comprobante" (solo lectura)
         - Diarios contables: NO. Convertir a "Puntos de Venta"
