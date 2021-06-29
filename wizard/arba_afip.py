@@ -229,13 +229,28 @@ class InvoiceLine(models.Model):
     invoice_display_name = fields.Char(string="Comprobante", compute="_compute_invoice_display_name", invisible=True)
 
 # TODO: Usar modelo de Odoo para hacer esta traduccion
+# TODO: No repetir este codigo
 def helper_convert_invoice_type(afip_invoice_type):
+    if afip_invoice_type == '1 - Factura A':
+        return "FA-A"
+    if afip_invoice_type == '2 - Nota de Débito A':
+        return "ND-A"
+    if afip_invoice_type == '3 - Nota de Crédito A':
+        return "NC-A"
     if afip_invoice_type == '6 - Factura B':
         return "FA-B"
+    if afip_invoice_type == '7 - Nota de Débito B':
+        return "ND-B"
     if afip_invoice_type == '8 - Nota de Crédito B':
         return "NC-B"
     if afip_invoice_type == '11 - Factura C':
         return 'FA-C'
+    if afip_invoice_type == '12 - Nota de Débito C':
+        return 'ND-C'
+    if afip_invoice_type == '13 - Nota de Crédito C':
+        return 'NC-C'
+    
+    raise UserError('Tipo de Comprobante invalido: %s'.format(afip_invoice_type))
 
 class ImpuestosImporter(models.Model):
     _name = 'gob.ar.afip.upload'
@@ -249,24 +264,6 @@ class ImpuestosImporter(models.Model):
     notes = fields.Char(string="Notas", readonly=True)    
 
     def compute_sheet(self):
-        # TODO: Remove this
-
-        self.ensure_one()
-        report_name = 'pyme_accounting.report_payslip'
-        report_type = 'qweb-html'
-        data = {
-            'name': 'Template name'
-        } # ....
-        return (
-            self.env["ir.actions.report"]
-            .search(
-                [("report_name", "=", report_name), ("report_type", "=", report_type)],
-                limit=1,
-            )
-            .report_action(self, data=data)
-        )
-
-        ## TODO: End remove
 
         [data] = self.read()
 
@@ -276,7 +273,8 @@ class ImpuestosImporter(models.Model):
         if not data['iibb_file']:
             raise UserError("Debes cargar un archivo de percepciones de IIBB")
 
-        # self.invoice_ids = []
+        # TODO: Chequear esto
+        self.invoice_ids.write([(5, 0, 0)])
 
         # Leer archivo AFIP de compras
         file_content = base64.decodestring(data['afip_file'])
@@ -342,72 +340,6 @@ class ImpuestosImporter(models.Model):
 
             count += 1
 
-            continue
-
-            # Mark as received (only when stock is installed)
-            # picking = self.env['stock.picking'].search([('')])
-
-            # invoice_payment_term_id (account.payment.term)
-
-
-            # print(purchase.invoice_ids.invoice_line_ids)
-            # print(purchase.invoice_ids.invoice_line_ids.tax_ids)
-            # iibb_line = purchase.invoice_ids.line_ids.filtered(lambda line: line.tax_line_id.id == iibb.id)
-
-            # purchase.invoice_ids.l10n_latam_document_number = '1-11'
-
-            # print("Line IDs:", purchase.invoice_ids.line_ids)
-            # purchase.invoice_ids.line_ids.recompute_tax_line = True
-            # purchase.invoice_ids._recompute_tax_lines(True)
-            # purchase.invoice_ids._compute_base_line_taxes(purchase.invoice_ids.invoice_line_ids)
-
-            # print("Compute Taxes By Group")
-            # purchase.invoice_ids._compute_invoice_taxes_by_group()
-
-            # print("Recomputee")
-            # account_tax_repartition_line = 4
-            # purchase.invoice_ids._recompute_dynamic_lines(False)
-            # purchase.invoice_ids._recompute_dynamic_lines() => _recompute_tax_lines()
-            # Cannot create unbalanced journal entry. Ids:
-            # print(purchase.invoice_ids.line_ids)
-
-            # _check_balanced
-            
-            # print(purchase.invoice_ids.line_ids[0].tax_line_id.name)
-            # print(purchase.invoice_ids.line_ids[1].tax_line_id.id)
-            # print(purchase.invoice_ids.line_ids[2].tax_line_id.id)
-
-            # https://www.odoo.com/es_ES/forum/ayuda-1/many2many-write-replaces-all-existing-records-in-the-set-by-the-ids-148267
-            # purchase.invoice_ids.write({'line_ids': [(1, iibb_line.id, { 'debit': 11, 'credit': 0, 'amount_currency': 11 })]})
-
-            # purchase.invoice_ids._onchange_recompute_dynamic_lines()
-            # purchase.invoice_ids.write({'line_ids': [(1, iibb_line.id, { 'debit': 11, 'credit': 0, 'amount_currency': 11 })]})
-            # print(purchase.invoice_ids._inverse_amount_total())
-            # purchase.invoice_ids.write({})
-            # purchase.invoice_ids.write({'line_ids': [(1, iibb_line.id, { 'debit': 11, 'credit': 0, 'amount_currency': 11 })]})
-            # purchase.invoice_ids._recompute_payment_terms_lines()
-            
-            # purchase.invoice_ids._recompute_dynamic_lines()
-            # purchase.invoice_ids._onchange_recompute_dynamic_lines()
-            # purchase.invoice_ids._move_autocomplete_invoice_lines_values()
-            # account/static/src/js/tax_group.js => tax-group-custom-field
-            # iibb_line._onchange_amount_currency()
-            # purchase.invoice_ids._move_autocomplete_invoice_lines_values()
-            # purchase.invoice_ids._recompute_tax_lines(True)
-            
-            # to_check = True
-            # _compute_invoice_taxes_by_group => amount_by_group
-
-            # DEBITO: 
-            # price_unit, debit, balance, amount_currency, price_subtotal, price_total = 37
-            # CREDITO:
-            # price_unit, balance, amount_currency, price_subtotal, price_total = -37
-            # credit = 37
-
-            # to_check: True ???
-            
-            # afip_barcode al descargar PDF
-
         facturas_con_diferencia = 0
         perc_sin_factura = 0
 
@@ -451,6 +383,7 @@ NOTA: Existen {} percepciones que no tienen factura correspondiente.""".format(c
         cuit_type = cuit_type[0]
             
         # Obtener tipo de responsabilidad AFIP Responsable Inscripto
+        # TODO: Dependiendo el tipo de factura, cargar como RI o Monotributo
         afip_resp_inscripto_type = self.env['l10n_ar.afip.responsibility.type'].search([('name', '=', 'IVA Responsable Inscripto')])
         if len(afip_resp_inscripto_type) != 1:
             raise UserError("Debe haber cargado un tipo de responsabilidad AFIP 'IVA Responsable Inscripto'")
@@ -495,17 +428,8 @@ NOTA: Existen {} percepciones que no tienen factura correspondiente.""".format(c
                 'partner_id': partner.id,
                 'import_id': self.id,
             }
-            # if len(purchase) == 0:
-            #     # Crear nueva orden de compra
-            #     purchase = self.env['purchase.order'].create(purchase_data)
-            # else:
-            #     # Obtener orden de compra existente
-            #     purchase = purchase[0]
-
-            # TODO: Remove this line y descomentar el codigo anterior
-            purchase = self.env['purchase.order'].create(purchase_data)
-
             # TODO: No actualizar una compra ya existente
+            purchase = self.env['purchase.order'].create(purchase_data)
 
             print("Purchase", purchase)
 

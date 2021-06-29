@@ -11,6 +11,17 @@ ns = {'ss': 'urn:schemas-microsoft-com:office:spreadsheet'}
 def cell_data(cells, index):
     return cells[index].find('ss:Data', ns).findtext('.')
 
+class PurchaseImportDeduccionesArbaPLine(models.TransientModel):
+    _name = "l10n_ar.import.purchase.deducciones.arba.pline"
+
+    date = fields.Date(string="Fecha")
+    cuit = fields.Float(string="CUIT")
+    invoice_number = fields.Float(string="Comprobante")
+    amount = fields.Float(string="Monto")
+    
+    # TODO: borrar esto de la vista de edicion
+    import_id = fields.Many2one(comodel_name="l10n_ar.import.purchase.deducciones.arba", ondelete="cascade", readonly=True, invisible=True)
+
 class PurchaseImportDeduccionesArbaRLine(models.TransientModel):
     _name = "l10n_ar.import.purchase.deducciones.arba.rline"
 
@@ -43,7 +54,7 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
     _description = "Importar deducciones de ARBA en compras"
 
     arba_file = fields.Binary(string="Deducciones de ARBA (*.xml)")
-    # percepciones
+    percepciones = fields.One2many(string="Percepciones", comodel_name="l10n_ar.import.purchase.deducciones.arba.pline", inverse_name="import_id")
     retenciones = fields.One2many(string="Retenciones", comodel_name="l10n_ar.import.purchase.deducciones.arba.rline", inverse_name="import_id")
     retenciones_bancarias = fields.One2many(string="Retenciones Bancarias", comodel_name="l10n_ar.import.purchase.deducciones.arba.rbline", inverse_name="import_id")
     devoluciones_bancarias = fields.One2many(string="Devoluciones Bancarias", comodel_name="l10n_ar.import.purchase.deducciones.arba.dbline", inverse_name="import_id")
@@ -79,7 +90,7 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
         
     def generate_purchases(self):
         # TODO: actualizar compras con las percepciones encontradas
-        # self._generate_percepciones()
+        self._generate_percepciones()
 
         # TODO: generar cobros/devoluciones para las retenciones.
         # Las retenciones pueden ser validadas manualmente
@@ -112,6 +123,13 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
             importe = cell_data(cells, 8)
             
             print("[Percepcion]", fecha, cuit, numero_comprobante, importe)
+            self.percepciones.create({
+                'date': datetime.strptime(fecha, '%d/%m/%Y'),
+                'amount': float(importe),
+                'cuit': cuit,
+                'invoice_number': numero_comprobante,
+                'import_id': self.id,
+            })
 
     # Retenciones
     def _parse_retenciones(self, root):
@@ -203,9 +221,9 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
     # retenciones = root.find("ss:Worksheet[@ss:Name='Percepciones aduaneras']", ns)
     # table = retenciones.find('ss:Table', ns)
 
-    # def _generate_percepciones(self):
-    #     # TODO
-    #     pass
+    def _generate_percepciones(self):
+        if len(self.percepciones) > 0:
+            raise UserError("No se permiten cargar percepciones por el momento")
 
     def _generate_retenciones(self):
         for retencion in self.retenciones:

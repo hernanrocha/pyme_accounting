@@ -14,7 +14,14 @@
                 
                 <notebook string="Deducciones Cargadas" col="2">
                     <page string="Percepciones">
-
+                            <field name="percepciones" nolabel="1" widget="section_and_note_one2many" options="{'reload_on_button': true}">
+                            <tree>
+                                <field name="date" edit="false" />
+                                <field name="cuit" edit="false" />
+                                <field name="invoice_number" edit="false" />
+                                <field name="amount" edit="false" />
+                            </tree>
+                        </field>
                     </page>
                     <page string="Retenciones">
                         <field name="retenciones" nolabel="1" widget="section_and_note_one2many" options="{'reload_on_button': true}">
@@ -46,7 +53,7 @@
                     <field name="notes" />
                     <separator />
                     <button name="parse_purchases" string="Cargar" type="object" class="btn-primary" />
-                    <button name="generate_purchases" string="Actualizar Comprobantes" type="object" class="btn-primary" />
+                    <button name="generate_purchases" string="Guardar Deducciones" type="object" class="btn-primary" />
                     <button string="Cancelar" class="btn-secondary" special="cancel"/>
                 </footer>
 

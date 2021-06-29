@@ -3,88 +3,161 @@
 
     <!-- TODO: Renombrar este archivo -->
 
-    <template id="report_payslip">
-        <t t-call="web.html_container">
-
-            <!-- <t t-foreach="docs" t-as="o"> -->
-                <!-- <t t-call="web.external_layout"> -->
-
-<div class="page">
-
     <!-- http://localhost:8069/report/html/pyme_accounting.report_payslip/895 -->
+<template id="report_payslip">
+    <t t-call="web.html_container">
 
-    <style>
-        table.table-sm > thead > tr > th{
-            border:1px solid #808080;
-            border-spacing: 0;
-        }
-        table.table-sm > tbody > tr > th{
-            border:1px solid #808080;
-            border-spacing: 0;
-        }
-        table.table-sm > tbody > tr > td{
-            border:1px solid #808080;
-            border-spacing: 0;
-        }
-    </style>
+        <!-- <t t-foreach="docs" t-as="o"> -->
+        <!-- TODO: Configurar header y footer. Sacar boton "Imprimir del reporte HTML" -->
+        <!-- TODO: cambiar fuente -->
+        <!-- https://www.odoo.com/es_ES/forum/ayuda-1/how-can-i-render-template-in-model-83638 -->
+        <!-- Esto es necesario para PDF que agrega el formato -->
+        <t t-call="web.external_layout">
 
-    <div class="text-center">
-        <h3 t-esc="name"></h3>
-    </div>
+        <div class="page">
 
-    <!-- https://fontawesome.com/v4.7/examples/ -->
-    <!-- <div>
+            <style>
+        table {
+            font-size: 14px;
+        }
+        table tr.section th {
+            background-color: #4f81bd;
+            color: white;
+            font-weight: bold;
+        }
+        table tr.subtotal td {
+            font-weight: bold;
+            color: black;
+            background-color: #dbe5f1;
+        }
+        table tr.total td {
+            font-weight: bold;
+            color: black;
+            background-color: #b8cce4;
+        }
+        table tr td.line {
+            border-top: 2px solid black;
+        }
+        table tr.net td {
+            background-color: #b8cce4;
+            /* background-color: #dbe5f1; */
+            color: black;
+            font-weight: bold;
+            border-top: 2px solid black;
+            border-bottom: thick double black;
+        }
+        table i {
+            color: black
+        }
+        .number {
+            text-align: right;
+        }
+        .summary p {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+        .card, .row {
+            margin-bottom: 10px;
+        }
+        .category {
+            font-size: 48px;
+            font-weight: bold;
+        }
+            </style>
+
+            <!-- https://fontawesome.com/v4.7/examples/ -->
+            <!-- <div>
         <i class="fa fa-camera-retro"></i> fa-camera-retro
     </div> -->
 
-    <div class="row">
-
-        <!-- <div class="col-md-3">
-            <div class="card">asd</div>
+        <div class="text-center">
+            <h2 t-esc="name"></h2>
         </div>
-        <div class="col-md-3">
-            <div class="card">A3</div>
+        <div class="text-center">
+            <h4>Últimos 12 meses</h4>
         </div>
-        <div class="col-md-3">
-            <div class="card">A5</div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">A7</div>
-        </div> -->
 
-        <!-- <p>Facturación Anual: <p/> -->
-        <!-- <p>Categoria Calculada: </p> -->
-        <!-- <p>Maximo de la categoria </p> -->
-        <!-- <p>Pago Mensual: <p/> -->
-        <!-- <p>Warning si es una diferente a la configurada. Boton para actualizar</p> -->
-    </div>
-
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <table class="table table-sm table-bordered table-hover">
-                <thead>
-                    <tr class="table-primary">
-                        <th scope="col">Mes</th>
-                        <th scope="col">Total Ventas</th>
-                        <th scope="col">Total Compras</th>
-                        <th scope="col">Ganancia Bruta</th>
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <table class="table table-bordered table-sm">
+                    <tr class="section">
+                        <th class="text-center">Mes</th>
+                        <th class="text-center">Ventas</th>
+                        <th class="text-center">Compras</th>
+                        <th class="text-center">Ganancia/Pérdida</th>
                     </tr>
-                </thead>
-                <tbody>
                     <t t-foreach="docs" t-as="o">
                         <tr>
-                            <th scope="row"><t t-esc="o['date']"></t></th>
-                            <td><t t-esc="o['total_sales']"></t></td>
-                            <td><t t-esc="o['total_purchases']"></t></td>
-                            <td><t t-esc="o['balance']"></t></td>
+                            <td>
+                                <t t-esc="o['date'].capitalize()"></t>
+                            </td>
+                            <td class="number">
+                                <!-- <t t-field="o['total_sales']" t-field-options='{"widget": "monetary"}' /> -->
+                                <span>$</span>
+                                <t t-esc="o['total_sales']"></t>
+                            </td>
+                            <td class="number">
+                                <span>$</span>
+                                <t t-esc="o['total_purchases']"></t>
+                            </td>
+                            <td class="number">
+                                <span>$</span>
+                                <t t-esc="o['balance']"></t>
+                            </td>
                         </tr>
                     </t>
-                </tbody>
-            </table>
-        </div>
-    </div>
+                    
+                    <tr class="subtotal">
+                        <td>Total</td>
+                        <td class="number line"><span>$</span><t t-esc="total['sales']"></t></td>
+                        <td class="number line"><span>$</span><t t-esc="total['purchases']"></t></td>
+                        <td class="number line"><span>$</span><t t-esc="total['balance']"></t></td>
+                    </tr>
 
-    <!-- <div class="row">
+                    <!-- TODO: Ver tabla de categorias en una ventana aparte -->
+                </table>
+
+                <div class="card summary">
+                    <div class="card-body">
+                        <h4 class="card-title">Resumen</h4>
+                        <div class="row align-items-center">
+                            <div class="col-6">
+                                <p>Facturación Anual: 
+                                    <span>$</span><t t-esc="total['sales']"></t>
+                                </p>
+                                <p>Maximo de Facturación: 
+                                    <span>$</span><t t-esc="category['max_invoice']"></t>
+                                </p>
+                                <p><b>Pago Mensual: 
+                                    <span>$</span><t t-esc="category['payment']"></t>
+                                </b></p>
+                            </div>
+                            <div class="col-6 text-center">
+                                <p><b>Categoría</b> <br/> 
+                                <span class="category"><t t-esc="category['char']"></t></span></p>
+                            </div>
+                        </div>                        
+                    </div>
+                </div>
+                
+                <!-- TODO: Permitir actualizar la categoria si no coincide -->
+                <!-- <div class="card text-white bg-danger">
+                    <div class="card-header">Atención</div>
+                    <div class="card-body">
+                        <p class="card-text">La categoría calculada según la facturación no corresponde con la configurada. Por favor revise si es necesario realizar una recategorización y actualice la categoría en el sistema
+                        </p>
+                    </div>
+                </div>
+                <div class="row text-center">
+                    <div class="col-4 offset-4">
+                        <a href="#" class="btn btn-primary">Actualizar Categoría</a>
+                    </div>
+                </div> -->
+
+            </div>
+        </div>
+
+            <!-- <div class="row">
         <div class="col-md-6">
             <canvas id="myChart" width="400" height="200"></canvas>
 
@@ -143,11 +216,11 @@
     </div> -->
 
 
-</div>
+        </div>
 
-    <!-- https://www.chartjs.org/docs/2.9.4/ -->
-    <script src="/web/static/lib/Chart/Chart.js"></script>
-    <script>
+        <!-- https://www.chartjs.org/docs/2.9.4/ -->
+        <script src="/web/static/lib/Chart/Chart.js"></script>
+        <script>
         console.log("HELLO WORLD")
         console.log(Chart)
         var ctx = document.getElementById('myChart').getContext('2d');
@@ -187,20 +260,23 @@ var myChart = new Chart(ctx, {
         }
     }
 });
-    </script>
-                <!-- </t> -->
-            <!-- </t> -->
+        </script>
         </t>
-    </template>
+        <!-- </t> -->
+    </t>
+</template>
 
     <record id="report_basic" model="ir.actions.report">
         <field name="name">Reporte Monotributo</field>
-        <field name="model">account.move</field>
+        <field name="model">report.pyme_accounting.report_payslip</field>
+        <!-- Tipo: puede ser qweb-html o qweb-pdf -->
         <field name="report_type">qweb-html</field>
+        <!-- Nombre del template, incluyendo el modulo -->
         <field name="report_name">pyme_accounting.report_payslip</field>
-        <field name="print_report_name">Base</field>
+        <!-- <field name="print_report_name">'Base'</field> -->
+        <!-- Permite agregarlo en un menu de imprimir -->
         <field name="binding_model_id" ref="model_account_move" />
-        <field name="binding_type">report</field> 
+        <!-- <field name="binding_view_types"></field> -->
     </record>
 
     <!-- <record id="action_print_report_general_ledger_html" model="ir.actions.report">

@@ -15,6 +15,3 @@ class Partner(models.Model):
     # l10n_ar_gross_income_type = fields.Selection()
     # l10n_ar_gross_income_number = fields.Char()
 
-    # TODO: Esto esta mal. Los contactos pueden pertenecer a una empresa sin ser el partner principal
-    firm_client = fields.Boolean(related="company_id.firm_client")
-

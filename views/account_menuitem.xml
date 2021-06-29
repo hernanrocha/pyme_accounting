@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- TODO: Borrar "My Company" de la lista de empresas -->
+    <!-- TODO: Borrar Checkbox de la lista de empresas -->
 
     <!-- TODOs:
         - Borrar Conversaciones, Contactos, Ventas, Facturacion
@@ -200,13 +202,13 @@
 
             <!-- TODO: Borrar este y dividir en 2 partes -->
             <!-- MENU Facturacion/Importar/Compras/AFIP-ARBA  -->
-            <menuitem name="Importar AFIP" sequence="1"
-                id="menu_import_afip" action="action_arba_afip_upload"/>
+            <!-- <menuitem name="Importar AFIP" sequence="1"
+                id="menu_import_afip" action="action_arba_afip_upload"/> -->
 
             <!-- TODO -->
             <!-- MENU Facturacion/Importar/Compras/Comprobantes Emitidos  -->
             <menuitem name="Mis Comprobantes Recibidos" sequence="1" 
-                id="menu_import_purchases_comp_recibidos" action="action_move_in_invoice_type" />
+                id="menu_import_purchases_comp_recibidos" action="action_import_purchases_comp_recibidos" />
                 
             <!-- <menuitem name="Archivo RG3685" sequence="3" 
                 id="menu_import_purchases_rg3685" action="action_move_in_invoice_type" /> -->
@@ -281,15 +283,13 @@
         <!-- MENU Facturacion/Informes/Monotributo-->
         <menuitem id="menu_reports_monotributo" name="Monotributo" sequence="1">
 
-            <!-- MENU Facturacion/Informes/Monotributo/Reporte Mensual-->
-            <menuitem id="menu_taxes_report_monotributo_mensual" name="Reporte Mensual" 
-                sequence="1" action="report_basic" />
+            <!-- MENU Facturacion/Informes/Monotributo/Últimos 12 Meses-->
+            <!-- <menuitem id="menu_taxes_report_monotributo_mensual" name="Reporte Mensual" 
+                sequence="1" action="report_basic" /> -->
 
-            <!-- MENU Facturacion/Informes/Monotributo/Reporte Ultimos 12 Meses-->
-            <menuitem id="menu_taxes_report_monotributo_anual" name="Últimos 12 Meses"
+            <!-- MENU Facturacion/Informes/Monotributo/Últimos 12 Meses-->
+            <menuitem id="menu_taxes_report_monotributo_anual" name="Últimos 12 Meses" 
                 sequence="2" action="report_basic" />
-
-            <!-- TODO: compras y ventas de los ultimos 12 meses. Categoria, pago mensual, max categoria -->
 
         </menuitem>      
         
@@ -301,7 +301,7 @@
                 id="menu_iibb_arba_asientos" action="action_iibb_arba_asientos"/> -->
 
             <!-- MENU Facturacion/Impuestos/IIBB/ARBA  -->
-            <menuitem name="DD.JJ. ARBA" sequence="2"
+            <menuitem name="Liquidación ARBA" sequence="2"
                 id="menu_taxes_iibb_arba" action="action_iibb_arba_wizard"/>
 
             <!-- MENU Facturacion/Impuestos/IIBB/ARBA  -->

@@ -16,12 +16,14 @@
         'account',         # Contabilidad
         'purchase',        # Compras
         'l10n_ar',         # Localizacion Argentina
+        # 'l10n_latam_base',
+        # 'l10n_latam_invoice_document',
         'sale_management', # Ventas
         # 'web'            # Web Backend
         # 'portal'         # Web Login
 
-        # Localizacion Argentina
-        # 'l10n_ar_reports',           # Reportes Argentinos
+        # Localizacion Argentina         https://github.com/ctmil/odoo-argentina.git@14.0
+        # 'l10n_ar_reports',             # Reportes Argentinos
         # 'l10n_ar_account_iva_digital', # IVA Digital
 
         # Mantenimiento
@@ -38,6 +40,7 @@
         # Import
         'wizard/import_purchase_excel.xml',
         'wizard/import_purchase_deducciones_arba.xml',
+        'wizard/import_purchase_comprecibidos.xml',
         'wizard/import_sale_compemitidos.xml',
         'wizard/import_sale_compenlinea.xml',
         'wizard/import_sale_pem.xml',

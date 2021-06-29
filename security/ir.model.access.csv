@@ -10,7 +10,10 @@ security_afip_import_sale_account_manager,Importacion Ventas AFIP,model_l10n_ar_
 security_afip_import_sale_line_account_manager,Linea de importacion Ventas AFIP,model_l10n_ar_afip_import_sale_line,account.group_account_manager,1,1,1,1
 security_iibb_arba_wizard_account_manager,Reporte de IIBB ARBA,model_l10n_ar_iibb_arba_wizard,account.group_account_manager,1,1,1,1
 security_import_purchase_excel,Importar Compras desde Excel,model_l10n_ar_import_purchase_excel,account.group_account_manager,1,1,1,1
+security_import_purchase_comprecibidos,Importar Comprobantes Recibidos,model_l10n_ar_import_purchase_comprecibidos,account.group_account_manager,1,1,1,1
+security_import_purchase_comprecibidos_line,Linea de Comprobantes Recibidos,model_l10n_ar_import_purchase_comprecibidos_line,account.group_account_manager,1,1,1,1
 security_import_purchase_deducciones_arba,Importar deducciones de ARBA,model_l10n_ar_import_purchase_deducciones_arba,account.group_account_manager,1,1,1,1
+security_import_purchase_deducciones_arba_pline,Importar deducciones de ARBA - P,model_l10n_ar_import_purchase_deducciones_arba_pline,account.group_account_manager,1,1,1,1
 security_import_purchase_deducciones_arba_rline,Importar deducciones de ARBA - R,model_l10n_ar_import_purchase_deducciones_arba_rline,account.group_account_manager,1,1,1,1
 security_import_purchase_deducciones_arba_rbline,Importar deducciones de ARBA - RB,model_l10n_ar_import_purchase_deducciones_arba_rbline,account.group_account_manager,1,1,1,1
 security_import_purchase_deducciones_arba_dbline,Importar deducciones de ARBA - DB,model_l10n_ar_import_purchase_deducciones_arba_dbline,account.group_account_manager,1,1,1,1
@@ -26,3 +29,5 @@ security_arba_retencion_bancaria,ARBA Retenciones Bancarias,model_l10n_ar_arba_r
 security_arba_devolucion_bancaria,ARBA Devoluciones Bancarias,model_l10n_ar_arba_devolucion_bancaria,account.group_account_manager,1,1,1,1
 
 security_user_company,Manejo de Compañias,model_res_company,account.group_account_manager,1,1,1,1
+
+security_report_monotributo,Reporte Mensual de Monotributo,model_report_pyme_accounting_report_payslip,account.group_account_manager,1,1,1,1

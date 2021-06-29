@@ -90,6 +90,8 @@ class ImportSalesAfip(models.TransientModel):
         if len(journal) == 0:
             # TODO: Sacar de account.chart.template
             account_sale = self.env['account.account'].search([
+                # TODO: hacer dependiente de la compañia
+                ('company_id', '=', self.env.company.id),
                 ('code', '=', '4.1.1.01.010'),
                 ('name', '=', 'Venta de mercadería'),
             ])
@@ -102,7 +104,7 @@ class ImportSalesAfip(models.TransientModel):
                 'l10n_ar_afip_pos_number': pos_number,
                 # TODO: definir si es factura en linea (RLI_RLM) o webservice
                 'l10n_ar_afip_pos_system': 'RLI_RLM',
-                'l10n_ar_afip_pos_partner_id': self.env.company.id,
+                'l10n_ar_afip_pos_partner_id': self.env.company.partner_id.id,
                 'default_account_id': account_sale.id,
                 'code': str(pos_number).zfill(5),
             })
@@ -175,6 +177,8 @@ class ImportSalesAfip(models.TransientModel):
 
         # USAR MIXIN
         account_sale = self.env['account.account'].search([
+            # TODO: hacer dependiente de la compañia
+            ('company_id', '=', self.env.company.id),
             ('code', '=', '4.1.1.01.010'),
             ('name', '=', 'Venta de mercadería'),
         ])
@@ -214,15 +218,6 @@ class ImportSalesAfip(models.TransientModel):
                 partner = consumidor_final
             
             print("Partner", partner)
-            
-            # # Crear Orden de Venta (sale.order)
-            # sale_data = {
-            #     'date_order': invoice.date,
-            #     'partner_id': partner.id,
-            # }
-            # sale = self.env['sale.order'].create(sale_data)
-
-            # print("Sale", sale)
 
             # TODO: Revisar tambien montos gravados y exentos 
 

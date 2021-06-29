@@ -51,12 +51,18 @@ class IngresosBrutosArbaWizard(models.Model):
             ('name', '=', 'Impuestos')
         ])
         account_iibb = self.env['account.account'].search([
+            # TODO: hacer dependiente de la compañia
+            ('company_id', '=', self.env.company.id),
             ('name', '=', 'IIBB Prov. Bs. As.')
         ])
         account_percepciones = self.env['account.account'].search([
+            # TODO: hacer dependiente de la compañia
+            ('company_id', '=', self.env.company.id),
             ('name', '=', 'Percepción IIBB p. Buenos Aires sufrida')
         ])
         account_saldo_a_favor = self.env['account.account'].search([
+            # TODO: hacer dependiente de la compañia
+            ('company_id', '=', self.env.company.id),
             ('name', '=', 'Saldo a favor IIBB p. Buenos Aires')
         ])
 
@@ -67,26 +73,44 @@ class IngresosBrutosArbaWizard(models.Model):
             'journal_id': journal_taxes.id
         })
 
-        move.write({
-            'line_ids': [
-                # Impuesto IIBB
-                (0, 0, { 'account_id': account_iibb.id, 'debit': self.iibb_report_tax_subtotal }),
-                # Saldo a favor del periodo
-                (0, 0, { 'account_id': account_saldo_a_favor.id, 'debit': -self.iibb_report_tax_total_saldo }),
-                # Percepcion IIBB
-                (0, 0, { 'account_id': account_percepciones.id, 'credit': -self.iibb_report_percepciones }),
-                # TODO: Retencion IIBB
-                # (0, 0, { 'account_id': 1, 'credit': 0 }),
-                # TODO: Retencion IIBB Banco
-                # (0, 0, { 'account_id': 1, 'credit': 0 }),
-                # TODO: Devolucion IIBB Banco
-                # (0, 0, { 'account_id': 1, 'credit': 0 }),
-                # Saldo a favor IIBB periodo anterior
-                (0, 0, { 'account_id': account_saldo_a_favor.id, 'credit': -self.iibb_report_tax_prev_saldo }),
-            ]
-        })
-
-        # TODO: tener en cuenta el caso de IIBB a pagar
+        if self.iibb_report_tax_total_to_pay > 0:
+            move.write({
+                'line_ids': [
+                    # Impuesto IIBB
+                    (0, 0, { 'account_id': account_iibb.id, 'debit': self.iibb_report_tax_subtotal }),
+                    # Saldo a favor del periodo
+                    (0, 0, { 'account_id': account_saldo_a_favor.id, 'debit': -self.iibb_report_tax_total_saldo }),
+                    # Percepcion IIBB
+                    (0, 0, { 'account_id': account_percepciones.id, 'credit': -self.iibb_report_percepciones }),
+                    # TODO: Retencion IIBB
+                    (0, 0, { 'account_id': account_percepciones.id, 'credit': -self.iibb_report_retenciones }),
+                    # TODO: Retencion IIBB Banco
+                    (0, 0, { 'account_id': account_percepciones.id, 'credit': -self.iibb_report_retenciones_bancarias }),
+                    # TODO: Devolucion IIBB Banco
+                    (0, 0, { 'account_id': account_percepciones.id, 'debit': self.iibb_report_devoluciones_bancarias }),
+                    # Saldo a favor IIBB periodo anterior
+                    (0, 0, { 'account_id': account_saldo_a_favor.id, 'credit': -self.iibb_report_tax_prev_saldo }),
+                ]
+            })
+        else:
+            move.write({
+                'line_ids': [
+                    # Impuesto IIBB
+                    (0, 0, { 'account_id': account_iibb.id, 'debit': self.iibb_report_tax_subtotal }),
+                    # Saldo a favor del periodo
+                    (0, 0, { 'account_id': account_saldo_a_favor.id, 'debit': -self.iibb_report_tax_total_saldo }),
+                    # Percepcion IIBB
+                    (0, 0, { 'account_id': account_percepciones.id, 'credit': -self.iibb_report_percepciones }),
+                    # TODO: Retencion IIBB
+                    # (0, 0, { 'account_id': 1, 'credit': 0 }),
+                    # TODO: Retencion IIBB Banco
+                    # (0, 0, { 'account_id': 1, 'credit': 0 }),
+                    # TODO: Devolucion IIBB Banco
+                    # (0, 0, { 'account_id': 1, 'credit': 0 }),
+                    # Saldo a favor IIBB periodo anterior
+                    (0, 0, { 'account_id': account_saldo_a_favor.id, 'credit': -self.iibb_report_tax_prev_saldo }),
+                ]
+            })
 
         return {
             'context': self.env.context,
@@ -114,9 +138,13 @@ class IngresosBrutosArbaWizard(models.Model):
 
         # Buscar percepciones
         account_percepciones = self.env['account.account'].search([
+            # TODO: hacer dependiente de la compañia
+            ('company_id', '=', self.env.company.id),
             ('name', '=', 'Percepción IIBB p. Buenos Aires sufrida')
         ])
         account_saldo_anterior = self.env['account.account'].search([
+            # TODO: hacer dependiente de la compañia
+            ('company_id', '=', self.env.company.id),
             ('name', '=', 'Saldo a favor IIBB p. Buenos Aires')
         ])
 
@@ -240,7 +268,7 @@ class IngresosBrutosArbaWizard(models.Model):
         for p in self:
             saldo = p.iibb_report_tax_subtotal + p.iibb_report_tax_prev_saldo + p.iibb_report_deducciones
             if saldo <= 0:
-                p.iibb_report_tax_total_saldo = saldo
+                p.iibb_report_tax_total_saldo = -saldo
 
     @api.depends('iibb_report_tax_subtotal', 'iibb_report_tax_prev_saldo', 'iibb_report_deducciones')
     def _compute_iibb_report_tax_total_to_pay(self):

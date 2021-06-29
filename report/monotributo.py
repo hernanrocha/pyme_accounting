@@ -1,6 +1,90 @@
 # -*- coding: utf-8 -*-
 
 from odoo import api, fields, models, _
+import locale
+
+# Define locale es_AR
+def _temp_localeconv(lc=locale.localeconv()):
+    lc.update({'int_curr_symbol': 'ARS', 'currency_symbol': '$', 'mon_decimal_point': ',', 'mon_thousands_sep': '.', 'mon_grouping': [3, 0], 'positive_sign': '', 'negative_sign': '-', 'int_frac_digits': 2, 'frac_digits': 2, 'p_cs_precedes': 1, 'p_sep_by_space': 1, 'n_cs_precedes': 1, 'n_sep_by_space': 1, 'p_sign_posn': 3, 'n_sign_posn': 3, 'decimal_point': ',', 'thousands_sep': '.', 'grouping': [3, 0]})
+    return lc
+
+# Do the override
+locale.localeconv = _temp_localeconv
+
+# TODO: mover esto a su propio modelo
+# https://www.afip.gob.ar/monotributo/categorias.asp
+categories = [
+    {
+        'char': 'A',
+        'max_invoice': 282444.69,
+        'service_payment': 1955.68,
+        'goods_payment': 1955.68
+    },
+    {
+        'char': 'B',
+        'max_invoice': 423667.03,
+        'service_payment': 2186.80,
+        'goods_payment': 2186.80
+    },
+    {
+        'char': 'C',
+        'max_invoice': 564889.40,
+        'service_payment': 2499.91,
+        'goods_payment': 2457.65
+    },
+    {
+        'char': 'D',
+        'max_invoice': 847334.12,
+        'service_payment': 2947.94,
+        'goods_payment': 2878.37
+    },
+    {
+        'char': 'E',
+        'max_invoice': 1129778.77,
+        'service_payment': 3872.18,
+        'goods_payment': 3482.04
+    },
+    {
+        'char': 'F',
+        'max_invoice': 1412223.49,
+        'service_payment': 4634.89,
+        'goods_payment': 4003.69
+    },
+    {
+        'char': 'G',
+        'max_invoice': 1694668.19,
+        'service_payment': 5406.02,
+        'goods_payment': 4558.61
+    },
+    {
+        'char': 'H',
+        'max_invoice': 2353705.82,
+        'service_payment': 9451.93,
+        'goods_payment': 7886.41
+    },
+    {
+        'char': 'I',
+        'max_invoice': 2765604.35,
+        'service_payment': 0,
+        'goods_payment': 11336.71
+    },
+    {
+        'char': 'J',
+        'max_invoice': 3177502.86,
+        'service_payment': 0,
+        'goods_payment': 13019.83
+    },
+    {
+        'char': 'K',
+        'max_invoice': 3530558.74,
+        'service_payment': 0,
+        'goods_payment': 14716.41
+    },
+]
+
+# Archivos importantes:
+# - base/models/ir_actions_report.py
+# - base/report/report_base_report_irmodulereference.py
 
 # El nombre debe ser 'report.<module>.<template_id>'
 # 
@@ -71,15 +155,53 @@ class ReportMonotributoMensual(models.AbstractModel):
             data[m['invoice_date:month']][m['move_type']] = m['amount_total']
 
         data = data.values()
+        t_sales = 0
+        t_purchases = 0
+        t_balance = 0
         for d in data:
-            # Handle as monetary
             d['total_sales'] = d['out_invoice'] - d['out_refund']
             d['total_purchases'] = d['in_invoice'] - d['in_refund']
             d['balance'] = d['total_sales'] - d['total_purchases']
 
+            # Agregar a totales
+            t_sales += d['total_sales']
+            t_purchases += d['total_purchases']
+            t_balance += d['balance']
+
+            # TODO: Crear un helper para manejar monetary
+            d['total_sales'] = locale.format_string("%.2f", d['total_sales'], grouping=True, monetary=True)
+            d['total_purchases'] = locale.format_string("%.2f", d['total_purchases'], grouping=True, monetary=True)
+            d['balance'] = locale.format_string("%.2f", d['balance'], grouping=True, monetary=True)
+
+        # Formatear totales
+        total_facturacion = t_sales
+        t_sales = locale.format_string("%.2f", t_sales, grouping=True, monetary=True)
+        t_purchases = locale.format_string("%.2f", t_purchases, grouping=True, monetary=True)
+        t_balance = locale.format_string("%.2f", t_balance, grouping=True, monetary=True)
+
+        category = None
+
+        for c in categories:
+            facturacion_anual = c['max_invoice']
+            print("Checking", facturacion_anual)
+            if facturacion_anual > total_facturacion:
+                category = {
+                    'char': c['char'],
+                    'max_invoice': locale.format_string("%.2f", facturacion_anual, grouping=True, monetary=True),
+                    # TODO: contemplar si vende bienes o servicios 
+                    'payment': locale.format_string("%.2f", c['service_payment'], grouping=True, monetary=True)
+                }
+                break
+
         return {
             'name': 'Reporte Monotributo',
-            'docs': data
+            'docs': data,
+            'total': {
+                'sales': t_sales,
+                'purchases': t_purchases,
+                'balance': t_balance
+            },
+            'category': category
         }
 
 class ReportMonotributo:
@@ -144,3 +266,22 @@ class ReportMonotributo:
 # Ver account/wizard/account_report_common_view.xml
 # Ver account/wizard/account_report_common.py
 # Ver account/wizard/account_report_common_journal.py
+
+# # TODO: Remove this
+
+# self.ensure_one()
+# report_name = 'pyme_accounting.report_payslip'
+# report_type = 'qweb-html'
+# data = {
+#     'name': 'Template name'
+# } # ....
+# return (
+#     self.env["ir.actions.report"]
+#     .search(
+#         [("report_name", "=", report_name), ("report_type", "=", report_type)],
+#         limit=1,
+#     )
+#     .report_action(self, data=data)
+# )
+
+# ## TODO: End remove

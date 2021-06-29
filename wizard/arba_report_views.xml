@@ -157,7 +157,8 @@
                 </notebook>
 
                 <footer>
-                    <button name="generate_iibb" string="Generar" type="object" class="btn-primary" />
+                    <!-- TODO: not ready yet -->
+                    <!-- <button name="generate_iibb" string="Generar" type="object" class="btn-primary" /> -->
                 </footer>
             </form>
         </field>

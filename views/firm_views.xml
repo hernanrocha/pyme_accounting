@@ -12,13 +12,13 @@
         <field name="target">main</field>
         <field name="context">{'create': False, 'delete': False}</field>
     </record>
+    <!-- TODO: Crear asistente para configurar empresa propia, numero telefonico, correo -->
     <!-- TODO: Numero de IIBB es igual en tipo "Local" -->
     <!-- TODO: default IIBB "local" -->
     <!-- TODO: Agregar Actividad Principal y secundarias en AFIP (y ARBA) -->
-    <!-- TODO: Agregar campo "Notas", "Honorarios", "Contactos", "Cumpleaños" -->
+    <!-- TODO: Agregar campo "Notas", "Contactos" -->
     <!-- TODO: Agregar filtro por Condición Fiscal -->
-    <!-- TODO: Seguimiento de honorarios -->
-
+    
     <!-- MI ESTUDIO - MIS ACTIVIDADES - SERVER ACTION -->
     <record id="action_firm_activities" model="ir.actions.server">
         <field name="name">Mis Actividades</field>
@@ -28,6 +28,9 @@
         <field name="code">action = model.action_company_activities()</field>
     </record>
     <!-- TODO: definir tipos de actividades -->
+    <!-- TODO: Agregar "Evento", "Vencimiento" a la lista de actividades -->
+    <!-- TODO: Cambiar ventana de "Nueva actividad" -->
+    <!-- TODO: Cambiar vista por defecto de la barra de menu de "Actividades"-->
 
     <!-- MI ESTUDIO - CALENDARIO - SERVER ACTION -->
     <record id="action_firm_calendar" model="ir.actions.server">
@@ -48,25 +51,21 @@
         <field name="res_model">res.company</field>
         <field name="view_mode">list,form</field>
         <field name="view_id" ref="res_company_list_view"></field>
+        <field name="search_view_id" ref="view_res_company_filter"></field>
         <field name="target">main</field>
-        <field name="domain">[('firm_client', '=', 1)]</field>
-        <!-- TODO: esto no esta andando todavia -->
-        <field name="context">{'default_firm_client': True }</field>
+        <field name="domain">[('id', '>', 1)]</field>
+        <!-- TODO: aun no se agrego el group_by -->
+        <!-- <field name="context">{ 'search_default_responsibility_type': 1}</field> -->
     </record>
-    <!-- TODO: Filtrar por booleano nuevo "firm_client", con default true. No esta funcionando ahora -->
-    <!-- TODO: Agregar "default_firm_client":1 al context -->
-    <!-- TODO: Cambiar campos en la vista -->
     <!-- TODO: importacion masiva de clientes -->
-    <!-- TODO: default_country_id => argentina -->
-    <!-- TODO: Agregar Notas, Honorarios, Contactos, Actividades, Cumpleaños -->
-    <!-- TODO: Agregar filtro por Monotributista, Exento, Resp. Inscripto -->
-    <!-- TODO: Al crear compañia nueva, instalar plan contable
-     - Resp. Inscripto (uno solo para todos?)
-     - Agregar a todos los usuarios 
-    -->
-    <!-- TODO: Solo aparecen en la lista las compañias activas -->
-    
+    <!-- TODO: fix nombre al exportar contactos -->
+    <!-- TODO: Agregar Notas, Contactos, Actividades, Cumpleaños -->
+    <!-- TODO: Agregar grupo por Condicion Fiscal -->
+    <!-- TODO: Alias, Bancos (cuenta bancaria, codigo, nombre), periodos fiscales, actividad ppal y sec -->
+    <!-- TODO: Categoria Monotributo (y si vende servicios/bienes) para poder chequear maximos de facturacion -->
+
     <!-- TODO: Seguimiento de pagos -->
+    <!-- TODO: Seguimiento de honorarios -->
 
     <record id="action_firm_email_sent" model="ir.actions.act_window">
         <field name="name">Emails Enviados</field>

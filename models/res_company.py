@@ -8,7 +8,6 @@ class Company(models.Model):
     _inherit = "res.company"
 
     country_id = fields.Many2one('res.country', default=lambda self: self._default_country_id())
-    firm_client = fields.Boolean(string="Cliente del Estudio", default=True)
 
     phone = fields.Char(related="partner_id.phone")
     email = fields.Char(related="partner_id.email")
@@ -16,7 +15,12 @@ class Company(models.Model):
     l10n_ar_afip_responsibility_type_id = fields.Many2one(related="partner_id.l10n_ar_afip_responsibility_type_id")
     l10n_ar_gross_income_type = fields.Selection(related="partner_id.l10n_ar_gross_income_type")
     l10n_ar_gross_income_number = fields.Char(related="partner_id.l10n_ar_gross_income_number")
-    
+
+    monotributo_category = fields.Selection([
+        ('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D'), ('E', 'E'), 
+        ('F', 'F'), ('G', 'G'), ('H', 'H'), ('I', 'I'), ('J', 'J'), ('K', 'K')
+    ], string="Categoria")
+    monotributo_type = fields.Selection([('good', 'Bienes'), ('service', 'Servicios')])    
     
     def _default_country_id(self):
         country_ar = self.env['res.country'].search([('code', '=', 'AR')])

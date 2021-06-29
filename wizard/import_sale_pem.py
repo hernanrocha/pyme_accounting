@@ -19,6 +19,8 @@ class AccountMixin(models.AbstractModel):
 
         # TODO: Sacar de account.chart.template
         account_sale = self.env['account.account'].search([
+            # TODO: hacer dependiente de la compañia
+            ('company_id', '=', self.env.company.id),
             ('code', '=', '4.1.1.01.010'),
             ('name', '=', 'Venta de mercadería'),
         ])
@@ -40,7 +42,7 @@ class AccountMixin(models.AbstractModel):
                 'l10n_ar_afip_pos_number': pos_number,
                 # TODO: definir si es factura en linea (RLI_RLM), webservice, CF
                 'l10n_ar_afip_pos_system': 'RLI_RLM',
-                'l10n_ar_afip_pos_partner_id': self.env.company.id,
+                'l10n_ar_afip_pos_partner_id': self.env.company.partner_id.id,
                 'default_account_id': account_sale.id,
                 'code': str(pos_number).zfill(5),
             })
@@ -184,6 +186,8 @@ class SaleImportPEM(models.TransientModel):
         # Account
         # TODO: Sacar de account.chart.template
         self.account_sale = self.env['account.account'].search([
+            # TODO: hacer dependiente de la compañia
+            ('company_id', '=', self.env.company.id),
             ('code', '=', '4.1.1.01.010'),
             ('name', '=', 'Venta de mercadería'),
         ])
