@@ -90,6 +90,7 @@
 
                 <button name="calculate_iibb" string="Calcular" type="object" class="btn-primary" />
 
+                <!-- TODO: habilitar esto luego de haber presionado el boton "Calcular" -->
                 <notebook>
                     <page string="Resumen">
                         <group string="Reporte Generado" col="2">

@@ -170,6 +170,14 @@ class ImportSalesAfip(models.TransientModel):
         consumidor_final = self.env['res.partner'].search([('name', '=', 'Consumidor Final Anónimo')])
         print("CONSUMIDOR FINAL", consumidor_final) 
 
+        # Obtener tipo de identificacion CUIT
+        cuit_type = self.env.ref('l10n_ar.it_cuit') 
+
+        # Obtener condicion fiscal consumidor final, RI, Monotributo
+        cf = self.env.ref('l10n_ar.res_CF')
+        # ri = self.env.ref('l10n_ar.res_IVARI')
+        # monotributo = self.env.ref('l10n_ar.res_RM')
+
         if len(self.invoice_ids) == 0:
             raise UserError('No hay facturas cargadas')
 
@@ -197,19 +205,17 @@ class ImportSalesAfip(models.TransientModel):
             if invoice.cuit:
                 # Get or Create Customer Partner (res.partner)
                 partner = self.env['res.partner'].search([('vat', '=', invoice.cuit)])
-                partner_data = { 
+                partner_data = {
                     'type': 'contact',
-                    'name': invoice.partner, # TODO: rename this
-                    # TODO: set CUIT Consumidor final (20000000003)
-                    # 'vat': invoice.cuit,
-                    # 'l10n_latam_identification_type_id': cuit_type.id,
-                    # 'l10n_ar_afip_responsibility_type_id': afip_resp_inscripto_type.id
+                    'name': invoice.partner,
+                    'vat': invoice.cuit,
+                    'l10n_latam_identification_type_id': cuit_type.id,
+                    # TODO: Si es Resp Inscripto, corroborar si es monotributo/RI
+                    'l10n_ar_afip_responsibility_type_id': cf.id
                 }
+                print("PartnerData", partner_data)
                 if len(partner) == 0:
-                    raise UserError('Cliente con CUIT %s no encontrado'.format(invoice.cuit))
-
-                    # TODO: Crear nuevo cliente
-                    # partner = self.env['res.partner'].create(partner_data)
+                    partner = self.env['res.partner'].create(partner_data)
                 else:
                     # Actualizar datos del cliente
                     partner = partner[0]

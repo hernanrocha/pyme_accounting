@@ -82,6 +82,21 @@ categories = [
     },
 ]
 
+# #------------------------------------------------------
+# # Report controllers
+# #------------------------------------------------------
+# @http.route([
+#     '/report/<converter>/<reportname>',
+#     '/report/<converter>/<reportname>/<docids>',
+# ], type='http', auth='user', website=True)
+# def report_routes(self, reportname, docids=None, converter=None, **data):
+
+# web/views/webclient_templates.xml
+# web/views/report_templates.xml
+# web/static/src/xml/report.xml
+# - report.client_action.ControlButtons
+# - report.client_action
+
 # Archivos importantes:
 # - base/models/ir_actions_report.py
 # - base/report/report_base_report_irmodulereference.py
@@ -129,6 +144,7 @@ class ReportMonotributoMensual(models.AbstractModel):
         moves = self.env['account.move'].read_group(
             # domain
             [ 
+                ('company_id', '=', self.env.company.id),
                 ('move_type', 'in', [ 'in_invoice', 'in_refund', 'out_invoice', 'out_refund' ]),
                 ('state', '=', 'posted')
             ], 
@@ -181,6 +197,8 @@ class ReportMonotributoMensual(models.AbstractModel):
 
         category = None
 
+        # TODO: chequear si se pasa a responsable inscripto
+        # TODO: chequear si matchea con lo cargado en el sistema
         for c in categories:
             facturacion_anual = c['max_invoice']
             print("Checking", facturacion_anual)

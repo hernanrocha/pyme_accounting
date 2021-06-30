@@ -38,6 +38,9 @@ def get_move_type(invoice_type):
 
     return 'in_invoice'
 
+def es_comprobante_c(invoice_type):
+    return invoice_type in ['FA-C', 'ND-C', 'NC-C']
+
 class ImportPurchaseCompRecibidosLine(models.TransientModel):
     _name = "l10n_ar.import.purchase.comprecibidos.line"
     _description = "Linea de comprobante de Comprobantes Recibidos"
@@ -210,7 +213,7 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
                 'vat': invoice.cuit,
                 'l10n_latam_identification_type_id': cuit_type.id,
                 # TODO: Si es factura C, cargar como monotributo
-                'l10n_ar_afip_responsibility_type_id': ri.id
+                'l10n_ar_afip_responsibility_type_id': monotributo.id if es_comprobante_c(invoice.invoice_type) else ri.id 
             }
             if len(partner) == 0:
                 # Crear nuevo proveedor
@@ -285,11 +288,12 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
                     'name': 'Monto Exento',
                     'account_id': account_purchase.id,
                     'quantity': 1,
-                    'price_unit': tax_no_corresponde if no_iva else invoice.exempt_amount,
+                    'price_unit': invoice.exempt_amount,
                 })
-                line.tax_ids += tax_exempt
+                line.tax_ids += tax_no_corresponde if no_iva else tax_exempt
                 print("Exempt Line", line)
 
+            # Diferencia (se guarda como no gravado)
             if invoice.difference > 0:
                 line = move.line_ids.create({
                     'move_id': move.id,

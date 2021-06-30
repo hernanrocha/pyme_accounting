@@ -150,6 +150,7 @@ class IngresosBrutosArbaWizard(models.Model):
 
         # Calcular percepciones
         self.iibb_percepciones = self.env['account.move.line'].search([
+            ('company_id', '=', self.env.company.id),
             ('parent_state', '=', 'posted'),
             ('account_id', '=', account_percepciones.id),
             ('date', '>=', self.iibb_report_date_from),
