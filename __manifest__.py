@@ -19,17 +19,26 @@
         # 'l10n_latam_base',
         # 'l10n_latam_invoice_document',
         'sale_management', # Ventas
-        # 'web'            # Web Backend
+        'web',             # Web Backend
         # 'portal'         # Web Login
 
+        # 
+        # 'report_xlsx', # Reporte XLSX
+
         # Localizacion Argentina         https://github.com/ctmil/odoo-argentina.git@14.0
-        # 'l10n_ar_reports',             # Reportes Argentinos
+        # 'l10n_ar_account_vat_ledger',  # IVA Compras/Ventas
         # 'l10n_ar_account_iva_digital', # IVA Digital
+        # 'account_move_tax',            # Impuestos
 
         # Mantenimiento
         # Session Manager
     ],
     'data': [
+        # CTMIL Odoo-Argentina. Modulos account_move_tax, vat_ledger, iva_digital
+        # TODO: Mover a un modulo diferente
+        'iva/move_view.xml',
+        'iva/account_vat_report_view.xml',
+
         # Security Records
         'security/ir.model.access.csv',
         'security/record_rules.xml',
@@ -37,7 +46,10 @@
         'wizard/arba_afip_views.xml',
         'wizard/arba_report_views.xml',
         
-        # Import
+        # Empresas - Contabilidad
+        'views/account_views.xml',
+
+        # Empresas - Importar
         'wizard/import_purchase_excel.xml',
         'wizard/import_purchase_deducciones_arba.xml',
         'wizard/import_purchase_comprecibidos.xml',
@@ -61,6 +73,7 @@
         'views/account_menuitem.xml',
 
         # Cross-Company Data
+        "data/l10n_ar.afip.actividad.csv",
         "data/l10n_ar.afip.cuit.apocrifo.csv",
         "data/l10n_latam.document.type.csv",
         "data/account.tax.template.csv",

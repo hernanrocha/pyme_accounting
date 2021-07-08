@@ -4,7 +4,10 @@ from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 from dateutil.parser import parse
 import os
+import logging
 import xml.etree.ElementTree as ET
+
+_logger = logging.getLogger(__name__)
 
 # PRECONDICIONES:
 # - El CUIT debe ser el mismo de la compañia
@@ -199,12 +202,15 @@ class SaleImportPEM(models.TransientModel):
             "datas": pem,
             "type": "binary",
         })
-        print("PEM: ", attachment.id)
+        _logger.info("PEM: {}".format(attachment.id))
 
         # Convertir PEM a XML
+        # TODO: Borrar archivos temporales despues de usarlos
         xmlfile = attachment.store_fname.replace("/", "")
         fullpath = os.path.join(attachment._filestore(), attachment.store_fname)
-        os.system('openssl cms -verify -in {} -inform PEM -noverify -out /tmp/odoo/{}.xml'.format(fullpath, xmlfile))
+        _logger.info("XML File {} {}".format(xmlfile, fullpath))
+        ret = os.system('openssl cms -verify -in {} -inform PEM -noverify -out /tmp/odoo/{}.xml'.format(fullpath, xmlfile))
+        _logger.info("Return OpenSSL {}".format(ret))
         
         # Parsear archivo XML
         tree = ET.parse('/tmp/odoo/{}.xml'.format(xmlfile))

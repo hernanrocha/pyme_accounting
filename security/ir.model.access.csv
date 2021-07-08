@@ -1,5 +1,8 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 
+access_account_vat_ledger_accountant,account_vat_ledger_accountant,model_account_vat_ledger,account.group_account_manager,1,1,1,1
+access_account_move_tax,account.move.tax,model_account_move_tax,account.group_account_manager,1,1,1,1
+
 aac_arba,ARBA IMPORT,model_gob_ar_afip_upload,account.group_account_manager,1,1,1,1
 aac_invoice,ARBA IMPORT INVOICE,model_l10n_ar_invoice_line,account.group_account_manager,1,1,1,1
 
@@ -31,3 +34,5 @@ security_arba_devolucion_bancaria,ARBA Devoluciones Bancarias,model_l10n_ar_arba
 security_user_company,Manejo de Compañias,model_res_company,account.group_account_manager,1,1,1,1
 
 security_report_monotributo,Reporte Mensual de Monotributo,model_report_pyme_accounting_report_payslip,account.group_account_manager,1,1,1,1
+
+security_afip_actividad,Actividad AFIP,model_l10n_ar_afip_actividad,account.group_account_manager,1,0,0,0

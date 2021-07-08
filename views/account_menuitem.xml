@@ -24,13 +24,6 @@
     <!-- TODO: Deshabilitar menu Facturacion -->
     <!-- <menuitem id="account.menu_finance" name="Facturación" /> -->
 
-    <menuitem name="Mi Estudio"
-        id="menu_miestudio"
-        groups="account.group_account_readonly,account.group_account_invoice"
-        web_icon="account,static/description/icon.png"
-        sequence="41">
-    </menuitem>
-
     <menuitem name="Empresas"
         id="menu_finance"
         groups="account.group_account_readonly,account.group_account_invoice"
@@ -49,12 +42,16 @@
     </record>
 
     <!-- MENU Mi Estudio/Mi Estudio  -->
-    <menuitem id="menu_firm" name="Mi Estudio" parent="menu_miestudio" sequence="1">
+    <menuitem id="menu_miestudio"
+        name="Mi Estudio"
+        groups="account.group_account_readonly,account.group_account_invoice"
+        web_icon="account,static/description/icon.png"
+        sequence="41">
 
-        <!-- MENU Facturacion/Mi Estudio/Mis Datos  -->
-        <menuitem name="Mis Datos" sequence="1" 
-            id="menu_firm_company" action="action_firm_company" />
-        
+        <!-- MENU Facturacion/Mi Estudio/Clientes  -->
+        <menuitem name="Clientes" sequence="1" 
+            id="menu_firm_clients" action="action_firm_clients" />
+
         <!-- MENU Facturacion/Mi Estudio/Actividades  -->
         <menuitem name="Actividades" sequence="2" 
             id="menu_firm_activities" action="action_firm_activities" />
@@ -62,10 +59,10 @@
         <!-- TODO: MENU Facturacion/Mi Estudio/Actividades  -->
         <!-- <menuitem name="Calendario" sequence="3" 
             id="menu_firm_calendar" action="action_firm_calendar" /> -->
-
-        <!-- MENU Facturacion/Mi Estudio/Clientes  -->
-        <menuitem name="Clientes" sequence="4" 
-            id="menu_firm_clients" action="action_firm_clients" />
+            
+        <!-- MENU Facturacion/Mi Estudio/Mis Datos  -->
+        <menuitem name="Mis Datos" sequence="4" 
+            id="menu_firm_company" action="action_firm_company" />
         
         <!-- TODO: MENU Facturacion/Mi Estudio/Emails  -->
         <!-- <menuitem name="Emails Enviados" sequence="5" 
@@ -147,23 +144,21 @@
             <!-- MENU: Empresas/Contabilidad/Libros/Libro Mayor -->
             <menuitem name="Libro Mayor" 
                 id="menu_action_account_moves_ledger_general" 
-                action="account.action_account_moves_ledger_general" 
+                action="action_account_libro_mayor" 
                 groups="account.group_account_readonly,account.group_account_manager" 
                 sequence="1" />
 
             <!-- MENU: Empresas/Contabilidad/Libros/Cta. Cte. Clientes -->
-            <!-- TODO: filtrar solo por clientes -->
-            <menuitem name="Cuenta Corriente de Clientes"
-                id="menu_action_account_moves_ledger_partner" 
-                action="account.action_account_moves_ledger_partner" 
+            <menuitem name="Cta Cte de Clientes"
+                id="menu_action_account_cta_cte_clientes" 
+                action="action_account_cta_cte_clientes" 
                 groups="account.group_account_readonly,account.group_account_manager" 
                 sequence="2"/>
 
             <!-- MENU: Empresas/Contabilidad/Libros/Cta. Cte. Proveedores -->
-            <!-- TODO: filtrar solo por proveedores -->
-            <menuitem name="Cuenta Corriente de Proveedores"
-                id="menu_action_account_moves_ledger_partner" 
-                action="account.action_account_moves_ledger_partner" 
+            <menuitem name="Cta Cte de Proveedores"
+                id="menu_action_account_cta_cte_proveedores" 
+                action="action_account_cta_cte_proveedores" 
                 groups="account.group_account_readonly,account.group_account_manager" 
                 sequence="3"/>
         
@@ -185,7 +180,6 @@
         <!-- TODO:
             - Asientos Manuales
             - Libro Diario
-            - Libro Mayor
             - Resultados Mensuales
             - Cierre de Ejercicio
             - Extractos bancarios
@@ -319,8 +313,8 @@
 
             <!-- MENU Facturacion/Informes/AFIP/Reporte Mensual-->
             <!-- TODO: Compras (ALICUOTA, CBTE), Ventas (ALICUOTA, CBTE), TURIVA -->
-            <menuitem id="menu_taxes_report_afip_iva_digital" name="Libro IVA Digital" 
-                sequence="1" action="report_basic" />
+            <!-- <menuitem id="menu_taxes_report_afip_iva_digital" name="Libro IVA Digital" 
+                sequence="1" action="report_basic" /> -->
             <!-- TODO: 
                 - Sacar "Anomimo"
                 - Sacar acentos en el nombre
@@ -328,9 +322,26 @@
                 para no exceder el monto maximo permitido por comprobante
             -->
 
-            <!-- MENU: Facturacion/Informes/AFIP/DD. JJ. IVA -->
-            <menuitem id="menu_taxes_report_afip_iva_web" name="DD. JJ. IVA (F. 2002)" 
-                sequence="2" action="report_basic" />
+            <!-- TODO: MENU: Facturacion/Informes/AFIP/DD. JJ. IVA -->
+            <!-- <menuitem id="menu_taxes_report_afip_iva_web" name="DD. JJ. IVA (F. 2002)" 
+                sequence="2" action="report_basic" /> -->
+
+            <!-- TODO: Filtrar por compañia -->
+            <!-- TODO: Seleccionar rangos de fecha por mes -->
+            <!-- TODO: No permitir elegir los diarios -->
+            <!-- TODO: Traducir todos los mensajes -->
+            <!-- TODO: Reporte XLSX no funciona -->
+            <!-- TODO: Fusionar libro iva compras/ventas en uno solo -->
+            <!-- TODO: Traducir nombre del modelo para que aparezca abajo en el tracking -->
+            <!-- MENU: Facturacion/Informes/AFIP/IVA Compras -->
+            <menuitem id="menu_account_purchase_vat_ledger" name="Libro IVA Compras"
+                  action="action_account_purchase_vat_ledger"
+                  sequence="10"/>
+
+            <!-- MENU: Facturacion/Informes/AFIP/IVA Ventas -->
+            <menuitem id="menu_account_sale_vat_ledger" name="Libro IVA Ventas"
+                  action="action_account_sale_vat_ledger"
+                  sequence="11"/>
 
             <!-- TODO: mejorar -->
             <!-- MENU: Informes/Libro IVA Digital Compras -->
@@ -357,6 +368,19 @@
             <!-- TODO: Vista de Puntos de Venta en AFIP (opcion a traerlos configurandolo) -->
 
         </menuitem>  
+
+    </menuitem>
+
+    <!-- MENU Facturacion/Ajustes  -->
+    <menuitem id="menu_configuration" name="Ajustes" parent="menu_finance" sequence="20">
+
+        <!-- MENU Empresas/Ajustes/Plan Contable -->
+        <menuitem id="menu_configuration_plan_contable" name="Plan Contable" 
+            sequence="1" action="action_configuration_plan_contable" />
+
+        <!-- MENU Empresas/Ajustes/Tipos de Comprobante -->
+        <menuitem id="menu_configuration_tipos_comprobante" name="Tipos de Comprobante" 
+            sequence="2" action="action_configuration_tipos_comprobante" />
 
     </menuitem>
 
@@ -390,9 +414,6 @@
           - caja, banco, anulacion de movimientos entre caja/banco
           - sueldos
           - apertura, refundicion de resultados, cierre
-        - Libro Mayor (como esta)
-        - Cuenta corriente de proveedores (libro mayor de empresa, filtro por proveedores)
-        - Cuenta corriente de clientes (libro mayor de empresa, filtro por clientes)
         - Estados de los asientos: "Borrador", "Confirmado", "Cancelado"
         - Plan de Cuentas: editable
             - cuentas separadas por rubro (sub cuentas?)

@@ -63,7 +63,12 @@
                         <!-- TODO: Agregar actividades en AFIP -->
                         <!-- https://serviciosweb.afip.gob.ar/genericos/nomencladorActividades/index.aspx -->
                         <!-- <separator /> -->
-                        <!-- <field name="main_activity_id" colspan="3" /> -->
+                        <field name="afip_activity_ids" colspan="4">
+                            <tree>
+                                <field name="code" />
+                                <field name="name" />
+                            </tree>
+                        </field>
                     </group>
 
                     <!-- TODO: Solo habilitar para Monotributo -->
@@ -72,15 +77,13 @@
                         <field name="monotributo_type" string="Tipo" />
                     </group>
 
-                    <group string="Ingresos Brutos">
+                    <group string="Ingresos Brutos" col="4">
 
-                        <label for="l10n_ar_gross_income_number" attrs="{'invisible': [('country_code', '!=', 'AR')]}" modifiers="{'invisible':[['country_code','!=','AR']]}"/>
-                        <div attrs="{'invisible': [('country_code', '!=', 'AR')]}" name="gross_income" modifiers="{'invisible':[['country_code','!=','AR']]}">
-                            <field name="l10n_ar_gross_income_type" class="oe_inline" id="l10n_ar_gross_income_type"/>
-                            
-                            <!-- TODO: dejar siempre visible, como readonly si no es multilateral. y borrar con exento/null -->
-                            <field name="l10n_ar_gross_income_number" placeholder="Número..." class="oe_inline" attrs="{'invisible': [('l10n_ar_gross_income_type', 'in', [False, 'exempt'])], 'required': [('l10n_ar_gross_income_type', 'not in', [False, 'exempt'])]}" modifiers="{'invisible':[['l10n_ar_gross_income_type','in',[false,'exempt']]],'required':[['l10n_ar_gross_income_type','not in',[false,'exempt']]]}" id="l10n_ar_gross_income_number"/>
-                        </div>
+                        <field string="Tipo" name="l10n_ar_gross_income_type" />
+                        <field string="Número" name="l10n_ar_gross_income_number" />
+
+                        <field name="iibb_tax_percentage" />
+                        <field name="iibb_min_amount" />
 
                     </group>
 
