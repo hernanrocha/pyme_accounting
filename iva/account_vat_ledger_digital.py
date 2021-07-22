@@ -11,9 +11,12 @@ import re
 
 _logger = logging.getLogger(__name__)
 
+# https://discuss.tryton.org/t/account-ar-argentine-localization/3261/4
+
 class AccountVatLedger(models.Model):
     _inherit = "account.vat.ledger"
 
+    # TODO ?????
     digital_skip_invoice_tests = fields.Boolean(
         string='Saltear tests a facturas?',
         help='If you skip invoice tests probably you will have errors when '
@@ -36,11 +39,8 @@ class AccountVatLedger(models.Model):
         'REGDIGITAL_CV_CBTE',
         readonly=True,
     )
-    REGDIGITAL_CV_CABECERA = fields.Text(
-        'REGDIGITAL_CV_CABECERA',
-        readonly=True,
-    )
     digital_vouchers_file = fields.Binary(
+        string="Archivo Comprobantes",
         compute='_compute_digital_files',
         readonly=True
     )
@@ -48,6 +48,7 @@ class AccountVatLedger(models.Model):
         compute='_compute_digital_files',
     )
     digital_aliquots_file = fields.Binary(
+        string="Archivo Alícuotas",
         compute='_compute_digital_files',
         readonly=True
     )
@@ -109,40 +110,46 @@ class AccountVatLedger(models.Model):
         # segun vimos aca la afip espera "ISO-8859-1" en vez de utf-8
         # http://www.planillasutiles.com.ar/2015/08/
         # como-descargar-los-archivos-de.html
-        if self.REGDIGITAL_CV_ALICUOTAS:
-            self.digital_aliquots_filename = _('Alicuots_%s_%s.txt') % (
-                self.type,
-                self.date_to,
-                # self.period_id.name
-            )
-            self.digital_aliquots_file = base64.encodestring(
-                self.REGDIGITAL_CV_ALICUOTAS.encode('ISO-8859-1'))
-        else:
-            self.digital_aliquots_file = False
-            self.digital_aliquots_filename = False
-        if self.REGDIGITAL_CV_COMPRAS_IMPORTACIONES:
-            self.digital_import_aliquots_filename = _('Import_Alicuots_%s_%s.txt') % (
-                self.type,
-                self.date_to,
-                # self.period_id.name
-            )
-            self.digital_import_aliquots_file = base64.encodestring(
-                self.REGDIGITAL_CV_COMPRAS_IMPORTACIONES.encode('ISO-8859-1'))
-        else:
-            self.digital_import_aliquots_file = False
-            self.digital_import_aliquots_filename = False
+
+        # Restablecer todos los datos
+        self.digital_vouchers_file = False
+        self.digital_vouchers_filename = False
+        self.digital_aliquots_file = False
+        self.digital_aliquots_filename = False
+        self.digital_import_aliquots_file = False
+        self.digital_import_aliquots_filename = False
+
+        # Comprobantes
         if self.REGDIGITAL_CV_CBTE:
-            self.digital_vouchers_filename = _('Vouchers_%s_%s.txt') % (
-                self.type,
-                self.date_to,
-                # self.period_id.name
-            )
+            # self.period_id.name
+            # self.env.company_id.partner_id.vat
+            if self.type == 'purchase':
+                self.digital_vouchers_filename = 'Compras_Cbtes_{}.txt'.format(self.date_to)
+            else:
+                self.digital_vouchers_filename = 'Ventas_Cbtes_{}.txt'.format(self.date_to)
+
             self.digital_vouchers_file = base64.encodestring(
                 self.REGDIGITAL_CV_CBTE.encode('ISO-8859-1'))
-        else:
-            self.digital_vouchers_file = False
-            self.digital_vouchers_filename = False
 
+        # Alicuotas
+        if self.REGDIGITAL_CV_ALICUOTAS:
+            # self.period_id.name
+            # self.env.company_id.partner_id.vat
+            if self.type == 'purchase':
+                self.digital_aliquots_filename = 'Compras_Alicuotas_{}.txt'.format(self.date_to)
+            else:
+                self.digital_aliquots_filename = 'Ventas_Alicuotas_{}.txt'.format(self.date_to)
+
+            self.digital_aliquots_file = base64.encodestring(
+                self.REGDIGITAL_CV_ALICUOTAS.encode('ISO-8859-1'))
+        
+        # Importaciones
+        if self.REGDIGITAL_CV_COMPRAS_IMPORTACIONES:
+            # self.period_id.name
+            # self.env.company_id.partner_id.vat
+            self.digital_import_aliquots_filename = 'Compras_Importaciones_{}.txt'.format(self.date_to)
+            self.digital_import_aliquots_file = base64.encodestring(
+                self.REGDIGITAL_CV_COMPRAS_IMPORTACIONES.encode('ISO-8859-1'))
 
     def compute_digital_data(self):
         _logger.info("GET COMPUTE DIGITAL DATA")
@@ -154,6 +161,7 @@ class AccountVatLedger(models.Model):
         for k, v in alicuotas.items():
             lines += v
         self.REGDIGITAL_CV_ALICUOTAS = '\r\n'.join(lines)
+        _logger.info(self.REGDIGITAL_CV_ALICUOTAS)
 
         impo_alicuotas = {}
         if self.type == 'purchase':
@@ -641,6 +649,7 @@ class AccountVatLedger(models.Model):
             ]
         return row
 
+    # impo indica es si es para (66) - Despacho de Importacion (True) o no (False)
     def get_REGDIGITAL_CV_ALICUOTAS(self, impo=False):
         """
         Devolvemos un dict para calcular la cantidad de alicuotas cuando
@@ -662,49 +671,36 @@ class AccountVatLedger(models.Model):
             invoices = self.get_digital_invoices().filtered(
                 lambda r: r.l10n_latam_document_type_id.code != '66')
 
-        _logger.info("INVOICES {}".format(len(invoices)))
+        _logger.info("INVOICES PARA ALICUOTAS {}".format(len(invoices)))
         for inv in invoices:
             lines = []
-            is_zero = inv.currency_id.is_zero
+
             # reportamos como linea de iva si:
             # * el impuesto es iva cero
             # * el impuesto es iva 21, 27 etc pero tiene impuesto liquidado,
             # si no tiene impuesto liquidado (is_zero), entonces se inventa
             # una linea
-            #vat_taxes = inv.move_tax_ids.filtered(
-            #vat_taxes = inv.l10n_latam_tax_ids.filtered(
-                #lambda r: r.tax_id.tax_group_id.tax_type == 'vat' and r.tax_id.tax_group_id.l10n_ar_vat_afip_code == 3 or (
-                #    r.tax_id.tax_group_id.l10n_ar_vat_afip_code in [
-                #        4, 5, 6, 8, 9] and not is_zero(r.tax_amount)))
-            #    lambda r: r.l10n_latam_tax_ids[0].tax_group_id.tax_type == 'vat' and r.l10n_latam_tax_ids[0].tax_group_id.l10n_ar_vat_afip_code == '3' or (
-            #        r.l10n_latam_tax_ids[0].tax_group_id.l10n_ar_vat_afip_code in [
-            #            '4','5', '6', '8', '9'] and not is_zero(r.tax_base_amount)))
+
             vat_taxes = self.env['account.move.line']
             for mvl_tax in inv.l10n_latam_tax_ids:
-                #raise ValidationError('estamos aca %s %s %s'%(inv,mvl_tax.tax_group_id.l10n_ar_vat_afip_code + 'X',mvl_tax.tax_group_id.tax_type))
-                #if not mvl_tax.l10n_latam_tax_ids:
-                #    continue
                 tax_group_id = mvl_tax.tax_group_id
-                #if tax_group_id.l10n_ar_vat_afip_code == '1':
-                #    raise ValidationError('existe el registro')
-                #if tax_group_id.tax_type == 'vat' and (tax_group_id.l10n_ar_vat_afip_code == 3 or (tax_group_id.l10n_ar_vat_afip_code in [4, 5, 6, 8, 9])):
+                # (2) Exento 
+                # (3) 0%
+                # (4) 10.5%
+                # (5) 21%
+                # (6) 27%
+                # (8) 5%
+                # (9) 2.5%
                 if tax_group_id.tax_type == 'vat' and tax_group_id.l10n_ar_vat_afip_code in ['2','3', '4', '5', '6', '8', '9']:
                     vat_taxes += mvl_tax
 
-            #for mvl_tax in inv.line_ids:
-            #    #if inv.id == 652 and mvl_tax.name == 'No gravado':
-            #    #    raise ValidationError('estamos aca %s'%(mvl_tax.tax_ids[0].tax_group_id.l10n_ar_vat_afip_code))
-            #    if mvl_tax.tax_ids and mvl_tax.tax_ids[0].tax_group_id.l10n_ar_vat_afip_code == '3':
-            #        lines.append(''.join(self.get_tax_row(
-            #            inv, 0.0, 3, 0.0, impo=impo)))
-
+            # Agregar una linea para No Gravado ???
             if not vat_taxes and inv.move_tax_ids.filtered(
                     lambda r: r.tax_id.tax_group_id.tax_type == 'vat' and r.tax_id.tax_group_id.l10n_ar_vat_afip_code):
                 lines.append(''.join(self.get_tax_row(
                     inv, 0.0, 3, 0.0, impo=impo)))
 
             # we group by afip_code
-            #raise ValidationError('estamos aca %s %s %s %s'%(inv,vat_taxes,vat_taxes[0].tax_base_amount,vat_taxes[0].price_subtotal))
             for afip_code in vat_taxes.mapped('tax_group_id.l10n_ar_vat_afip_code'):
                 taxes = vat_taxes.filtered(lambda x: x.tax_group_id.l10n_ar_vat_afip_code == afip_code)
                 if inv.currency_id.id == inv.company_id.currency_id.id:
@@ -726,7 +722,8 @@ class AccountVatLedger(models.Model):
             _logger.info("IVA EXENTO/NO GRAVADO {}".format(inv.invoice_line_ids))
             for inv_line in inv.invoice_line_ids:
                 for tax in inv_line.tax_ids:
-                    if tax.tax_group_id.tax_type == 'vat' and tax.tax_group_id.l10n_ar_vat_afip_code in ['2']:
+                    # TODO: Filtrar solo las correspondientes a IVA
+                    # if tax.tax_group_id.tax_type == 'vat' and tax.tax_group_id.l10n_ar_vat_afip_code in ['2']:
                         text_line = ''
                         # Campo 1
                         text_line += "{:0>3d}".format(int(inv.l10n_latam_document_type_id.code))
@@ -741,8 +738,9 @@ class AccountVatLedger(models.Model):
                         text_line += self.get_partner_document_number(inv.commercial_partner_id)
                         # Campo 6: Importe Neto Gravado
                         text_line += self.format_amount(inv_line.price_subtotal, invoice=inv)
-                        # Campo 5: Alícuota de IVA.
-                        text_line += str(tax.tax_group_id.l10n_ar_vat_afip_code).rjust(4, '0')
+                        # TODO: Campo 5: Alícuota de IVA.
+                        # tax.tax_group_id.l10n_ar_vat_afip_code
+                        text_line += str('').rjust(4, '0')
                         # Campo 6: Impuesto Liquidado.
                         text_line += self.format_amount(0, invoice=inv)
                         lines.append(text_line)
