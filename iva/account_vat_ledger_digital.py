@@ -171,27 +171,37 @@ class AccountVatLedger(models.Model):
                 self.REGDIGITAL_CV_COMPRAS_IMPORTACIONES.encode('ISO-8859-1'))
 
     def compute_digital_data(self):
-        _logger.info("GET COMPUTE DIGITAL DATA")
-        alicuotas = self.get_REGDIGITAL_CV_ALICUOTAS()
-        _logger.info("ALICUOTAS: {}".format(len(alicuotas)))
+        if self.type == 'sale':
+            alicuotas = self.get_REGDIGITAL_CV_ALICUOTAS()
 
-        # sacamos todas las lineas y las juntamos
-        lines = []
-        for k, v in alicuotas.items():
-            lines += v
-        self.REGDIGITAL_CV_ALICUOTAS = '\r\n'.join(lines)
-        _logger.info(self.REGDIGITAL_CV_ALICUOTAS)
-
-        impo_alicuotas = {}
-        if self.type == 'purchase':
-            impo_alicuotas = self.get_REGDIGITAL_CV_ALICUOTAS(impo=True)
             # sacamos todas las lineas y las juntamos
             lines = []
-            for k, v in impo_alicuotas.items():
+            for k, v in alicuotas.items():
                 lines += v
-            self.REGDIGITAL_CV_COMPRAS_IMPORTACIONES = '\r\n'.join(lines)
-        alicuotas.update(impo_alicuotas)
-        self.get_REGDIGITAL_CV_CBTE(alicuotas)
+            self.REGDIGITAL_CV_ALICUOTAS = '\r\n'.join(lines)
+            _logger.info(self.REGDIGITAL_CV_ALICUOTAS)
+
+            self.get_REGDIGITAL_CV_CBTE_VENTAS(alicuotas)
+        else:
+            alicuotas = self.get_REGDIGITAL_CV_ALICUOTAS()
+
+            # sacamos todas las lineas y las juntamos
+            lines = []
+            for k, v in alicuotas.items():
+                lines += v
+            self.REGDIGITAL_CV_ALICUOTAS = '\r\n'.join(lines)
+            _logger.info(self.REGDIGITAL_CV_ALICUOTAS)
+
+            impo_alicuotas = {}
+            if self.type == 'purchase':
+                impo_alicuotas = self.get_REGDIGITAL_CV_ALICUOTAS(impo=True)
+                # sacamos todas las lineas y las juntamos
+                lines = []
+                for k, v in impo_alicuotas.items():
+                    lines += v
+                self.REGDIGITAL_CV_COMPRAS_IMPORTACIONES = '\r\n'.join(lines)
+            alicuotas.update(impo_alicuotas)
+            self.get_REGDIGITAL_CV_CBTE_COMPRAS(alicuotas)
 
     def get_partner_document_code(self, partner):
         # se exige cuit para todo menos consumidor final.
@@ -259,7 +269,8 @@ class AccountVatLedger(models.Model):
             invoices -= to_skip
         return invoices
 
-    def get_REGDIGITAL_CV_CBTE_VENTAS(self):
+    # TODO: Calcular alicuotas dentro del mismo metodo
+    def get_REGDIGITAL_CV_CBTE_VENTAS(self, alicuotas):
         res = []
 
         # Obtener lista de comprobantes.
@@ -269,7 +280,7 @@ class AccountVatLedger(models.Model):
         for inv in invoices:
             # TODO: Revisar aca la lista de alicuotas
             cant_alicuotas = 0
-            vat_taxes = []
+            vat_taxes = alicuotas[inv]
             vat_exempt_base_amount = 0
             cant_alicuotas = len(vat_taxes)
 
@@ -282,16 +293,16 @@ class AccountVatLedger(models.Model):
             _logger.info("No Gravado / Exento: {} {}".format(untaxed_amount, exempt_amount))
 
             row = [
-                # Campo 1: Fecha de comprobante
+                # VENTAS Campo 1: Fecha de comprobante
                 fields.Date.from_string(inv.invoice_date).strftime('%Y%m%d'),
 
-                # Campo 2: Tipo de Comprobante.
+                # VENTAS Campo 2: Tipo de Comprobante.
                 "{:0>3d}".format(int(inv.l10n_latam_document_type_id.code)),
 
-                # Campo 3: Punto de Venta
+                # VENTAS Campo 3: Punto de Venta
                 self.get_point_of_sale(inv),
 
-                # Campo 4: Número de Comprobante
+                # VENTAS Campo 4: Número de Comprobante
                 # TODO agregar estos casos de uso
                 # Si se trata de un comprobante de varias hojas, se deberá
                 # informar el número de documento de la primera hoja, teniendo
@@ -303,30 +314,30 @@ class AccountVatLedger(models.Model):
                 # del rango a considerar.
                 "{:0>20d}".format(doc_number),
 
-                # Campo 5: Número de Comprobante Hasta.
+                # VENTAS Campo 5: Número de Comprobante Hasta.
                 # TODO agregar esto En el resto de los casos se consignará el
                 # dato registrado en el campo 4
                 "{:0>20d}".format(doc_number),
 
-                # Campo 6: Código de documento del comprador.
+                # VENTAS Campo 6: Código de documento del comprador.
                 self.get_partner_document_code(inv.commercial_partner_id),
 
-                # Campo 7: Número de Identificación del comprador
+                # VENTAS Campo 7: Número de Identificación del comprador
                 self.get_partner_document_number(inv.commercial_partner_id),
 
-                # Campo 8: Apellido y Nombre del comprador.
+                # VENTAS Campo 8: Apellido y Nombre del comprador.
                 inv.commercial_partner_id.name.ljust(30, ' ')[:30],
                 # inv.commercial_partner_id.name.encode(
                 #     'ascii', 'replace').ljust(30, ' ')[:30],
 
-                # Campo 9: Importe Total de la Operación.
+                # VENTAS Campo 9: Importe Total de la Operación.
                 #self.format_amount(inv.cc_amount_total, invoice=inv),
                 self.format_amount(inv.amount_total, invoice=inv),
 
-                # Campo 10: Importe No Gravado
+                # VENTAS Campo 10: Importe No Gravado
                 self.format_amount(untaxed_amount, invoice=inv),
                     
-                # Campo 11: Percepción a no categorizados
+                # VENTAS Campo 11: Percepción a no categorizados
                 self.format_amount(
                     sum(inv.move_tax_ids.filtered(lambda r: (
                         r.tax_id.tax_group_id.tax_type == 'withholding' and
@@ -334,10 +345,10 @@ class AccountVatLedger(models.Model):
                         r.tax_id.tax_group_id.l10n_ar_tribute_afip_code == '01')
                     ).mapped('tax_amount')), invoice=inv),
 
-                # Campo 12: Importe exento
+                # VENTAS Campo 12: Importe exento
                 self.format_amount(exempt_amount, invoice=inv),
 
-                # Campo 13: Importe de percepciones o pagos a cuenta de
+                # VENTAS Campo 13: Importe de percepciones o pagos a cuenta de
                 # impuestos nacionales
                 self.format_amount(
                     sum(inv.move_tax_ids.filtered(lambda r: (
@@ -346,37 +357,37 @@ class AccountVatLedger(models.Model):
                         r.tax_id.tax_group_id.l10n_ar_tribute_afip_code == '01')
                     ).mapped('tax_amount')), invoice=inv),
 
-                # Campo 14: Importe de percepciones de ingresos brutos
+                # VENTAS Campo 14: Importe de percepciones de ingresos brutos
                 self.format_amount(
                     sum(inv.move_tax_ids.filtered(lambda r: (
                         r.tax_id.tax_group_id.tax_type == 'withholding' and
                         r.tax_id.tax_group_id.l10n_ar_tribute_afip_code == '02')
                     ).mapped('tax_amount')), invoice=inv),
 
-                # Campo 15: Importe de percepciones de impuestos municipales
+                # VENTAS Campo 15: Importe de percepciones de impuestos municipales
                 self.format_amount(
                     sum(inv.move_tax_ids.filtered(lambda r: (
                         r.tax_id.tax_group_id.tax_type == 'withholding' and
                         r.tax_id.tax_group_id.l10n_ar_tribute_afip_code == '03')
                     ).mapped('tax_amount')), invoice=inv),
 
-                # Campo 16: Importe de impuestos internos
+                # VENTAS Campo 16: Importe de impuestos internos
                 self.format_amount(
                     sum(inv.move_tax_ids.filtered(
                         lambda r: r.tax_id.tax_group_id.l10n_ar_tribute_afip_code == '04'
                     ).mapped('tax_amount')), invoice=inv),
 
-                # Campo 17: Código de Moneda
+                # VENTAS Campo 17: Código de Moneda
                 str(currency_code),
 
-                # Campo 18: Tipo de Cambio
+                # VENTAS Campo 18: Tipo de Cambio
                 # nueva modalidad de currency_rate
                 self.format_amount(currency_rate, padding=10, decimals=6),
 
-                # Campo 19: Cantidad de alícuotas de IVA
+                # VENTAS Campo 19: Cantidad de alícuotas de IVA
                 str(cant_alicuotas),
 
-                # Campo 20: Código de operación.
+                # VENTAS Campo 20: Código de operación.
                 # WARNING. segun la plantilla es 0 si no es ninguna
                 # TODO ver que no se informe un codigo si no correpsonde,
                 # tal vez da error
@@ -384,13 +395,13 @@ class AccountVatLedger(models.Model):
                 #inv.fiscal_position_id.afip_code or '0',
                 ' ',
 
-                # Campo 21: Otros Tributos
+                # VENTAS Campo 21: Otros Tributos
                 self.format_amount(
                     sum(inv.move_tax_ids.filtered(
                         lambda r: r.tax_id.tax_group_id.l10n_ar_tribute_afip_code == '99'
                     ).mapped('tax_amount')), invoice=inv),
 
-                # Campo 22: vencimiento comprobante (no figura en
+                # VENTAS Campo 22: vencimiento comprobante (no figura en
                 # instructivo pero si en aplicativo) para tique y factura
                 # de exportacion no se informa, tmb para algunos otros
                 # pero que tampoco tenemos implementados
@@ -407,11 +418,7 @@ class AccountVatLedger(models.Model):
             res.append(''.join(row))
         self.REGDIGITAL_CV_CBTE = '\r\n'.join(res)
 
-    def get_REGDIGITAL_CV_CBTE(self, alicuotas):
-        if self.type == 'sale':
-            self.get_REGDIGITAL_CV_CBTE_VENTAS()
-            return
-        
+    def get_REGDIGITAL_CV_CBTE_COMPRAS(self, alicuotas):
         self.ensure_one()
         res = []
 
@@ -437,7 +444,7 @@ class AccountVatLedger(models.Model):
             #cant_alicuotas = len(alicuotas.get(inv.))
             # TODO: Revisar aca la lista de alicuotas
             cant_alicuotas = 0
-            vat_taxes = []
+            vat_taxes = alicuotas[inv]
             vat_exempt_base_amount = 0
             for invl in inv.invoice_line_ids:
                 for tax in invl.tax_ids:
@@ -730,6 +737,64 @@ class AccountVatLedger(models.Model):
             ]
         return row
 
+    # A partir de un invoice, se determinan tipos de alicuota y se devuelve un array
+    def get_invoice_alicuotas(self, inv, impo):
+        lines = []
+
+        # reportamos como linea de iva si:
+        # * el impuesto es iva cero
+        # * el impuesto es iva 21, 27 etc pero tiene impuesto liquidado,
+        # si no tiene impuesto liquidado (is_zero), entonces se inventa
+        # una linea
+
+        # Obtener todas las lineas de IVA
+        # - Filtrar las lineas de impuestos de tipo 'IVA' con codigo conocido
+        vat_taxes = inv.line_ids.filtered(
+            # (1) No Gravado
+            # (2) Exento 
+            # (3) 0%
+            # (4) 10.5%
+            # (5) 21%
+            # (6) 27%
+            # (8) 5%
+            # (9) 2.5%
+            lambda l: l.tax_group_id and l.tax_group_id.tax_type == 'vat' and 
+            l.tax_group_id.l10n_ar_vat_afip_code in ['2','3', '4', '5', '6', '8', '9']
+        )
+
+        _logger.info("Cantidad de alicuotas gravadas: {}".format(len(vat_taxes)))
+        _logger.info(vat_taxes)
+
+        taxed_0 = inv.invoice_line_ids.filtered(taxed_0_line)
+        if len(taxed_0):
+            _logger.info("Alicuota al 0%: {} {} {}".format(inv, vat_taxes, inv.amount_total))
+            lines.append(''.join(self.get_tax_row(inv, sum(taxed_0.mapped('price_total')), 3, 0.0, impo=impo)))            
+
+        untaxed_exempt = inv.invoice_line_ids.filtered(untaxed_exempt_line)
+        if len(untaxed_exempt):
+            _logger.info("Alicuota No Gravada/Exenta: {} {}".format(inv, vat_taxes))
+            lines.append(''.join(self.get_tax_row(inv, 0.0, 3, 0.0, impo=impo)))
+        
+        # Agrupar montos por tipo de alicuota
+        for afip_code in vat_taxes.mapped('tax_group_id.l10n_ar_vat_afip_code'):
+            taxes = vat_taxes.filtered(lambda x: x.tax_group_id.l10n_ar_vat_afip_code == afip_code)
+            if inv.currency_id.id == inv.company_id.currency_id.id:
+                # Factura en pesos
+                imp_neto = sum(taxes.mapped('tax_base_amount'))
+            else:
+                # Factura en otra moneda
+                imp_neto = 0
+                other_lines = self.env['account.move.line'].search([('debit','>',0),('move_id','=',inv.id),('tax_ids','!=',False)])
+                for other_line in other_lines:
+                    imp_neto = imp_neto + other_line.amount_currency
+            
+            imp_liquidado = sum(taxes.mapped('price_subtotal'))
+            lines.append(''.join(self.get_tax_row(
+                inv, imp_neto, afip_code, imp_liquidado, impo=impo,
+            )))
+        
+        return lines
+    
     # impo indica es si es para (66) - Despacho de Importacion (True) o no (False)
     # Se usa tanto para compras como para ventas
     def get_REGDIGITAL_CV_ALICUOTAS(self, impo=False):
@@ -757,64 +822,7 @@ class AccountVatLedger(models.Model):
 
         _logger.info("INVOICES PARA ALICUOTAS {}".format(len(invoices)))
         for inv in invoices:
-            lines = []
-
-            # reportamos como linea de iva si:
-            # * el impuesto es iva cero
-            # * el impuesto es iva 21, 27 etc pero tiene impuesto liquidado,
-            # si no tiene impuesto liquidado (is_zero), entonces se inventa
-            # una linea
-
-            # Obtener todas las lineas de IVA
-            # - Filtrar las lineas de impuestos de tipo 'IVA' con codigo conocido
-            vat_taxes = inv.line_ids.filtered(
-                # (1) No Gravado
-                # (2) Exento 
-                # (3) 0%
-                # (4) 10.5%
-                # (5) 21%
-                # (6) 27%
-                # (8) 5%
-                # (9) 2.5%
-                lambda l: l.tax_group_id and l.tax_group_id.tax_type == 'vat' and 
-                l.tax_group_id.l10n_ar_vat_afip_code in ['2','3', '4', '5', '6', '8', '9']
-            )
-
-            _logger.info("Cantidad de alicuotas gravadas: {}".format(len(vat_taxes)))
-            _logger.info(vat_taxes)
-
-            taxed_0 = inv.invoice_line_ids.filtered(taxed_0_line)
-            if len(taxed_0):
-                _logger.info("Alicuota al 0%: {} {} {}".format(inv, vat_taxes, inv.amount_total))
-                lines.append(''.join(self.get_tax_row(inv, sum(taxed_0.mapped('price_total')), 3, 0.0, impo=impo)))            
-
-            untaxed_exempt = inv.invoice_line_ids.filtered(untaxed_exempt_line)
-            if len(untaxed_exempt):
-                _logger.info("Alicuota No Gravada/Exenta: {} {}".format(inv, vat_taxes))
-                lines.append(''.join(self.get_tax_row(inv, 0.0, 3, 0.0, impo=impo)))
-            
-            # Agrupar montos por tipo de alicuota
-            for afip_code in vat_taxes.mapped('tax_group_id.l10n_ar_vat_afip_code'):
-                taxes = vat_taxes.filtered(lambda x: x.tax_group_id.l10n_ar_vat_afip_code == afip_code)
-                if inv.currency_id.id == inv.company_id.currency_id.id:
-                    # Factura en pesos
-                    imp_neto = sum(taxes.mapped('tax_base_amount'))
-                else:
-                    # Factura en otra moneda
-                    imp_neto = 0
-                    other_lines = self.env['account.move.line'].search([('debit','>',0),('move_id','=',inv.id),('tax_ids','!=',False)])
-                    for other_line in other_lines:
-                        imp_neto = imp_neto + other_line.amount_currency
-                
-                imp_liquidado = sum(taxes.mapped('price_subtotal'))
-                lines.append(''.join(self.get_tax_row(
-                    inv,
-                    imp_neto,
-                    afip_code,
-                    imp_liquidado,
-                    impo=impo,
-                )))
-
-            res[inv] = lines
+            # Por cada factura, obtener la lista de alicuotas
+            res[inv] = self.get_invoice_alicuotas(inv, impo=impo)
         return res
 
