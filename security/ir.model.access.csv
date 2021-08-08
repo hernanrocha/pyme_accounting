@@ -34,5 +34,6 @@ security_arba_devolucion_bancaria,ARBA Devoluciones Bancarias,model_l10n_ar_arba
 security_user_company,Manejo de Compañias,model_res_company,account.group_account_manager,1,1,1,1
 
 security_report_monotributo,Reporte Mensual de Monotributo,model_report_pyme_accounting_report_payslip,account.group_account_manager,1,1,1,1
+security_report_iva_f2002,Reporte de IVA F.2002,model_report_pyme_accounting_report_iva_f2002,account.group_account_manager,1,1,1,1
 
 security_afip_actividad,Actividad AFIP,model_l10n_ar_afip_actividad,account.group_account_manager,1,0,0,0

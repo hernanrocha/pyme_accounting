@@ -61,6 +61,7 @@
 
         # Reports
         'report/basic_report.xml',
+        'report/report_iva_f2002.xml',
         # 'views/report_iibb.xml', # Asientos contables relacionados con IIBB
 
         # Menu - Mi Estudio

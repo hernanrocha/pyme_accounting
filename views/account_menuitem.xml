@@ -323,8 +323,8 @@
             -->
 
             <!-- TODO: MENU: Facturacion/Informes/AFIP/DD. JJ. IVA -->
-            <!-- <menuitem id="menu_taxes_report_afip_iva_web" name="DD. JJ. IVA (F. 2002)" 
-                sequence="2" action="report_basic" /> -->
+            <menuitem id="menu_reports_afip_f2002" name="IVA Por Actividad (F. 2002)" 
+                sequence="2" action="qweb_report_iva_f2002" />
 
             <!-- TODO: Filtrar por compañia -->
             <!-- TODO: Seleccionar rangos de fecha por mes -->
