@@ -4,9 +4,30 @@ from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 import xml.etree.ElementTree as ET
 import base64
+import logging
 from datetime import datetime
 
+_logger = logging.getLogger(__name__)
+
 ns = {'ss': 'urn:schemas-microsoft-com:office:spreadsheet'}
+
+def translate_invoice_type(tipo, letra, numero):
+    t = ''
+    if tipo == 'F':
+        t = 'FA'
+    elif tipo == 'C':
+        t = 'NC'
+    else:
+        raise UserError("Tipo de comprobante invalido: {}".format(tipo))
+
+    if letra not in ['A', 'B', 'C', ' ']:
+        raise UserError("Letra de comprobante invalido: {}".format(letra))
+
+    l = letra
+    if letra == ' ':
+        l = 'C'
+
+    return '{}-{} {}'.format(t, l, numero)
 
 def cell_data(cells, index):
     return cells[index].find('ss:Data', ns).findtext('.')
@@ -15,9 +36,19 @@ class PurchaseImportDeduccionesArbaPLine(models.TransientModel):
     _name = "l10n_ar.import.purchase.deducciones.arba.pline"
 
     date = fields.Date(string="Fecha")
-    cuit = fields.Float(string="CUIT")
-    invoice_number = fields.Float(string="Comprobante")
+    cuit = fields.Char(string="CUIT")
+    partner = fields.Char(string="Proveedor")
+    invoice_number = fields.Char(string="Comprobante")
     amount = fields.Float(string="Monto")
+    amount2 = fields.Float(string="Otros")
+
+    @api.depends('amount', 'amount2')
+    def _compute_diff(self):
+        for line in self:
+            # TODO: tener en cuenta las notas de credito
+            line.diff = abs(abs(line.amount) - abs(line.amount2)) > 0.005
+
+    diff = fields.Boolean(string="Diferencia", compute=_compute_diff)
     
     # TODO: borrar esto de la vista de edicion
     import_id = fields.Many2one(comodel_name="l10n_ar.import.purchase.deducciones.arba", ondelete="cascade", readonly=True, invisible=True)
@@ -69,9 +100,18 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
             raise UserError("Debes cargar un archivo de deducciones de ARBA")
 
         # Leer archivo
-        file_content = base64.decodestring(data['arba_file'])
+        file_content = base64.b64decode(data['arba_file'].decode())
         root = ET.fromstring(file_content)
 
+        # Borrar registros anteriores
+        self.write({ 
+            'percepciones': [(5, 0, 0)],
+            'retenciones': [(5, 0, 0)],
+            'retenciones_bancarias': [(5, 0, 0)],
+            'devoluciones_bancarias': [(5, 0, 0)],
+        })
+
+        # TODO: Handle parsing error messages
         self._parse_percepciones(root)
         self._parse_retenciones(root)
         self._parse_retenciones_bancarias(root)
@@ -115,21 +155,43 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
         for row in rows:
             cells = row.findall('ss:Cell', ns)
 
-            # tipo_comprobante = cell_data(cells, 0) # FA,NC,ND
-            # letra_comprobante = cell_data(cells, 1) # A,B,C
+            tipo_comprobante = cell_data(cells, 0) # 'F', 'C', 'D'
+            letra_comprobante = cell_data(cells, 1) # 'A', 'B', 'C', ' '
             numero_comprobante = "{}-{}".format(cell_data(cells, 2).zfill(5), cell_data(cells, 3).zfill(8))
             cuit = cell_data(cells, 4)
             fecha = cell_data(cells, 7)
             importe = cell_data(cells, 8)
             
             print("[Percepcion]", fecha, cuit, numero_comprobante, importe)
-            self.percepciones.create({
+
+            p = self.percepciones.create({
                 'date': datetime.strptime(fecha, '%d/%m/%Y'),
                 'amount': float(importe),
                 'cuit': cuit,
-                'invoice_number': numero_comprobante,
+                'invoice_number': translate_invoice_type(tipo_comprobante, letra_comprobante, numero_comprobante),
                 'import_id': self.id,
             })
+
+            comp = self.env['account.move'].search([
+                ('move_type', 'in', ['in_invoice', 'in_refund']),
+                ('name', '=', p.invoice_number)
+                # TODO: filtrar por CUIT
+            ])
+            if len(comp) == 0:
+                _logger.info("Comprobante no encontrado", cuit, numero_comprobante)
+            else:
+                # print("Comprobante encontrado", cuit, numero_comprobante)
+                line_other = comp.line_ids.filtered(lambda line: line.name == 'Otros Montos No Gravados')
+                # print("Line", line_other)
+                if len(line_other) == 1:
+                    p.write({ 'amount2': line_other.price_unit, 'partner': comp.partner_id.name })
+
+        # TODO: Filtrar por fecha primero, y descontar las facturas que vayan coincidiendo
+        comp = self.env['account.move'].search([
+            ('move_type', 'in', ['in_invoice', 'in_refund']),
+            ('name', 'not in', self.percepciones.mapped('invoice_number')),
+        ])
+        _logger.info("Comprobantes sin percepciones", comp, comp.mapped('name'))
 
     # Retenciones
     def _parse_retenciones(self, root):
@@ -222,20 +284,40 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
     # table = retenciones.find('ss:Table', ns)
 
     def _generate_percepciones(self):
-        if len(self.percepciones) > 0:
-            raise UserError("No se permiten cargar percepciones por el momento")
+        for percepcion in self.percepciones:
+            perc = self.env['l10n_ar.impuestos.deduccion'].create({
+                'state': 'available',
+                'tax': 'arba',
+                'type': 'arba_percepcion',
+                'date': percepcion.date,
+                'amount': percepcion.amount,
+            })
+            print("Percepcion", perc)
 
     def _generate_retenciones(self):
         for retencion in self.retenciones:
-            ret = self.env['l10n_ar.arba.retencion'].create({
+            ret = self.env['l10n_ar.impuestos.deduccion'].create({
+                'state': 'available',
+                'tax': 'arba',
+                'type': 'arba_retencion',
                 'date': retencion.date,
                 'amount': retencion.amount,
+                # 'cuit'
+                # 'invoice_pos'
+                # 'invoice_number'
+                # 'invoice_description'
+                # 'description',
+                # 'apply_date'
+                # 'publish_date'
             })
             print("Retencion", ret)
 
     def _generate_retenciones_bancarias(self):
         for retencion in self.retenciones_bancarias:
-            ret = self.env['l10n_ar.arba.retencion_bancaria'].create({
+            ret = self.env['l10n_ar.impuestos.deduccion'].create({
+                'state': 'available',
+                'tax': 'arba',
+                'type': 'arba_retencion_bancaria',
                 'date': retencion.date,
                 'amount': retencion.amount,
             })
@@ -243,12 +325,14 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
 
     def _generate_devoluciones_bancarias(self):
         for devolucion in self.devoluciones_bancarias:
-            dev = self.env['l10n_ar.arba.devolucion_bancaria'].create({
+            dev = self.env['l10n_ar.impuestos.deduccion'].create({
+                'state': 'available',
+                'tax': 'arba',
+                'type': 'arba_devolucion_bancaria',
                 'date': devolucion.date,
                 'amount': devolucion.amount,
             })
             print("Devolucion Bancaria", dev)
-
 
     # TODO: Percepciones aduaneras
     # def _generate_percepciones_aduaneras(self, root):

@@ -15,11 +15,14 @@
                 <notebook string="Deducciones Cargadas" col="2">
                     <page string="Percepciones">
                             <field name="percepciones" nolabel="1" widget="section_and_note_one2many" options="{'reload_on_button': true}">
-                            <tree>
+                            <tree decoration-warning="diff">
+                                <field name="diff" invisible="1" />
                                 <field name="date" edit="false" />
                                 <field name="cuit" edit="false" />
+                                <field name="partner" />
                                 <field name="invoice_number" edit="false" />
                                 <field name="amount" edit="false" />
+                                <field name="amount2" edit="false" />
                             </tree>
                         </field>
                     </page>
