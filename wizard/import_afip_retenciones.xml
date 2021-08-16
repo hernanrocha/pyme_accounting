@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- IMPORTAR AFIP MIS RETENCIONES - FORM -->
+    <record id="view_import_afip_retenciones" model="ir.ui.view">
+        <field name="name">l10n_ar.import.afip.retenciones.form</field>
+        <field name="model">l10n_ar.import.afip.retenciones</field>
+        <field name="arch" type="xml">
+            <form string="Importar Mis Retenciones AFIP">
+            
+                <group string="Archivo" col="2">
+                    <field name="file" />
+                </group>
+                
+                <footer>
+                    <button name="parse" string="Importar" type="object" class="btn-primary" />
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+
+            </form>
+        </field>
+    </record>
+
+    <!-- IMPORTAR AFIP MIS RETENCIONES - ACTION -->
+    <record id="action_import_afip_retenciones" model="ir.actions.act_window">
+        <field name="name">AFIP - Mis Retenciones</field>
+        <field name="res_model">l10n_ar.import.afip.retenciones</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

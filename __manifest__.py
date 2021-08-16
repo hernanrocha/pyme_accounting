@@ -57,6 +57,7 @@
         'wizard/import_sale_compenlinea.xml',
         'wizard/import_sale_pem.xml',
         'wizard/import_sale_excel.xml',
+        'wizard/import_afip_retenciones.xml',
         'wizard/import_bank_bapro.xml',
 
         # Reports
