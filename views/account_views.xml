@@ -103,4 +103,150 @@
         <field name="view_mode">tree</field>
     </record>
 
+    <!-- TODO: Mover a un archivo propio -->
+    <!-- Deducciones ARBA - TREE VIEW -->
+    <record id="view_taxes_arba_deducciones_tree" model="ir.ui.view">
+        <field name="name">l10n_ar.impuestos.deduccion.tree</field>
+        <field name="model">l10n_ar.impuestos.deduccion</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="tax" invisible="1" />
+                <field name="date" />
+                <field name="amount" />
+                <field name="control" />
+                <field name="cuit" />
+                <field name="invoice_pos" />
+                <field name="invoice_number" />
+                <field name="invoice_description" />
+                <field name="description" />
+                <field name="apply_date" />
+                <field name="publish_date" />
+                <field name="type" />
+                <field name="state" />
+            </tree>
+        </field>
+    </record>
+
+    <!-- TODO: Mover a un archivo propio -->
+    <!-- Deducciones ARBA - WINDOW -->
+    <record id="action_taxes_arba_deducciones" model="ir.actions.act_window">
+        <field name="name">Deducciones ARBA</field>
+        <field name="res_model">l10n_ar.impuestos.deduccion</field>
+        <field name="view_mode">tree</field>
+        <field name="domain">[('tax','=','arba')]</field>
+        <field name="target">main</field>
+    </record>
+
+    <!-- TODO: Mover a un archivo propio -->
+    <!-- Subdiario Compras - WINDOW -->
+    <record id="action_accountancy_journals_purchases" model="ir.actions.act_window">
+        <field name="name">Subdiario Compras</field>
+        <field name="res_model">account.move.line</field>
+        <field name="view_mode">tree</field>
+        <field name="context">{ 'search_default_purchases': 1, 'search_default_group_by_move': 1, 'expand': 1 }</field>
+        <field name="target">main</field>
+    </record>
+
+    <!-- TODO: Mover a un archivo propio -->
+    <!-- Subdiario Ventas - WINDOW -->
+    <record id="action_accountancy_journals_sales" model="ir.actions.act_window">
+        <field name="name">Subdiario Ventas</field>
+        <field name="res_model">account.move.line</field>
+        <field name="view_mode">tree</field>
+        <!-- https://github.com/odoo/odoo/blob/0097b4a4c6dcb9f66d89316476f6c65fcb998ecd/addons/account/views/account_move_views.xml#L342 -->
+        <field name="context">{ 'search_default_sales': 1, 'search_default_group_by_move': 1, 'expand': 1 }</field>
+        <field name="target">main</field>
+    </record>
+
+    <!-- TODO: Mover a un archivo propio -->
+    <!-- Subdiario Banco - WINDOW -->
+    <record id="action_accountancy_journals_bank" model="ir.actions.act_window">
+        <field name="name">Banco</field>
+        <field name="res_model">account.move.line</field>
+        <field name="view_mode">tree</field>
+        <!-- https://github.com/odoo/odoo/blob/0097b4a4c6dcb9f66d89316476f6c65fcb998ecd/addons/account/views/account_move_views.xml#L342 -->
+        <field name="context">{ 'search_default_bank': 1, 'search_default_group_by_move': 1, 'expand': 1 }</field>
+        <field name="target">main</field>
+    </record>
+
+    <!-- TODO: Mover a un archivo propio -->
+    <!-- Subdiario Caja - WINDOW -->
+    <record id="action_accountancy_journals_cash" model="ir.actions.act_window">
+        <field name="name">Caja</field>
+        <field name="res_model">account.move.line</field>
+        <field name="view_mode">tree</field>
+        <!-- https://github.com/odoo/odoo/blob/0097b4a4c6dcb9f66d89316476f6c65fcb998ecd/addons/account/views/account_move_views.xml#L342 -->
+        <field name="context">{ 'search_default_cash': 1, 'search_default_group_by_move': 1, 'expand': 1 }</field>
+        <field name="target">main</field>
+    </record>
+
+    <!-- TODO: Mover a un archivo propio -->
+    <!-- Subdiario Varios - WINDOW -->
+    <record id="action_accountancy_journals_misc" model="ir.actions.act_window">
+        <field name="name">Varios</field>
+        <field name="res_model">account.move.line</field>
+        <field name="view_mode">tree</field>
+        <!-- https://github.com/odoo/odoo/blob/0097b4a4c6dcb9f66d89316476f6c65fcb998ecd/addons/account/views/account_move_views.xml#L342 -->
+        <field name="context">{ 'search_default_misc_filter': 1, 'search_default_group_by_move': 1, 'expand': 1 }</field>
+        <field name="target">main</field>
+    </record>
+
+    <!-- TODO: Mover a un archivo propio -->
+    <!-- AFIP Mis Retenciones - WINDOW -->
+    <record id="action_taxes_afip_retenciones" model="ir.actions.act_window">
+        <field name="name">AFIP - Mis Retenciones</field>
+        <field name="res_model">l10n_ar.impuestos.deduccion</field>
+        <field name="view_mode">tree</field>
+        <field name="domain">[('tax','=','iva')]</field>
+        <field name="target">main</field>
+    </record>
+
+    <!-- TODO: Mover a un archivo propio -->
+    <record id="action_configuration_impuestos" model="ir.actions.act_window">
+        <field name="name">Impuestos</field>
+        <field name="res_model">account.tax</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- TODO: Mover a un archivo propio -->
+    <record id="action_configuration_grupo_impuestos" model="ir.actions.act_window">
+        <field name="name">Grupos de Impuestos</field>
+        <field name="res_model">account.tax.group</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <record id="view_account_journal_creditdebit" model="ir.ui.view">
+        <field name="name">account.journal.creditdebit</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.view_account_journal_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='loss_account_id']" position="after">
+                <field name="payment_debit_account_id" />
+                <field name="payment_credit_account_id" />
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Empresas/Contabilidad/Subdiarios-->
+    <record id="view_account_journal_creditdebit" model="ir.ui.view">
+        <field name="name">account.move.line.pyme</field>
+        <field name="model">account.move.line</field>
+        <field name="inherit_id" ref="account.view_move_line_tree_grouped" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='company_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='move_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='matching_number']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='move_id']" position="after">
+                <field name="account_id" />
+            </xpath>
+        </field>
+    </record>
+
 </odoo>

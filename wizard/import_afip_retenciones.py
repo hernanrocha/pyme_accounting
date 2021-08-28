@@ -39,7 +39,7 @@ class ImportAfipMisRetenciones(models.TransientModel):
     _name = "l10n_ar.import.afip.retenciones"
     _description = "Importar Mis Retenciones"
 
-    file = fields.Binary(string="Archivo de Retenciones (*.csv)")
+    file = fields.Binary(string="Archivo de Retenciones (*.xls)")
 
     invoice_ids = fields.One2many(string="Retenciones", comodel_name="l10n_ar.import.afip.retenciones.line", inverse_name="import_id")
     

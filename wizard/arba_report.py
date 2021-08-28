@@ -158,12 +158,15 @@ class IngresosBrutosArbaWizard(models.Model):
         ])
 
         # Calcular retenciones
+        # TODO: filtrar por compañia y por fecha
         self.iibb_retenciones = self.env['l10n_ar.arba.retencion'].search([])
 
         # Calcular retenciones bancarias
+        # TODO: filtrar por compañia y por fecha
         self.iibb_retenciones_bancarias = self.env['l10n_ar.arba.retencion_bancaria'].search([])
         
         # Calcular devoluciones bancarias
+        # TODO: filtrar por compañia y por fecha
         self.iibb_devoluciones_bancarias = self.env['l10n_ar.arba.devolucion_bancaria'].search([])
 
         saldo_a_favor = self.env['account.move.line'].read_group([

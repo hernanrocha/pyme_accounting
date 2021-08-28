@@ -130,11 +130,23 @@
                 
             <!-- MENU Facturacion/Contabilidad/Subdiarios/Compras -->
             <menuitem id="menu_accountancy_journals_purchases" name="Compras" 
-                sequence="1" action="report_basic" />
+                sequence="1" action="action_accountancy_journals_purchases" />
 
             <!-- MENU Facturacion/Contabilidad/Subdiarios/Ventas -->
             <menuitem id="menu_accountancy_journals_sales" name="Ventas" 
-                sequence="2" action="report_basic" />
+                sequence="2" action="action_accountancy_journals_sales" />
+
+            <!-- MENU Facturacion/Contabilidad/Subdiarios/Banco -->
+            <menuitem id="menu_accountancy_journals_bank" name="Banco" 
+                sequence="3" action="action_accountancy_journals_bank" />
+
+            <!-- MENU Facturacion/Contabilidad/Subdiarios/Caja -->
+            <menuitem id="menu_accountancy_journals_cash" name="Caja" 
+                sequence="4" action="action_accountancy_journals_cash" />
+
+            <!-- MENU Facturacion/Contabilidad/Subdiarios/Varios -->
+            <menuitem id="menu_accountancy_journals_misc" name="Varios" 
+                sequence="5" action="action_accountancy_journals_misc" />
                 
         </menuitem>
 
@@ -186,12 +198,37 @@
             - Conciliacion bancaria
         -->
 
-    </menuitem>       
+    </menuitem>      
 
-    <!-- MENU Facturacion/Importar  -->
+    
+    <!-- MENU Empresas/Impuestos -->
+    <menuitem id="menu_taxes" name="Impuestos" parent="menu_finance" sequence="5">
+        
+        <!-- MENU Empresas/Impuestos/ARBA  -->
+        <menuitem id="menu_taxes_arba" name="ARBA" sequence="1">
+        
+            <!-- Empresas/Impuestos/ARBA/Deducciones ARBA-->
+            <menuitem name="Deducciones ARBA" sequence="1"
+                id="menu_taxes_arba_deducciones" action="action_taxes_arba_deducciones"/>
+            
+        </menuitem>
+
+        <!-- MENU Empresas/Impuestos/AFIP  -->
+        <menuitem id="menu_taxes_afip" name="AFIP" sequence="1">
+        
+            <!-- Empresas/Impuestos/AFIP/Mis Retenciones -->
+            <menuitem name="Mis Retenciones" sequence="1"
+                id="menu_taxes_afip_retenciones" action="action_taxes_afip_retenciones"/>
+            
+        </menuitem>
+
+
+    </menuitem> 
+
+    <!-- MENU Empresas/Importar  -->
     <menuitem id="menu_import" name="Importar" parent="menu_finance" sequence="10">
 
-        <!-- MENU Facturacion/Importar/Compras -->
+        <!-- MENU Empresas/Importar/Compras -->
         <menuitem id="menu_import_purchases" name="Compras" sequence="1">
 
             <!-- TODO: Borrar este y dividir en 2 partes -->
@@ -214,7 +251,7 @@
 
         </menuitem>
 
-        <!-- MENU Facturacion/Importar/Ventas -->
+        <!-- MENU Empresas/Importar/Ventas -->
         <menuitem id="menu_import_sales" name="Ventas" sequence="2">
 
             <!-- MENU Facturacion/Importar/Ventas  -->
@@ -253,15 +290,26 @@
 
         </menuitem>
 
+        <!-- MENU Empresas/Importar/IIBB -->
         <menuitem id="menu_import_iibb" name="IIBB" sequence="3">
-            <!-- MENU Facturacion/Importar/Compras/Deducciones ARBA -->
+            
+            <!-- MENU Empresas/Importar/IIBB/Deducciones ARBA -->
             <menuitem name="Deducciones ARBA" sequence="1" 
                 id="menu_import_purchase_deducciones_arba" action="action_import_purchase_deducciones_arba" />
 
         </menuitem>
 
+        <!-- MENU Empresas/Importar/IIBB -->
+        <menuitem id="menu_import_afip" name="AFIP" sequence="4">
+            
+            <!-- MENU Empresas/Importar/AFIP/Mis Retenciones -->
+            <menuitem name="Mis Retenciones" sequence="1" 
+                id="menu_import_afip_retenciones" action="action_import_afip_retenciones" />
+
+        </menuitem>
+
         <!-- MENU Facturacion/Importar/Banco -->
-        <menuitem id="menu_import_bank" name="Bancos" sequence="4">
+        <menuitem id="menu_import_bank" name="Bancos" sequence="5">
                 
             <!-- MENU Facturacion/Importar/Banco/Resumen Bancario -->
             <menuitem name="Resumen Bancario" sequence="2"
@@ -272,7 +320,7 @@
     </menuitem>
 
     <!-- MENU Facturacion/Informes  -->
-    <menuitem id="menu_taxes" name="Informes" parent="menu_finance" sequence="11">
+    <menuitem id="menu_reports" name="Informes" parent="menu_finance" sequence="11">
 
         <!-- MENU Facturacion/Informes/Monotributo-->
         <menuitem id="menu_reports_monotributo" name="Monotributo" sequence="1">
@@ -382,6 +430,16 @@
         <menuitem id="menu_configuration_tipos_comprobante" name="Tipos de Comprobante" 
             sequence="2" action="action_configuration_tipos_comprobante" />
 
+        <!-- MENU Empresas/Ajustes/Listado de Impuestos -->
+        <!-- TODO: hacer readonly -->
+        <menuitem id="menu_configuration_impuestos" name="Listado de Impuestos" 
+            sequence="3" action="action_configuration_impuestos" />
+
+        <!-- MENU Empresas/Ajustes/Listado de Impuestos -->
+        <!-- TODO: hacer readonly -->
+        <menuitem id="menu_configuration_grupo_impuestos" name="Grupos de Impuestos" 
+            sequence="4" action="action_configuration_grupo_impuestos" />
+
     </menuitem>
 
     <!-- TODO:
@@ -401,6 +459,12 @@
 
         Compras:
         - Pagos
+
+        Banco:
+        - Cuentas bancarias (ABM) => Agregar Cuenta Bancaria
+            - Extractos Bancarios => Cargar, Conciliar, Cerrar
+        - Asientos Contables
+        - Reglas de Conciliacion
     -->
 
     <!-- CONTABILIDAD:
