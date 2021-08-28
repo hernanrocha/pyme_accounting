@@ -27,6 +27,7 @@ security_import_sale_pem_f8080_line,Linea de venta de archivo PEM F8010,model_l1
 security_import_sale_compenlinea,Importar Comprobantes en Linea,model_l10n_ar_import_sale_compenlinea,account.group_account_manager,1,1,1,1
 security_import_sale_compenlinea_line,Linea de Comprobantes en Linea,model_l10n_ar_import_sale_compenlinea_line,account.group_account_manager,1,1,1,1
 security_import_sale_excel,Importar Comprobantes desde Excel,model_l10n_ar_import_sale_excel,account.group_account_manager,1,1,1,1
+security_import_sale_rg3685,Ventas RG3685,model_l10n_ar_import_sale_rg3685,account.group_account_manager,1,1,1,1
 security_import_bank_bapro,Importar Extracto Banco Provincia,model_l10n_ar_import_bank_bapro,account.group_account_manager,1,1,1,1
 security_import_afip_retenciones,Importar AFIP Mis Retenciones,model_l10n_ar_import_afip_retenciones,account.group_account_manager,1,1,1,1
 security_import_afip_retenciones_line,Linea de Mis Retenciones,model_l10n_ar_import_afip_retenciones_line,account.group_account_manager,1,1,1,1

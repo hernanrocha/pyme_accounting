@@ -441,9 +441,9 @@ class AccountVatLedger(models.Model):
             vat_exempt_base_amount = 0
             for invl in inv.invoice_line_ids:
                 for tax in invl.tax_ids:
-                    if tax.tax_group_id.tax_type == 'vat':
-                        if tax.id not in vat_taxes and tax.amount != 0 :
-                            vat_taxes.append(tax.id)
+                    # if tax.tax_group_id.tax_type == 'vat':
+                    #     if tax.id not in vat_taxes and tax.amount != 0 :
+                    #         vat_taxes.append(tax.id)
                     if self.type == 'purchase':
                         if tax.amount == 0:
                             vat_exempt_base_amount += invl.price_subtotal
@@ -622,7 +622,7 @@ class AccountVatLedger(models.Model):
                 #     row.append(self.format_amount(round(imp_liquidado,2), invoice=inv))
                 #     # row.append(self.format_amount(
                 #         #    inv.vat_amount, invoice=inv))
-                self.format_amount(0, invoice=inv),
+                self.format_amount(self._get_invoice_credito_fiscal(inv), invoice=inv),
 
                 # Campo 22: Otros Tributos
                 #self.format_amount(
@@ -739,6 +739,22 @@ class AccountVatLedger(models.Model):
                 self.format_amount(tax_amount, invoice=inv),
             ]
         return row
+
+    def _get_invoice_credito_fiscal(self, inv):
+        vat_taxes = inv.line_ids.filtered(
+            # (1) No Gravado
+            # (2) Exento 
+            # (3) 0%
+            # (4) 10.5%
+            # (5) 21%
+            # (6) 27%
+            # (8) 5%
+            # (9) 2.5%
+            lambda l: l.tax_group_id and l.tax_group_id.tax_type == 'vat' and 
+            l.tax_group_id.l10n_ar_vat_afip_code in ['4', '5', '6', '8', '9']
+        )
+
+        return sum(vat_taxes.mapped('price_subtotal'))
 
     # A partir de un invoice, se determinan tipos de alicuota y se devuelve un array
     def get_invoice_alicuotas(self, inv, impo):

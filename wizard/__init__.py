@@ -11,6 +11,7 @@ from . import import_purchase_comprecibidos
 from . import import_sale_pem
 from . import import_sale_compenlinea
 from . import import_sale_compemitidos
+from . import import_sale_rg3685
 from . import import_sale_excel
 
 from . import import_afip_retenciones

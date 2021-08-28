@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- IMPORTAR COMPROBANTES EMITIDOS RG3685 - FORM VIEW -->
+    <record id="view_wizard_import_sale_rg3685_form" model="ir.ui.view">
+        <field name="name">l10n_ar.import.sale.rg3685.form</field>
+        <field name="model">l10n_ar.import.sale.rg3685</field>
+        <field name="arch" type="xml">
+            <form>
+                
+                <!-- <div class="card bg-primary">
+                    <div class="card-body">
+                        <p>Existen 2 tipos de archivos que pueden ser importados:</p>
+                        <ul>
+                            <li>F8010: importar comprobantes individuales.</li>
+                            <li>F8011: importar comprobantes Z</li>
+                        </ul>
+                        <p>Por el momento, el sistema solo permite importar el archivo F8011.</p>
+                        <p>Se generará un comprobante por cada Z, comúnmente generado al finalizar cada día.</p>
+                    </div>
+                </div> -->
+
+                <group string="Archivo" col="2">
+
+                    <field name="file_cbtes" />
+                    <field name="file_alicuotas" />
+                
+                </group>
+
+                <!-- <separator string="Datos Cargados" />
+                <notebook>
+                    <page string="Facturas">
+
+                        <field name="invoice_ids" widget="section_and_note_one2many" options="{'reload_on_button': true}">
+                            <tree>
+                                <field name="date" edit="false" />
+                                <field name="invoice_display_name" />
+                                <field name="taxed_amount" />
+                                <field name="untaxed_amount" />
+                                <field name="exempt_amount" />
+                                <field name="iva_type" />
+                                <field name="iva" />
+                                <field name="difference" />
+                                <field name="total" />
+                                <field name="vendor" edit="false" />
+                                <field name="cuit" edit="false" />
+                            </tree>
+                        </field>
+                    </page>
+                </notebook> -->
+
+                <footer>
+                    <!-- TODO: convertir a action -->
+                    <button name="compute" string="Cargar" type="object" class="btn-primary" />
+                    <button name="generate" string="Generar Facturas" type="object" class="btn-primary" /> 
+                        <!-- TODO attrs="{'invisible': [('loaded', '=', True)]}" /> -->
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- IMPORTAR VENTAS RG3685 - WINDOW ACTION -->
+    <record id="action_import_sale_rg3685" model="ir.actions.act_window">
+        <field name="name">Importar Ventas de RG3685</field>
+        <field name="res_model">l10n_ar.import.sale.rg3685</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>
