@@ -20,6 +20,7 @@ security_import_purchase_deducciones_arba_pline,Importar deducciones de ARBA - P
 security_import_purchase_deducciones_arba_rline,Importar deducciones de ARBA - R,model_l10n_ar_import_purchase_deducciones_arba_rline,account.group_account_manager,1,1,1,1
 security_import_purchase_deducciones_arba_rbline,Importar deducciones de ARBA - RB,model_l10n_ar_import_purchase_deducciones_arba_rbline,account.group_account_manager,1,1,1,1
 security_import_purchase_deducciones_arba_dbline,Importar deducciones de ARBA - DB,model_l10n_ar_import_purchase_deducciones_arba_dbline,account.group_account_manager,1,1,1,1
+security_import_purchase_rg3685,Compras RG3685,model_l10n_ar_import_purchase_rg3685,account.group_account_manager,1,1,1,1
 security_import_sale_pem,Importar ventas PEM,model_l10n_ar_import_sale_pem,account.group_account_manager,1,1,1,1
 security_import_sale_pem_line,Linea de venta de archivo PEM,model_l10n_ar_import_sale_pem_line,account.group_account_manager,1,1,1,1
 security_import_sale_pem_f8080_line,Linea de venta de archivo PEM F8010,model_l10n_ar_import_sale_pem_f8010_line,account.group_account_manager,1,1,1,1

@@ -241,8 +241,8 @@
             <menuitem name="Mis Comprobantes Recibidos" sequence="1" 
                 id="menu_import_purchases_comp_recibidos" action="action_import_purchases_comp_recibidos" />
                 
-            <!-- <menuitem name="Archivo RG3685" sequence="3" 
-                id="menu_import_purchases_rg3685" action="action_move_in_invoice_type" /> -->
+            <menuitem name="Archivo RG3685" sequence="3" 
+                id="menu_import_purchases_rg3685" action="action_import_purchase_rg3685" />
 
             <menuitem name="Archivo Excel" sequence="4" 
                 id="menu_import_purchase_excel" action="action_import_purchase_excel" />

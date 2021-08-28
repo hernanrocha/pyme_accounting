@@ -5,4 +5,4 @@ from . import res_partner
 from . import afip_cuit_apocrifos
 from . import afip_activities
 from . import arba
-# from . import account_move
+from . import account_move

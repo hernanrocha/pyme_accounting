@@ -53,6 +53,7 @@
         'wizard/import_purchase_excel.xml',
         'wizard/import_purchase_deducciones_arba.xml',
         'wizard/import_purchase_comprecibidos.xml',
+        'wizard/import_purchase_rg3685.xml',
         'wizard/import_sale_compemitidos.xml',
         'wizard/import_sale_compenlinea.xml',
         'wizard/import_sale_pem.xml',

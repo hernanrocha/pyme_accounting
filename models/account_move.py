@@ -12,3 +12,5 @@ class AccountMove(models.Model):
     #     print("Getting last sequence in invoice")
     #     # TODO: llamar a super cuando no sean documentos oficiales de AFIP (comprobantes internos)
     #     return []
+    commercial_partner_name = fields.Char('Razon Social', 
+        related='commercial_partner_id.name', store=True)

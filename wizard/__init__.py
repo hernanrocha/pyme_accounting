@@ -5,6 +5,7 @@ from . import arba_report
 
 from . import import_purchase_deducciones_arba
 from . import import_purchase_excel
+from . import import_purchase_rg3685
 from . import import_purchase_comprecibidos
 
 from . import import_sale_pem

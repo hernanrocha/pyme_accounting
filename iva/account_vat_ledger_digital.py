@@ -251,22 +251,13 @@ class AccountVatLedger(models.Model):
                     'Bad format for Skip Lines. You need to enter a list of '
                     'numbers like "1, 2, 3". This is the error we get: %s') % (
                         repr(e)))
-
+    
     def get_digital_invoices(self, return_skiped=False):
         self.ensure_one()
         invoices = self.env['account.move'].search([
             # ('l10n_latam_document_type_id.export_to_digital', '=', True),
             ('id', 'in', self.invoice_ids.ids)], order='invoice_date asc')
-        if self.digital_skip_lines:
-            skip_lines = literal_eval(self.digital_skip_lines)
-            if isinstance(skip_lines, int):
-                skip_lines = [skip_lines]
-            to_skip = invoices.browse()
-            for line in skip_lines:
-                to_skip += invoices[line - 1]
-            if return_skiped:
-                return to_skip
-            invoices -= to_skip
+
         return invoices
 
     # TODO: Calcular alicuotas dentro del mismo metodo
@@ -424,7 +415,9 @@ class AccountVatLedger(models.Model):
 
         # Obtener lista de comprobantes.
         # TODO: revisar parametro skip_test_invoice
-        invoices = self.get_digital_invoices()
+        invoices = self.env['account.move'].search([
+            ('id', 'in', self.invoice_ids.ids)], 
+            order='commercial_partner_name asc,invoice_date asc')
 
         # Validacion de CUIT para compras
         partners = invoices.mapped('commercial_partner_id').filtered(
@@ -585,12 +578,13 @@ class AccountVatLedger(models.Model):
                 str(cant_alicuotas),
 
                 # Campo 20: Código de operación.
-                # WARNING. segun la plantilla es 0 si no es ninguna
-                # TODO ver que no se informe un codigo si no correpsonde,
-                # tal vez da error
-                # TODO ADIVINAR E IMPLEMENTAR, VA A DAR ERROR
-                #inv.fiscal_position_id.afip_code or '0',
-                '0',
+                # - E: operaciones exentas
+                # - N: operaciones no gravadas
+                # - <blanco>: operaciones que tienen al menos una parte gravada
+                self._get_compra_codigo_operacion(
+                    self.format_amount(inv.amount_total, invoice=inv),
+                    self.format_amount(untaxed_amount, invoice=inv),
+                    self.format_amount(exempt_amount, invoice=inv)),
 
                 # Campo 21: Crédito Fiscal Computable
                 # if self.prorate_tax_credit:
@@ -662,6 +656,15 @@ class AccountVatLedger(models.Model):
 
             res.append(''.join(row))
         self.REGDIGITAL_CV_CBTE = '\r\n'.join(res)
+
+    def _get_compra_codigo_operacion(self, total, untaxed, exempt):
+        if total == 0:
+            return ' '
+        if total == untaxed:
+            return 'N'
+        if total == exempt:
+            return 'E'
+        return ' '
 
     # Genera una linea de Alicuota en IVA para compra, venta o importacion
     def get_tax_row(self, invoice, base, code, tax_amount, impo=False):
