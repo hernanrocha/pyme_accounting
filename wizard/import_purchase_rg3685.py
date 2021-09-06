@@ -113,6 +113,26 @@ class ImportPurchaseRg3685(models.TransientModel):
             ('name', '=', 'IVA 21%'),
         ])
 
+        tax_10 = self.env['account.tax'].search([
+            ('type_tax_use', '=', 'purchase'),
+            ('name', '=', 'IVA 10.5%'),
+        ])
+
+        tax_27 = self.env['account.tax'].search([
+            ('type_tax_use', '=', 'purchase'),
+            ('name', '=', 'IVA 27%'),
+        ])
+
+        tax_25 = self.env['account.tax'].search([
+            ('type_tax_use', '=', 'purchase'),
+            ('name', '=', 'IVA 2,5%'),
+        ])
+
+        tax_5 = self.env['account.tax'].search([
+            ('type_tax_use', '=', 'purchase'),
+            ('name', '=', 'IVA 5%'),
+        ])
+
         tax_exempt = self.env['account.tax'].search([
             ('type_tax_use', '=', 'purchase'),
             ('name', '=', 'IVA Exento'),
@@ -188,19 +208,55 @@ class ImportPurchaseRg3685(models.TransientModel):
             move = self.env['account.move'].create(move_data)
             print("Invoice", move)
 
-            # TODO: Cargar alicuotas de IVA
+            # Cargar alicuotas de IVA
             for alic in alicuotas:
                 cod = alic["codigo_iva"]
-                if cod == 5:
+                
+                if cod == 4:
                     line = move.line_ids.create({
                         'move_id': move.id,
-                        'name': 'Monto Gravado',
+                        'name': 'Monto Gravado 10.5%',
+                        'account_id': account_purchase.id,
+                        'quantity': 1,
+                        'price_unit': alic["importe_gravado"] + (alic["valor_iva"] if tax_10.price_include else 0),
+                    })
+                    line.tax_ids += tax_no_corresponde if no_iva else tax_10
+                elif cod == 5:
+                    line = move.line_ids.create({
+                        'move_id': move.id,
+                        'name': 'Monto Gravado 21%',
                         'account_id': account_purchase.id,
                         'quantity': 1,
                         'price_unit': alic["importe_gravado"] + (alic["valor_iva"] if tax_21.price_include else 0),
                     })
                     line.tax_ids += tax_no_corresponde if no_iva else tax_21
-                    print("Taxed Line", line)
+                elif cod == 6:
+                    line = move.line_ids.create({
+                        'move_id': move.id,
+                        'name': 'Monto Gravado 27%',
+                        'account_id': account_purchase.id,
+                        'quantity': 1,
+                        'price_unit': alic["importe_gravado"] + (alic["valor_iva"] if tax_27.price_include else 0),
+                    })
+                    line.tax_ids += tax_no_corresponde if no_iva else tax_27
+                elif cod == 8:
+                    line = move.line_ids.create({
+                        'move_id': move.id,
+                        'name': 'Monto Gravado 5%',
+                        'account_id': account_purchase.id,
+                        'quantity': 1,
+                        'price_unit': alic["importe_gravado"] + (alic["valor_iva"] if tax_5.price_include else 0),
+                    })
+                    line.tax_ids += tax_no_corresponde if no_iva else tax_5
+                elif cod == 9:
+                    line = move.line_ids.create({
+                        'move_id': move.id,
+                        'name': 'Monto Gravado 2.5%',
+                        'account_id': account_purchase.id,
+                        'quantity': 1,
+                        'price_unit': alic["importe_gravado"] + (alic["valor_iva"] if tax_25.price_include else 0),
+                    })
+                    line.tax_ids += tax_no_corresponde if no_iva else tax_25
 
             # IVA No Gravado
             if cbte["total_no_gravado"] > 0:
@@ -212,7 +268,6 @@ class ImportPurchaseRg3685(models.TransientModel):
                     'price_unit': cbte["total_no_gravado"],
                 })
                 line.tax_ids += tax_no_corresponde if no_iva else tax_untaxed
-                print("Untaxed Line", line)
 
             # IVA Exento
             if cbte["total_exento"] > 0:
@@ -224,7 +279,8 @@ class ImportPurchaseRg3685(models.TransientModel):
                     'price_unit': cbte["total_exento"],
                 })
                 line.tax_ids += tax_no_corresponde if no_iva else tax_exempt
-                print("Exempt Line", line)
+
+            # TODO: Importar percepciones IIBB y otras
 
             # Recalculate totals
             move._recompute_dynamic_lines(recompute_all_taxes=True, recompute_tax_base_amount=True)

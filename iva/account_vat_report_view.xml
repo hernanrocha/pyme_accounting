@@ -8,10 +8,10 @@
             <field name='arch' type='xml'>
                 <tree string="VAT Ledger">
                     <field name="name"/>
-                    <field name="company_id" groups="base.group_multi_company"/>
+                    <!-- <field name="company_id" groups="base.group_multi_company"/> -->
                     <field name="date_from"/>
                     <field name="date_to"/>
-                    <field name="state"/>
+                    <field name="state" string="Estado" />
                 </tree>
             </field>
         </record>
@@ -43,7 +43,7 @@
                             <page string="Journals" name="journal_ids">
                                 <field name="journal_ids" domain="[('type','in',['purchase', 'sale', 'purchase_refund', 'sale_refund']),('company_id', 'child_of', company_id)]"/>
                             </page>
-                            <page string="Ventas" name="invoices">
+                            <page string="Comprobantes" name="invoices">
                                 <field name="invoice_ids">
                                     <!-- <tree default_order="date_invoice">
                                         <field name="state" invisible="1"/>
@@ -96,14 +96,14 @@
             <field name="name">IVA Compras</field>
             <field name="res_model">account.vat.ledger</field>
             <field name="context">{'default_type':'purchase'}</field>
-            <field name="domain">[('type','=','purchase')]</field>
+            <field name="domain">[('type','=','purchase'),('company_id','=',allowed_company_ids[0])]</field>
         </record>
 
         <record id="action_account_sale_vat_ledger" model="ir.actions.act_window">
             <field name="name">IVA Ventas</field>
             <field name="res_model">account.vat.ledger</field>
             <field name="context">{'default_type':'sale'}</field>
-            <field name="domain">[('type','=','sale')]</field>
+            <field name="domain">[('type','=','sale'),('company_id','=',allowed_company_ids[0])]</field>
         </record>
 
     </data>

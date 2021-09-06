@@ -250,7 +250,7 @@ def helper_convert_invoice_type(afip_invoice_type):
     if afip_invoice_type == '13 - Nota de Crédito C':
         return 'NC-C'
     
-    raise UserError('Tipo de Comprobante invalido: %s'.format(afip_invoice_type))
+    raise UserError('Tipo de Comprobante invalido: {}'.format(afip_invoice_type))
 
 class ImpuestosImporter(models.Model):
     _name = 'gob.ar.afip.upload'
@@ -320,6 +320,8 @@ class ImpuestosImporter(models.Model):
             # print(row[0], row[1], row[2].zfill(4), row[3].zfill(8), row[7], row[8], row[11], row[14], row[15], imp, sep=",")
 
             # TODO: borrar registros viejos la segunda vez que se carga
+
+            _logger.info("LINE: {} - {}".format(row, row[1]))
 
             # Crear linea de compra en el wizard
             wizard_invoice_line = self.env['l10n_ar.invoice_line'].create({ 

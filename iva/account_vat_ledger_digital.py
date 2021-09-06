@@ -266,7 +266,10 @@ class AccountVatLedger(models.Model):
 
         # Obtener lista de comprobantes.
         # TODO: revisar parametro skip_test_invoice
-        invoices = self.get_digital_invoices()
+        invoices = self.env['account.move'].search([
+            ('id', 'in', self.invoice_ids.ids)],
+            # TODO: ordenar por punto de venta 
+            order='sequence_number asc')
 
         for inv in invoices:
             # TODO: Revisar aca la lista de alicuotas
@@ -416,8 +419,9 @@ class AccountVatLedger(models.Model):
         # Obtener lista de comprobantes.
         # TODO: revisar parametro skip_test_invoice
         invoices = self.env['account.move'].search([
-            ('id', 'in', self.invoice_ids.ids)], 
-            order='commercial_partner_name asc,invoice_date asc')
+            ('id', 'in', self.invoice_ids.ids)],
+            # TODO: ordenar por punto de venta
+            order='commercial_partner_name asc,sequence_number asc')
 
         # Validacion de CUIT para compras
         partners = invoices.mapped('commercial_partner_id').filtered(
@@ -534,23 +538,7 @@ class AccountVatLedger(models.Model):
                     ).mapped('tax_amount')), invoice=inv),
 
                 # Campo 14: Importe de percepciones de ingresos brutos
-                # TODO Percepciones en moneda extranjera
-                # if inv.currency_id.id == inv.company_id.currency_id.id:
-                #     row += [
-                #         self.format_amount(
-                #             sum(inv.l10n_latam_tax_ids.filtered(lambda r: (
-                #                 r.tax_line_id.tax_group_id.tax_type == 'withholdings' and
-                #                 r.tax_line_id.tax_group_id.l10n_ar_tribute_afip_code \
-                #                 == '07')
-                #             ).mapped('debit')), invoice=inv)]
-                # else:
-                #     tot_percep_iibb = 0
-                #     for tax_line in inv.l10n_latam_tax_ids:
-                #         if tax_line.tax_group_id.tax_type == 'withholdings' and tax_line.tax_group_id.l10n_ar_tribute_afip_code == '07':
-                #             tot_percep_iibb = tot_percep_iibb + abs(tax_line.amount_currency)
-                #     row += [
-                #         self.format_amount(tot_percep_iibb, invoice=inv)]
-                self.format_amount(0, invoice=inv),
+                self.format_amount(self._get_compra_iibb(inv), invoice=inv),
 
                 # Campo 15: Importe de percepciones de impuestos municipales
                 # TODO:
@@ -665,6 +653,23 @@ class AccountVatLedger(models.Model):
         if total == exempt:
             return 'E'
         return ' '
+
+    def _get_compra_iibb(self, inv):
+        # TODO Percepciones en moneda extranjera
+        # if inv.currency_id.id == inv.company_id.currency_id.id:
+        #     row += [
+        #         self.format_amount(
+        #             sum(inv.l10n_latam_tax_ids.filtered(lambda r: (
+        #                 r.tax_line_id.tax_group_id.tax_type == 'withholdings' and
+        #                 r.tax_line_id.tax_group_id.l10n_ar_tribute_afip_code \
+        #                 == '07')
+        #             ).mapped('debit')), invoice=inv)]
+        _logger.info("MOVE_TAX_IDS: {} {}".format(inv, inv.line_ids))
+        iibb = inv.line_ids.filtered(lambda r: (
+            r.tax_group_id and r.tax_group_id.l10n_ar_tribute_afip_code == '07'))
+        _logger.info("Filtered: {}".format(iibb))
+        
+        return sum(iibb.mapped('price_total'))
 
     # Genera una linea de Alicuota en IVA para compra, venta o importacion
     def get_tax_row(self, invoice, base, code, tax_amount, impo=False):
@@ -836,6 +841,7 @@ class AccountVatLedger(models.Model):
                 lambda r: r.l10n_latam_document_type_id.code == '66')
         else:
             # Si no es importacion, filtrar los comprobantes tipo 66 (Despacho de Importacion)
+            # TODO: ordenar las alicuotas de la misma forma que las compras/ventas
             invoices = self.get_digital_invoices().filtered(
                 lambda r: r.l10n_latam_document_type_id.code != '66')
 

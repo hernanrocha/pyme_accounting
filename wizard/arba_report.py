@@ -17,32 +17,36 @@ class IngresosBrutosArbaWizard(models.Model):
     _name = "l10n_ar.iibb.arba.wizard"
     _description = 'Reporte de Ingresos Brutos ARBA'
 
-    iibb_report_date_from = fields.Date(string="Fecha Inicio", default=lambda self: self._default_date_from())
-    iibb_report_date_to = fields.Date(string="Fecha Fin", default=lambda self: self._default_date_to())
-    iibb_report_tax_percentage = fields.Selection(string="Alicuota", selection=[('1.50', '1.50%')], default="1.50")
-    iibb_report_min_amount = fields.Float(string="Impuesto Mínimo", default=615)
+    iibb_report_date_from = fields.Date(string="Fecha Desde", default=lambda self: self._default_date_from())
+    iibb_report_date_to = fields.Date(string="Fecha Hasta", default=lambda self: self._default_date_to())
 
-    # TODO: obtain default currency_id=19
-    # TODO: tener en cuenta el minimo ($615 en este caso)
+    # Determinacion del impuesto
     iibb_report_sale_total = fields.Float(string="Total de Ventas")
-    
+    iibb_company_tax_percentage = fields.Float(string="Alicuota", compute="_compute_iibb_company_tax_percentage")
+    iibb_company_min_amount = fields.Float(string="Impuesto Minimo", compute="_compute_iibb_company_min_amount")
     iibb_report_tax_subtotal = fields.Float(string="Impuesto Determinado", compute="_compute_iibb_report_tax_subtotal")
     
+    # Calculo de deducciones
     iibb_report_percepciones = fields.Float(string="Percepciones", compute="_compute_iibb_report_percepciones")
     iibb_report_retenciones = fields.Float(string="Retenciones", compute="_compute_iibb_report_retenciones")
     iibb_report_retenciones_bancarias = fields.Float(string="Retenciones Bancarias", compute="_compute_iibb_report_retenciones_bancarias")
     iibb_report_devoluciones_bancarias = fields.Float(string="Devoluciones Bancarias", compute="_compute_iibb_report_devoluciones_bancarias")
-
     iibb_report_deducciones = fields.Float(string="Total Deducciones", compute="_compute_iibb_report_deducciones")
+
+    # Saldo a favor / a pagar
     iibb_report_tax_prev_saldo = fields.Float(string="Saldo a favor del periodo anterior")
-
     iibb_report_tax_total_saldo = fields.Float(string="Saldo a favor del período", compute="_compute_iibb_report_tax_total_saldo")
-    iibb_report_tax_total_to_pay = fields.Float(string="Saldo a Pagar", compute="_compute_iibb_report_tax_total_to_pay")
+    iibb_report_tax_total_to_pay = fields.Float(string="Saldo a pagar", compute="_compute_iibb_report_tax_total_to_pay")
 
-    iibb_percepciones = fields.Many2many(comodel_name="account.move.line")
-    iibb_retenciones = fields.Many2many(comodel_name="l10n_ar.arba.retencion")
-    iibb_retenciones_bancarias = fields.Many2many(comodel_name="l10n_ar.arba.retencion_bancaria")
-    iibb_devoluciones_bancarias = fields.Many2many(comodel_name="l10n_ar.arba.devolucion_bancaria")
+    # Relaciones
+    iibb_percepciones = fields.Many2many(comodel_name="l10n_ar.impuestos.deduccion",
+        relation="l10n_ar_iibb_arba_percepciones")
+    iibb_retenciones = fields.Many2many(comodel_name="l10n_ar.impuestos.deduccion",
+        relation="l10n_ar_iibb_arba_retenciones")
+    iibb_retenciones_bancarias = fields.Many2many(comodel_name="l10n_ar.impuestos.deduccion",
+        relation="l10n_ar_iibb_arba_retenciones_bancarias")
+    iibb_devoluciones_bancarias = fields.Many2many(comodel_name="l10n_ar.impuestos.deduccion",
+        relation="l10n_ar_iibb_arba_devoluciones_bancarias")
 
     def generate_iibb(self):
         # TODO: Mostrar una seccion con las facturas en borrador
@@ -149,25 +153,34 @@ class IngresosBrutosArbaWizard(models.Model):
         ])
 
         # Calcular percepciones
-        self.iibb_percepciones = self.env['account.move.line'].search([
-            ('company_id', '=', self.env.company.id),
-            ('parent_state', '=', 'posted'),
-            ('account_id', '=', account_percepciones.id),
+        self.iibb_percepciones = self.env['l10n_ar.impuestos.deduccion'].search([
+            ('type', '=', 'arba_percepcion'),
             ('date', '>=', self.iibb_report_date_from),
             ('date', '<=', self.iibb_report_date_to),
         ])
 
         # Calcular retenciones
         # TODO: filtrar por compañia y por fecha
-        self.iibb_retenciones = self.env['l10n_ar.arba.retencion'].search([])
+        self.iibb_retenciones = self.env['l10n_ar.impuestos.deduccion'].search([
+            ('type', '=', 'arba_retencion'),
+            ('date', '>=', self.iibb_report_date_from),
+            ('date', '<=', self.iibb_report_date_to),            
+        ])
 
         # Calcular retenciones bancarias
         # TODO: filtrar por compañia y por fecha
-        self.iibb_retenciones_bancarias = self.env['l10n_ar.arba.retencion_bancaria'].search([])
+        self.iibb_retenciones_bancarias = self.env['l10n_ar.impuestos.deduccion'].search([
+            ('type', '=', 'arba_retencion_bancaria'),
+            ('date', '>=', self.iibb_report_date_from),
+            ('date', '<=', self.iibb_report_date_to),
+        ])
         
         # Calcular devoluciones bancarias
-        # TODO: filtrar por compañia y por fecha
-        self.iibb_devoluciones_bancarias = self.env['l10n_ar.arba.devolucion_bancaria'].search([])
+        self.iibb_devoluciones_bancarias = self.env['l10n_ar.impuestos.deduccion'].search([
+            ('type', '=', 'arba_devolucion_bancaria'),
+            ('date', '>=', self.iibb_report_date_from),
+            ('date', '<=', self.iibb_report_date_to),
+        ])
 
         saldo_a_favor = self.env['account.move.line'].read_group([
             ('parent_state', '=', 'posted'),
@@ -228,38 +241,41 @@ class IngresosBrutosArbaWizard(models.Model):
             'target': 'new',
         }
 
-    @api.depends('iibb_report_sale_total', 'iibb_report_tax_percentage')
+    def _compute_iibb_company_tax_percentage(self):
+        for p in self:
+            p.iibb_company_tax_percentage = self.env.company.iibb_tax_percentage
+
+    def _compute_iibb_company_min_amount(self):
+        for p in self:
+            p.iibb_company_min_amount = self.env.company.iibb_min_amount
+
+    @api.depends('iibb_report_sale_total')
     def _compute_iibb_report_tax_subtotal(self):
         for p in self:
-            p.iibb_report_tax_subtotal = p.iibb_report_sale_total * float(p.iibb_report_tax_percentage) / 100
+            p.iibb_report_tax_subtotal = max(
+                p.iibb_report_sale_total * float(p.iibb_company_tax_percentage) / 100,
+                p.iibb_company_min_amount
+            )
 
     @api.depends('iibb_percepciones')
     def _compute_iibb_report_percepciones(self):
         for p in self:
-            p.iibb_report_percepciones = 0
-            for perc in p.iibb_percepciones:
-                p.iibb_report_percepciones -= perc.balance
+            p.iibb_report_percepciones = -sum(p.iibb_percepciones.mapped('amount'))
 
     @api.depends('iibb_retenciones')
     def _compute_iibb_report_retenciones(self):
         for p in self:
-            p.iibb_report_retenciones = 0
-            for ret in p.iibb_retenciones:
-                p.iibb_report_retenciones -= ret.amount
+            p.iibb_report_retenciones = -sum(p.iibb_retenciones.mapped('amount'))
 
     @api.depends('iibb_retenciones_bancarias')
     def _compute_iibb_report_retenciones_bancarias(self):
         for p in self:
-            p.iibb_report_retenciones_bancarias = 0
-            for ret in p.iibb_retenciones_bancarias:
-                p.iibb_report_retenciones_bancarias -= ret.amount
+            p.iibb_report_retenciones_bancarias = -sum(p.iibb_retenciones_bancarias.mapped('amount'))
 
     @api.depends('iibb_devoluciones_bancarias')
     def _compute_iibb_report_devoluciones_bancarias(self):
         for p in self:
-            p.iibb_report_devoluciones_bancarias = 0
-            for dev in p.iibb_devoluciones_bancarias:
-                p.iibb_report_devoluciones_bancarias -= dev.amount
+            p.iibb_report_devoluciones_bancarias = sum(p.iibb_devoluciones_bancarias.mapped('amount'))
 
     @api.depends('iibb_report_percepciones', 'iibb_report_retenciones', 'iibb_report_retenciones_bancarias', 'iibb_report_devoluciones_bancarias')
     def _compute_iibb_report_deducciones(self):

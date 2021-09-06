@@ -104,8 +104,6 @@
     <!-- MENU Facturacion/Ventas -->
     <menuitem id="menu_sales" name="Ventas" parent="menu_finance" sequence="2">
         <menuitem id="menu_action_move_out_invoice_type" name="Comprobantes Emitidos" action="action_move_out_invoice_type" sequence="1"/>
-        <menuitem id="menu_action_move_out_refund_type" name="Notas de Crédito" action="action_move_out_refund_type" sequence="2"/>
-        <!-- <menuitem id="menu_action_move_out_receipt_type" action="action_move_out_receipt_type" groups="account.group_sale_receipts" sequence="3"/> -->
         <!-- <menuitem id="menu_action_account_payments_receivable" action="action_account_payments" sequence="15"/> -->
         <!-- <menuitem id="product_product_menu_sellable" name="Productos" action="account.product_product_action_sellable" sequence="100"/> -->
         <menuitem id="menu_account_customer" name="Clientes" action="account.res_partner_action_customer" sequence="110"/>
@@ -115,8 +113,6 @@
     <menuitem id="menu_finance_payables" name="Compras" parent="menu_finance" sequence="3">
         <menuitem id="menu_action_move_in_invoice_type" name="Comprobantes Recibidos" action="action_move_in_invoice_type" sequence="1"/>
         <!-- TODO: Los proveedores no pueden ser compartidos. Aparecen todos los proveedores al momento de crear una factura -->
-        <menuitem id="menu_action_move_in_refund_type" action="action_move_in_refund_type" sequence="2"/>
-        <!-- <menuitem id="menu_action_move_in_receipt_type" action="action_move_in_receipt_type" groups="account.group_purchase_receipts" sequence="3"/> -->
         <!-- <menuitem id="menu_action_account_payments_payable" action="action_account_payments_payable" sequence="20"/> -->
         <!-- <menuitem id="product_product_menu_purchasable" name="Productos" action="account.product_product_action_purchasable" sequence="100"/> -->
         <menuitem id="menu_account_supplier" name="Proveedores" action="account.res_partner_action_supplier" sequence="200"/>
@@ -244,8 +240,8 @@
             <menuitem name="Archivo RG3685" sequence="3" 
                 id="menu_import_purchases_rg3685" action="action_import_purchase_rg3685" />
 
-            <menuitem name="Archivo Excel" sequence="4" 
-                id="menu_import_purchase_excel" action="action_import_purchase_excel" />
+            <!-- <menuitem name="Archivo Excel" sequence="4" 
+                id="menu_import_purchase_excel" action="action_import_purchase_excel" /> -->
 
             <!-- TODO: Definir actividad para importar productos (Pto Vta o Producto) -->
 
@@ -275,8 +271,8 @@
                 id="menu_import_sale_pem" action="action_wizard_import_sale_pem" />
             
             <!-- MENU Facturacion/Importar/Archivo Excel -->
-            <menuitem name="Archivo Excel" sequence="6" 
-                id="menu_import_sale_excel" action="action_import_sale_excel" />
+            <!-- <menuitem name="Archivo Excel" sequence="6" 
+                id="menu_import_sale_excel" action="action_import_sale_excel" /> -->
             
             <!-- 
                 TODO: Proveedor, Fecha Factura/Contable/Vencimiento, Diario, Tipo de doc, Numero de Doc. 

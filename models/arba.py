@@ -25,9 +25,10 @@ class ArbaDevolucionBancaria(models.Model):
 ##### Retenciones/Percepciones
 class ImpuestosDeduccion(models.Model):
     _name = "l10n_ar.impuestos.deduccion"
+    _order = "date desc"
 
     # WIDGET DE CONCILIACION
-    # Casos de Uso:
+    # Casos a Testear:
     # - Perc/Ret sin comprobante asociado
     # - Perc/Ret con comprobante asociado, valores diferentes
     #   - Se define un valor a tomar (por defecto la percepcion)

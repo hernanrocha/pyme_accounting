@@ -112,17 +112,17 @@
             <tree>
                 <field name="tax" invisible="1" />
                 <field name="date" />
+                <field name="type" />
                 <field name="amount" />
-                <field name="control" />
+                <!-- <field name="control" />
                 <field name="cuit" />
                 <field name="invoice_pos" />
                 <field name="invoice_number" />
                 <field name="invoice_description" />
                 <field name="description" />
                 <field name="apply_date" />
-                <field name="publish_date" />
-                <field name="type" />
-                <field name="state" />
+                <field name="publish_date" /> -->
+                <!-- <field name="state" /> -->
             </tree>
         </field>
     </record>
@@ -243,6 +243,10 @@
                 <attribute name="invisible">1</attribute>
             </xpath>
 
+            <xpath expr="//field[@name='partner_id']" position="attributes">
+                <attribute name="string">Sujeto</attribute>
+            </xpath>
+            
             <xpath expr="//field[@name='move_id']" position="after">
                 <field name="account_id" />
             </xpath>

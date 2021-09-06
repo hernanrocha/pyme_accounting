@@ -83,9 +83,6 @@
                 <group string="Configuración" col="4">
                     <field name="iibb_report_date_from" />
                     <field name="iibb_report_date_to" />
-
-                    <field name="iibb_report_tax_percentage" />
-                    <field name="iibb_report_min_amount" />
                 </group>
 
                 <button name="calculate_iibb" string="Calcular" type="object" class="btn-primary" />
@@ -95,19 +92,23 @@
                     <page string="Resumen">
                         <group string="Reporte Generado" col="2">
                             <field name="iibb_report_sale_total" readonly="1" />
-                            <field name="iibb_report_tax_percentage" readonly="1" />
-                            <field name="iibb_report_tax_subtotal" />
+                            <field name="iibb_company_tax_percentage" readonly="1" />
+                            <field name="iibb_company_min_amount" readonly="1" />
+                            <field name="iibb_report_tax_subtotal" decoration-bf="1" />
                             <separator />
                             <field name="iibb_report_percepciones" readonly="1" />
                             <field name="iibb_report_retenciones" readonly="1" />
                             <field name="iibb_report_retenciones_bancarias" readonly="1" />
                             <field name="iibb_report_devoluciones_bancarias" readonly="1" />
+                            <field name="iibb_report_deducciones" readonly="1" decoration-bf="1" />
                             <separator />
-                            <field name="iibb_report_deducciones" readonly="1" />
                             <field name="iibb_report_tax_prev_saldo" readonly="1" />
-                            <separator />
-                            <field name="iibb_report_tax_total_saldo" />
-                            <field name="iibb_report_tax_total_to_pay" />
+                            <field name="iibb_report_tax_total_saldo"
+                                decoration-bf="iibb_report_tax_total_saldo > 0"
+                                decoration-success="iibb_report_tax_total_saldo > 0" />
+                            <field name="iibb_report_tax_total_to_pay" 
+                                decoration-bf="iibb_report_tax_total_to_pay > 0"
+                                decoration-danger="iibb_report_tax_total_to_pay > 0" />
                         </group>
                     </page>
                     <page string="Percepciones">    
@@ -115,10 +116,8 @@
                             <field nolabel="1" name="iibb_percepciones">
                                 <tree>
                                     <field name="date" />
+                                    <field name="amount" />
                                     <field name="move_id" />
-                                    <field name="partner_id" />
-                                    <field name="debit" />
-                                    <field name="credit" />
                                 </tree>
                             </field>
                         </group>

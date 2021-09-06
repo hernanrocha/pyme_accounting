@@ -143,6 +143,26 @@ class ImportSaleRg3685(models.TransientModel):
             ('name', '=', 'IVA 21%'),
         ])
 
+        tax_10 = self.env['account.tax'].search([
+            ('type_tax_use', '=', 'sale'),
+            ('name', '=', 'IVA 10.5%'),
+        ])
+
+        tax_27 = self.env['account.tax'].search([
+            ('type_tax_use', '=', 'sale'),
+            ('name', '=', 'IVA 27%'),
+        ])
+
+        tax_25 = self.env['account.tax'].search([
+            ('type_tax_use', '=', 'purchase'),
+            ('name', '=', 'IVA 2,5%'),
+        ])
+
+        tax_5 = self.env['account.tax'].search([
+            ('type_tax_use', '=', 'sale'),
+            ('name', '=', 'IVA 5%'),
+        ])
+
         tax_exempt = self.env['account.tax'].search([
             ('type_tax_use', '=', 'sale'),
             ('name', '=', 'IVA Exento'),
@@ -176,6 +196,11 @@ class ImportSaleRg3685(models.TransientModel):
             
             _logger.info("Partner: {}".format(partner))
 
+            # Alicuotas de IVA
+            alicuotas = filter(
+                lambda x: x["num_comprobante"] == cbte["numero_comprobante_desde"],
+                lines_alicuotas)
+
             # Create Invoice
             # TODO: mejorar esta query
             doc_type = self.env['l10n_latam.document.type'].search([('code', '=', cbte["tipo_comprobante"])])
@@ -190,9 +215,59 @@ class ImportSaleRg3685(models.TransientModel):
                 # TODO: Chequear (y validar) secuencia en PG
                 'l10n_latam_document_number': '{}-{}'.format(cbte["punto_de_venta"], cbte["numero_comprobante_desde"]),
             }
-            print("Invoice Data", move_data)
+            _logger.info("Invoice Data: {}".format(move_data))
             move = self.env['account.move'].create(move_data)
-            print("Invoice", move)
+            _logger.info("Invoice: {}".format(move))
+
+            # Cargar alicuotas de IVA
+            for alic in alicuotas:
+                cod = alic["codigo_iva"]
+                
+                if cod == 4:
+                    line = move.line_ids.create({
+                        'move_id': move.id,
+                        'name': 'Monto Gravado 10.5%',
+                        'account_id': account_sale.id,
+                        'quantity': 1,
+                        'price_unit': alic["importe_gravado"] + (alic["valor_iva"] if tax_10.price_include else 0),
+                    })
+                    line.tax_ids += tax_10
+                elif cod == 5:
+                    line = move.line_ids.create({
+                        'move_id': move.id,
+                        'name': 'Monto Gravado 21%',
+                        'account_id': account_sale.id,
+                        'quantity': 1,
+                        'price_unit': alic["importe_gravado"] + (alic["valor_iva"] if tax_21.price_include else 0),
+                    })
+                    line.tax_ids += tax_21
+                elif cod == 6:
+                    line = move.line_ids.create({
+                        'move_id': move.id,
+                        'name': 'Monto Gravado 27%',
+                        'account_id': account_sale.id,
+                        'quantity': 1,
+                        'price_unit': alic["importe_gravado"] + (alic["valor_iva"] if tax_27.price_include else 0),
+                    })
+                    line.tax_ids += tax_27
+                elif cod == 8:
+                    line = move.line_ids.create({
+                        'move_id': move.id,
+                        'name': 'Monto Gravado 5%',
+                        'account_id': account_sale.id,
+                        'quantity': 1,
+                        'price_unit': alic["importe_gravado"] + (alic["valor_iva"] if tax_5.price_include else 0),
+                    })
+                    line.tax_ids += tax_5
+                elif cod == 9:
+                    line = move.line_ids.create({
+                        'move_id': move.id,
+                        'name': 'Monto Gravado 2.5%',
+                        'account_id': account_sale.id,
+                        'quantity': 1,
+                        'price_unit': alic["importe_gravado"] + (alic["valor_iva"] if tax_25.price_include else 0),
+                    })
+                    line.tax_ids += tax_25
 
             # IVA No Gravado
             if cbte["total_no_gravado"] > 0:

@@ -22,6 +22,7 @@
                                 <field name="partner" />
                                 <field name="invoice_number" edit="false" />
                                 <field name="amount" edit="false" />
+                                <field name="invoice_name" edit="false" />
                                 <field name="amount2" edit="false" />
                             </tree>
                         </field>
