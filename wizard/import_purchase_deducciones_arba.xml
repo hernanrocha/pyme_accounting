@@ -1,6 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="view_import_purchase_deducciones_arba_pline_form" model="ir.ui.view">
+        <field name="name">l10n_ar.import.purchase.deducciones.arba.pline.form</field>
+        <field name="model">l10n_ar.import.purchase.deducciones.arba.pline</field>
+        <field name="arch" type="xml">
+            <form string="Editar Percepción">
+
+                <group col="2">
+                    <field name="date" />
+                    <field name="cuit" />
+                    <field name="invoice_number" />
+                    <field name="amount" />
+                    <field name="state" />
+                </group>
+
+            </form>
+        </field>
+    </record>
+
     <!-- IMPORTAR DEDUCCIONES COMPRA ARBA - FORM -->
     <record id="view_import_purchase_deducciones_arba_form" model="ir.ui.view">
         <field name="name">l10n_ar.import.purchase.deducciones.arba.form</field>
@@ -17,13 +35,20 @@
                             <field name="percepciones" nolabel="1" widget="section_and_note_one2many" options="{'reload_on_button': true}">
                             <tree decoration-warning="diff">
                                 <field name="diff" invisible="1" />
+                                
+                                <!-- Datos del archivo -->
                                 <field name="date" edit="false" />
                                 <field name="cuit" edit="false" />
                                 <field name="partner" />
                                 <field name="invoice_number" edit="false" />
+                                <field name="amount_agente" edit="false" />
                                 <field name="amount" edit="false" />
-                                <field name="invoice_name" edit="false" />
+                                <field name="state" />
+                                
+                                <!-- Datos del comprobante asociado -->
+                                <field name="invoice_found" edit="false" />
                                 <field name="amount2" edit="false" />
+                                <field name="diff" edit="false" />
                             </tree>
                         </field>
                     </page>

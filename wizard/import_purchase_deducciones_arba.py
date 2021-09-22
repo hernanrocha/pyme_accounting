@@ -13,12 +13,15 @@ ns = {'ss': 'urn:schemas-microsoft-com:office:spreadsheet'}
 
 def translate_invoice_type(tipo, letra, numero):
     t = ''
-    if tipo == 'F':
+    if tipo == 'F' or tipo == ' ':
         t = 'FA'
     elif tipo == 'C':
         t = 'NC'
+    elif tipo == 'D':
+        t = 'ND'
     else:
-        raise UserError("Tipo de comprobante invalido: {}".format(tipo))
+        raise UserError("(NUEVO) Tipo de comprobante invalido: {}".format(tipo))
+        # t = "INVALIDO"
 
     if letra not in ['A', 'B', 'C', ' ']:
         raise UserError("Letra de comprobante invalido: {}".format(letra))
@@ -35,12 +38,22 @@ def cell_data(cells, index):
 class PurchaseImportDeduccionesArbaPLine(models.TransientModel):
     _name = "l10n_ar.import.purchase.deducciones.arba.pline"
 
+    # TODO: permitir filtrar deducciones con estado "Baja"
+    # TODO: permitir "matchear" comprobantes con numeros invalidos
+    # TODO: al pasar a borrador, se restablecen los valores de IIBB y otros impuestos
+
     date = fields.Date(string="Fecha")
     cuit = fields.Char(string="CUIT")
-    partner = fields.Char(string="Proveedor")
+    # TODO: separar en tipo de comprobante, punto de venta y numero de comprobante
     invoice_number = fields.Char(string="Comprobante")
-    amount = fields.Float(string="Monto")
-    amount2 = fields.Float(string="Otros")
+    amount_agente = fields.Float(string="Importe Agente")
+    amount = fields.Float(string="Importe Contrib")
+    state = fields.Selection([('alta', 'Alta'), ('baja', 'Baja')], string="Estado")
+
+    # TODO: completar con consulta AFIP si es que no existe    
+    partner = fields.Char(string="Proveedor", related='invoice_id.partner_id.name')
+    invoice_name = fields.Char('Cbte Asociado', related='invoice_id.name')
+    amount2 = fields.Float(string="No Gravado")
 
     @api.depends('amount', 'amount2')
     def _compute_diff(self):
@@ -48,10 +61,19 @@ class PurchaseImportDeduccionesArbaPLine(models.TransientModel):
             # TODO: tener en cuenta las notas de credito
             line.diff = abs(abs(line.amount) - abs(line.amount2)) > 0.005
 
+    # TODO: tener en cuenta las percepciones existentes en el comprobante
     diff = fields.Boolean(string="Diferencia", compute=_compute_diff)
     
+    @api.depends('invoice_id')
+    def _compute_invoice_found(self):
+        for line in self:
+            line.invoice_found = bool(line.invoice_id)
+
+    invoice_found = fields.Boolean(string="Cbte Asociado", compute=_compute_invoice_found)
+
     # TODO: borrar esto de la vista de edicion
     import_id = fields.Many2one(comodel_name="l10n_ar.import.purchase.deducciones.arba", ondelete="cascade", readonly=True, invisible=True)
+    invoice_id = fields.Many2one(string="Cbte Asociado", comodel_name="account.move", ondelete="set null", readonly=True, invisible=True)
 
 class PurchaseImportDeduccionesArbaRLine(models.TransientModel):
     _name = "l10n_ar.import.purchase.deducciones.arba.rline"
@@ -113,6 +135,7 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
 
         # TODO: Handle parsing error messages
         self._parse_percepciones(root)
+
         self._parse_retenciones(root)
         self._parse_retenciones_bancarias(root)
         self._parse_devoluciones_bancarias(root)
@@ -159,39 +182,51 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
             letra_comprobante = cell_data(cells, 1) # 'A', 'B', 'C', ' '
             numero_comprobante = "{}-{}".format(cell_data(cells, 2).zfill(5), cell_data(cells, 3).zfill(8))
             cuit = cell_data(cells, 4)
+            importe_agente = cell_data(cells, 6)
             fecha = cell_data(cells, 7)
             importe = cell_data(cells, 8)
+            estado = cell_data(cells, 9)
             
-            print("[Percepcion]", fecha, cuit, numero_comprobante, importe)
+            _logger.info("[Percepcion] {} {} {} {}".format(fecha, cuit, numero_comprobante, importe))
 
             p = self.percepciones.create({
                 'date': datetime.strptime(fecha, '%d/%m/%Y'),
-                'amount': float(importe),
+                'amount': float(importe.replace(",", "")),
+                'amount_agente': float(importe_agente.replace(",", "")),
                 'cuit': cuit,
+                'state': 'alta' if estado == 'Alta' else 'baja',
                 'invoice_number': translate_invoice_type(tipo_comprobante, letra_comprobante, numero_comprobante),
                 'import_id': self.id,
             })
 
+            # TODO: hacer invoice_id computed que dependa de invoice_number
             comp = self.env['account.move'].search([
                 ('move_type', 'in', ['in_invoice', 'in_refund']),
-                ('name', '=', p.invoice_number)
-                # TODO: filtrar por CUIT
+                ('name', '=', str(p.invoice_number)),
+                # TODO: filtrar por CUIT y por estado
             ])
+            _logger.info("Comprobantes: {}".format(comp))
+            
             if len(comp) == 0:
-                _logger.info("Comprobante no encontrado", cuit, numero_comprobante)
+                _logger.info("Comprobante no encontrado: {}".format(p.invoice_number))
             else:
-                # print("Comprobante encontrado", cuit, numero_comprobante)
+                p.write({
+                    'invoice_id': comp.id,
+                })
+                
+                # TODO: hacer invoice_id computed que dependa de invoice_number
                 line_other = comp.line_ids.filtered(lambda line: line.name == 'Otros Montos No Gravados')
-                # print("Line", line_other)
                 if len(line_other) == 1:
-                    p.write({ 'amount2': line_other.price_unit, 'partner': comp.partner_id.name })
+                    p.write({ 
+                        'amount2': line_other.price_unit, 
+                    })
 
         # TODO: Filtrar por fecha primero, y descontar las facturas que vayan coincidiendo
         comp = self.env['account.move'].search([
             ('move_type', 'in', ['in_invoice', 'in_refund']),
             ('name', 'not in', self.percepciones.mapped('invoice_number')),
         ])
-        _logger.info("Comprobantes sin percepciones", comp, comp.mapped('name'))
+        _logger.info("Comprobantes sin percepciones: {} {}".format(comp, comp.mapped('name')))
 
     # Retenciones
     def _parse_retenciones(self, root):
@@ -221,7 +256,7 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
             print("[Retencion]", fecha, importe, estado, emision)
             self.retenciones.create({
                 'date': datetime.strptime(fecha, '%d/%m/%Y'),
-                'amount': float(importe),
+                'amount': float(importe.replace(",", "")),
                 'import_id': self.id,
             })
 
@@ -250,7 +285,7 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
             print("[RetencionBancaria]", fecha, importe, estado)
             self.retenciones_bancarias.create({
                 'date': datetime.strptime(fecha, '%d/%m/%Y'),
-                'amount': float(importe),
+                'amount': float(importe.replace(",", "")),
                 'import_id': self.id,
             })
         
@@ -274,7 +309,7 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
 
             self.devoluciones_bancarias.create({
                 'date': datetime.strptime(fecha, '%d/%m/%Y'),
-                'amount': float(importe),
+                'amount': float(importe.replace(",", "")),
                 'import_id': self.id,
             })
 
@@ -293,6 +328,58 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
                 'amount': percepcion.amount,
             })
             print("Percepcion", perc)
+
+            # Actualizar factura coincidente (solo si esta marcada como "Alta")
+            if percepcion.invoice_id and percepcion.state == 'alta':
+                comp = percepcion.invoice_id
+                
+                # Pasar a borrador para poder editar
+                posted = comp.state == 'posted'
+                if posted:
+                    comp.button_draft()
+
+                _logger.info("Comprobante: {}".format(comp))
+                _logger.info("Old Line IDs: {}".format(comp.line_ids))
+                _logger.info("Old Total: {}".format(comp.amount_total))
+
+                iibb = self.env['account.tax'].search([
+                    ('name', '=', "Percepción IIBB ARBA Sufrida")
+                ])
+                _logger.info("IIBB: {}".format(iibb))
+
+                line = comp.invoice_line_ids[0]
+                line.tax_ids += iibb
+
+                # Actualizar factura
+                comp._recompute_dynamic_lines(recompute_all_taxes=True, recompute_tax_base_amount=True)
+                _logger.info("New Line IDs: {}".format(comp.line_ids))
+                comp._recompute_payment_terms_lines()
+                _logger.info("New Line IDs: {}".format(comp.line_ids))
+                comp._compute_amount()
+                _logger.info("New Line IDs: {}".format(comp.line_ids))
+
+                # Obtener linea de percepcion IIBB
+                iibb_line = comp.line_ids.filtered(lambda line: line.tax_line_id.id == iibb.id)
+
+                perc = percepcion.amount
+                if perc >= 0:
+                    comp.write({'line_ids': [(1, iibb_line.id, { 
+                        'debit': perc, 
+                        'credit': 0, 
+                        'amount_currency': perc,
+                    })]})
+                else:
+                    comp.write({'line_ids': [(1, iibb_line.id, { 
+                        'debit': 0, 
+                        'credit': -perc, 
+                        'amount_currency': -perc,
+                    })]})
+
+                _logger.info("NewNew Total: {}".format(comp.amount_total))
+
+                # Volver al estado confirmado
+                if posted:
+                    comp.action_post()
 
     def _generate_retenciones(self):
         for retencion in self.retenciones:

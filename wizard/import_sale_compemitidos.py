@@ -138,7 +138,7 @@ class ImportSalesAfip(models.TransientModel):
             line = self.env['l10n_ar.afip.import_sale.line'].create({ 
                 'date': datetime.datetime.strptime(row[0], '%d/%m/%Y'),
                 'invoice_type': helper_convert_invoice_type(row[1]),
-                'pos_number': row[2].zfill(4),
+                'pos_number': row[2].zfill(5),
                 'invoice_number': row[3].zfill(8),
                 'cuit': row[7],
                 'partner': row[8],

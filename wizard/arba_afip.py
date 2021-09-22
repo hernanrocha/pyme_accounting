@@ -309,7 +309,7 @@ class ImpuestosImporter(models.Model):
 
         # Computar Mis Comprobantes Recibidos AFIP
         for row in spamreader:
-            num = row[2].zfill(4) + "-" + row[3].zfill(8)
+            num = row[2].zfill(5) + "-" + row[3].zfill(8)
             
             # Obtener percepcion de IIBB si existe
             perc = percepciones.pop(num, None)
@@ -317,8 +317,6 @@ class ImpuestosImporter(models.Model):
             # Calcular importe de percepcion
             imp = float(perc["importe_percepcion"]) if perc else 0
             
-            # print(row[0], row[1], row[2].zfill(4), row[3].zfill(8), row[7], row[8], row[11], row[14], row[15], imp, sep=",")
-
             # TODO: borrar registros viejos la segunda vez que se carga
 
             _logger.info("LINE: {} - {}".format(row, row[1]))
@@ -327,7 +325,7 @@ class ImpuestosImporter(models.Model):
             wizard_invoice_line = self.env['l10n_ar.invoice_line'].create({ 
                 'date': datetime.datetime.strptime(row[0], '%d/%m/%Y'),
                 'invoice_type': helper_convert_invoice_type(row[1]),
-                'pos_number': row[2].zfill(4),
+                'pos_number': row[2].zfill(5),
                 'invoice_number': row[3].zfill(8),
                 'cuit': row[7],
                 'vendor': row[8],

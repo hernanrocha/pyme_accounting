@@ -28,18 +28,31 @@
                 <field name="invoice_source_email" invisible="1"/>
                 <field name="invoice_partner_display_name" invisible="context.get('default_move_type') not in ('in_invoice', 'in_refund','in_receipt')" groups="base.group_user" string="Proveedor" />
                 <field name="invoice_partner_display_name" invisible="context.get('default_move_type') not in ('out_invoice', 'out_refund','out_receipt')" groups="base.group_user" string="Cliente" />
-                <field name="amount_untaxed" string="Neto Gravado" sum="Total"/>
-                <field name="amount_tax" string="Impuestos" sum="Total" />
-                <field name="amount_total" string="Total" sum="Total" decoration-bf="1"/>
                 <!-- TODO: ver como calcular totales -->
-                <!-- <field name="display_amount_untaxed" />
-                <field name="display_amount_tax" />
-                <field name="display_amount_total" decoration-bf="1" /> -->
-                <!-- TODO: Positivo para facturas. Negativo para notas de credito
-                    Gravado	IVA 21%	IVA 10,5%	Exento	No gravado	Retenc Iva	Percep Iva	PERCEP IIBB	PERCEP MUNICIP	Otros tributos -->
+                <field name="display_amount_taxed" sum="Total" />
+                <field name="display_amount_untaxed" sum="Total" />
+                <field name="display_amount_exempt" sum="Total" />
+                <!-- TODO: IVA 0% -->
+                <!-- <field name="display_amount_tax_0" optional="hide" /> -->
+                <!-- TODO: Las ventas a CF tienen "IVA No Corresponde" -->
+                <field name="display_amount_tax_21" sum="Total" />
+                <field name="display_amount_tax_10" sum="Total" optional="show" /> 
+                <field name="display_amount_tax_27" sum="Total" optional="hide" /> 
+                <field name="display_amount_tax_5" sum="Total" optional="hide" /> 
+                <field name="display_amount_tax_25" sum="Total" optional="hide" />
+                <field name="display_perc_nacionales" sum="Total" optional="hide" />
+                <field name="display_perc_internos" sum="Total" optional="hide" />
+                <field name="display_perc_iva" sum="Total" />
+                <field name="display_perc_iibb" sum="Total" />
+                <field name="display_perc_municipales" sum="Total" optional="hide" />
+                <!-- TODO: Otros tributos -->
+
+                <field name="display_amount_total" string="Total" sum="Total" decoration-bf="1"/>
+                
+                <!-- TODO: Positivo para facturas. Negativo para notas de credito -->
                 <field name="currency_id" invisible="1"/>
                 <field name="company_currency_id" invisible="1"/>
-                <field name="state" widget="badge" decoration-success="state == 'posted'" decoration-info="state == 'draft'" optional="show"/>
+                <field name="state" widget="badge" decoration-success="state == 'posted'" decoration-info="state == 'draft'" />
                 <!-- <field name="payment_state" widget="badge" decoration-danger="payment_state == 'not_paid'" decoration-warning="payment_state in ('partial', 'in_payment')" decoration-success="payment_state in ('paid', 'reversed')" attrs="{'invisible': [('payment_state', 'in', ('invoicing_legacy'))]}"/> -->
             </tree>
         </field>

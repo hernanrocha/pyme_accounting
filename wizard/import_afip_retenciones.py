@@ -14,19 +14,22 @@ class ImportAfipMisRetencionesLine(models.TransientModel):
     _name = "l10n_ar.import.afip.retenciones.line"
     _description = "Linea de Mis Retenciones"
 
-    date = fields.Date(string="Fecha")
-    # invoice_type = fields.Char(string="Tipo de Comprobante")
-    # pos_number = fields.Char(string="Punto de Venta")
-    # invoice_number = fields.Char(string="N° Factura")
-    # cuit = fields.Char(string="CUIT")
-    # vendor = fields.Char(string="Proveedor")
-    # taxed_amount = fields.Float(string="Gravado")
-    # untaxed_amount = fields.Float(string="No Gravado")
-    # exempt_amount = fields.Float(string="Exento")
-    # iva = fields.Float(string="Monto IVA")
+    # TODO: Fecha retencion/percepcion
+    # TODO: Numero de certificado
+    date = fields.Date(string="Fecha Cbte")
+    cuit = fields.Char(string="CUIT")
+    partner = fields.Char(string="Proveedor")
+    impuesto = fields.Selection([('767', '767 - SICORE Perc/Ret IVA')], string="Impuesto")
+    regimen = fields.Selection([('493', '493 - Percepción IVA de Proveedores')], string="Regimen")
+    descripcion = fields.Char(string="Descripcion")
+    numero_comprobante = fields.Char(string="Numero Cbte")
     total = fields.Float(string="Total")
+    descripcion_cbte = fields.Char(string="Descripcion Cbte")
+    date_registered = fields.Date(string="Fecha Registración")
+    # TODO: filtrar por mes y por proveedor
 
     import_id = fields.Many2one(comodel_name="l10n_ar.import.afip.retenciones", ondelete="cascade", invisible=True)
+    invoice_id = fields.Many2one(string="Cbte Asociado", comodel_name="account.move", ondelete="set null")
 
     # @api.depends('taxed_amount', 'iva', 'untaxed_amount', 'exempt_amount', 'total')
     # def _compute_difference(self):
@@ -91,16 +94,42 @@ class ImportAfipMisRetenciones(models.TransientModel):
             retenciones.append(values)
             _logger.info(values)
 
-        self.generate(retenciones)
+        for retencion in retenciones:
+            self.invoice_ids.create({
+                'date': datetime.strptime(retencion[11], '%d/%m/%Y'),
+                'cuit': retencion[0],
+                'partner': retencion[1],
+                'impuesto': retencion[2],
+                'regimen': retencion[4],
+                'descripcion': retencion[8],
+                'total': float(retencion[9]),
+                'numero_comprobante': retencion[10],
+                'descripcion_cbte': retencion[12],
+                'date_registered': datetime.strptime(retencion[13], '%d/%m/%Y'),
+                'import_id': self.id
+            })        
+
+        return {
+            'context': self.env.context,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'l10n_ar.import.afip.retenciones',
+            'res_id': self.id,
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+        }
 
     def generate(self, retenciones):
-        for retencion in retenciones:
+        for retencion in self.invoice_ids:
             ret = self.env['l10n_ar.impuestos.deduccion'].create({
                 'state': 'available',
-                'tax': 'iva',
-                'type': 'iva_percepcion',
-                'date': datetime.strptime(retencion[11], '%d/%m/%Y'),
-                'amount': float(retencion[9]),
-                'cuit': retencion[0],
+                'tax': 'iva',             # TODO: convertir este valor
+                'type': 'iva_percepcion', # TODO: convertir este valor
+                'date': retencion.date,
+                'amount': retencion.total,
+                'cuit': retencion.cuit,
             })
             _logger.info("Retencion: {}".format(ret))
+
+            # TODO: generar linea de percepcion IIBB

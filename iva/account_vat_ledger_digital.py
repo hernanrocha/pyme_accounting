@@ -16,6 +16,7 @@ _logger = logging.getLogger(__name__)
 # TODO: cantidad de alicuotas sigue vieja
 # TODO: todos los grupos de IVA tienen que tener especificado el tipo "vat"
 
+# TODO: Mover esto a computed en account.move
 def untaxed_exempt_line(line):
     codes = line.mapped('tax_ids').mapped('tax_group_id').mapped('l10n_ar_vat_afip_code')
     return '1' in codes or '2' in codes
@@ -256,7 +257,8 @@ class AccountVatLedger(models.Model):
         self.ensure_one()
         invoices = self.env['account.move'].search([
             # ('l10n_latam_document_type_id.export_to_digital', '=', True),
-            ('id', 'in', self.invoice_ids.ids)], order='invoice_date asc')
+            # TODO: Ordenar diferente para compras y ventas
+            ('id', 'in', self.invoice_ids.ids)], order='commercial_partner_name asc,sequence_number asc')
 
         return invoices
 
@@ -281,6 +283,7 @@ class AccountVatLedger(models.Model):
             currency_rate = inv.l10n_ar_currency_rate
             currency_code = inv.currency_id.l10n_ar_afip_code
             doc_number = int(inv.name.split('-')[2])
+            cbte_z = inv.l10n_latam_document_type_id.code in ['83']
 
             untaxed_amount = sum(inv.invoice_line_ids.filtered(untaxed_line).mapped('price_total'))
             exempt_amount = sum(inv.invoice_line_ids.filtered(exempt_line).mapped('price_total'))
@@ -306,12 +309,12 @@ class AccountVatLedger(models.Model):
                 # En el supuesto de registrar de manera agrupada por totales
                 # diarios, se deberá consignar el primer número de comprobante
                 # del rango a considerar.
-                "{:0>20d}".format(doc_number),
+                "{:0>20d}".format(inv.z_desde if cbte_z else doc_number),
 
                 # VENTAS Campo 5: Número de Comprobante Hasta.
                 # TODO agregar esto En el resto de los casos se consignará el
                 # dato registrado en el campo 4
-                "{:0>20d}".format(doc_number),
+                "{:0>20d}".format(inv.z_hasta if cbte_z else doc_number),
 
                 # VENTAS Campo 6: Código de documento del comprador.
                 self.get_partner_document_code(inv.commercial_partner_id),
@@ -463,16 +466,16 @@ class AccountVatLedger(models.Model):
             _logger.info("No Gravado / Exento: {} {}".format(untaxed_amount, exempt_amount))
 
             row = [
-                # Campo 1: Fecha de comprobante
+                # COMPRAS Campo 1: Fecha de comprobante
                 fields.Date.from_string(inv.invoice_date).strftime('%Y%m%d'),
 
-                # Campo 2: Tipo de Comprobante.
+                # COMPRAS Campo 2: Tipo de Comprobante.
                 "{:0>3d}".format(int(inv.l10n_latam_document_type_id.code)),
 
-                # Campo 3: Punto de Venta
+                # COMPRAS Campo 3: Punto de Venta
                 self.get_point_of_sale(inv),
 
-                # Campo 4: Número de Comprobante
+                # COMPRAS Campo 4: Número de Comprobante
                 # TODO agregar estos casos de uso
                 # Si se trata de un comprobante de varias hojas, se deberá
                 # informar el número de documento de la primera hoja, teniendo
@@ -484,7 +487,7 @@ class AccountVatLedger(models.Model):
                 # del rango a considerar.
                 "{:0>20d}".format(doc_number),
 
-                # Campo 5: Despacho de importación
+                # COMPRAS Campo 5: Despacho de importación
                 # TODO
                 # if inv.l10n_latam_document_type_id.code == '66':
                 #     row.append(
@@ -494,18 +497,18 @@ class AccountVatLedger(models.Model):
                 #     row.append(''.rjust(16, ' '))
                 ''.rjust(16, ' '),
 
-                # Campo 6: Código de documento del comprador.
+                # COMPRAS Campo 6: Código de documento del comprador.
                 self.get_partner_document_code(inv.commercial_partner_id),
 
-                # Campo 7: Número de Identificación del comprador
+                # COMPRAS Campo 7: Número de Identificación del comprador
                 self.get_partner_document_number(inv.commercial_partner_id),
 
-                # Campo 8: Apellido y Nombre del comprador.
+                # COMPRAS Campo 8: Apellido y Nombre del comprador.
                 inv.commercial_partner_id.name.ljust(30, ' ')[:30],
                 # inv.commercial_partner_id.name.encode(
                 #     'ascii', 'replace').ljust(30, ' ')[:30],
 
-                # Campo 9: Importe Total de la Operación.
+                # COMPRAS Campo 9: Importe Total de la Operación.
                 self.format_amount(inv.amount_total, invoice=inv),
 
                 #if inv.id == 200:
@@ -514,21 +517,16 @@ class AccountVatLedger(models.Model):
                 # amount_percepciones_iva = 0
                 # amount_percepciones_iibb = 0
 
-                # Campo 10: Importe No Gravado
+                # COMPRAS Campo 10: Importe No Gravado
                 self.format_amount(untaxed_amount, invoice=inv),
                 
-                # Campo 11: Importe Exento
+                # COMPRAS Campo 11: Importe Exento
                 self.format_amount(exempt_amount, invoice=inv),
 
-                # Campo 12: Importe de percepciones o pagos a cuenta del
-                # Impuesto al Valor Agregado
-                self.format_amount(
-                    sum(inv.l10n_latam_tax_ids.filtered(lambda r: (
-                        r.tax_line_id.tax_group_id.tax_type == 'withholdings' and
-                        r.tax_line_id.tax_group_id.l10n_ar_tribute_afip_code == '06')
-                    ).mapped('debit')), invoice=inv),
+                # COMPRAS Campo 12: Importe de percepciones/pagos a cuenta de IVA
+                self.format_amount(self._get_compra_iva(inv), invoice=inv),
                 
-                # Campo 13: Importe de percepciones o pagos a cuenta de
+                # COMPRAS Campo 13: Importe de percepciones/pagos a cuenta de
                 # impuestos nacionales
                 self.format_amount(
                     sum(inv.move_tax_ids.filtered(lambda r: (
@@ -537,10 +535,10 @@ class AccountVatLedger(models.Model):
                         r.tax_id.tax_group_id.l10n_ar_tribute_afip_code == '01')
                     ).mapped('tax_amount')), invoice=inv),
 
-                # Campo 14: Importe de percepciones de ingresos brutos
+                # COMPRAS Campo 14: Importe de percepciones de ingresos brutos
                 self.format_amount(self._get_compra_iibb(inv), invoice=inv),
 
-                # Campo 15: Importe de percepciones de impuestos municipales
+                # COMPRAS Campo 15: Importe de percepciones de impuestos municipales
                 # TODO:
                 # self.format_amount(
                 #     sum(inv.move_tax_ids.filtered(lambda r: (
@@ -549,23 +547,23 @@ class AccountVatLedger(models.Model):
                 #     ).mapped('tax_amount')), invoice=inv),
                 self.format_amount(0, invoice=inv),
 
-                # Campo 16: Importe de impuestos internos
+                # COMPRAS Campo 16: Importe de impuestos internos
                 self.format_amount(
                     sum(inv.move_tax_ids.filtered(
                         lambda r: r.tax_id.tax_group_id.l10n_ar_tribute_afip_code == '04'
                     ).mapped('tax_amount')), invoice=inv),
 
-                # Campo 17: Código de Moneda
+                # COMPRAS Campo 17: Código de Moneda
                 str(currency_code),
 
-                # Campo 18: Tipo de Cambio
+                # COMPRAS Campo 18: Tipo de Cambio
                 # nueva modalidad de currency_rate
                 self.format_amount(currency_rate, padding=10, decimals=6),
 
-                # Campo 19: Cantidad de alícuotas de IVA
+                # COMPRAS Campo 19: Cantidad de alícuotas de IVA
                 str(cant_alicuotas),
 
-                # Campo 20: Código de operación.
+                # COMPRAS Campo 20: Código de operación.
                 # - E: operaciones exentas
                 # - N: operaciones no gravadas
                 # - <blanco>: operaciones que tienen al menos una parte gravada
@@ -574,7 +572,7 @@ class AccountVatLedger(models.Model):
                     self.format_amount(untaxed_amount, invoice=inv),
                     self.format_amount(exempt_amount, invoice=inv)),
 
-                # Campo 21: Crédito Fiscal Computable
+                # COMPRAS Campo 21: Crédito Fiscal Computable
                 # if self.prorate_tax_credit:
                 #     if self.prorate_type == 'global':
                 #         row.append(self.format_amount(0, invoice=inv))
@@ -612,7 +610,7 @@ class AccountVatLedger(models.Model):
                 #         #    inv.vat_amount, invoice=inv))
                 self.format_amount(self._get_invoice_credito_fiscal(inv), invoice=inv),
 
-                # Campo 22: Otros Tributos
+                # COMPRAS Campo 22: Otros Tributos
                 #self.format_amount(
                 #    sum(inv.l10n_latam_tax_ids.filtered(lambda r: (
                 #        r.l10n_latam_tax_ids[0].tax_group_id.tax_type \
@@ -625,7 +623,7 @@ class AccountVatLedger(models.Model):
                     #    'cc_amount')), invoice=inv),
 
                 # TODO implementar estos 3
-                # Campo 23: CUIT Emisor / Corredor
+                # COMPRAS Campo 23: CUIT Emisor / Corredor
                 # Se informará sólo si en el campo "Tipo de Comprobante" se
                 # consigna '033', '058', '059', '060' ó '063'. Si para
                 # éstos comprobantes no interviene un tercero en la
@@ -633,10 +631,10 @@ class AccountVatLedger(models.Model):
                 # el resto de los comprobantes se completará con ceros
                 self.format_amount(0, padding=11, invoice=inv),
 
-                # Campo 24: Denominación Emisor / Corredor
+                # COMPRAS Campo 24: Denominación Emisor / Corredor
                 ''.ljust(30, ' ')[:30],
 
-                # Campo 25: IVA Comisión
+                # COMPRAS Campo 25: IVA Comisión
                 # Si el campo 23 es distinto de cero se consignará el
                 # importe del I.V.A. de la comisión
                 self.format_amount(0, invoice=inv)
@@ -653,6 +651,13 @@ class AccountVatLedger(models.Model):
         if total == exempt:
             return 'E'
         return ' '
+
+    def _get_compra_iva(self, inv):
+        iibb = inv.line_ids.filtered(lambda r: (
+            r.tax_group_id and r.tax_group_id.l10n_ar_tribute_afip_code == '06'))
+        _logger.info("Filtered: {}".format(iibb))
+        
+        return sum(iibb.mapped('price_total'))
 
     def _get_compra_iibb(self, inv):
         # TODO Percepciones en moneda extranjera

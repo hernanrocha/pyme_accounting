@@ -6,6 +6,9 @@ import csv
 import io
 import base64
 import datetime
+import logging
+
+_logger = logging.getLogger(__name__)
 
 # TODO: Usar modelo de Odoo para hacer esta traduccion
 # TODO: No repetir este codigo
@@ -86,6 +89,22 @@ class ImportPurchaseCompRecibidosLine(models.TransientModel):
         for line in self:
             line.needs_attention = line.difference > 0.01 or line.difference < -0.01
 
+    @api.depends('invoice_display_name')
+    def _compute_invoice_id(self):
+        for line in self:
+            line.invoice_id = self.env['account.move'].search([
+                ('move_type', 'in', ['in_invoice', 'in_refund']),
+                ('name', '=', line.invoice_display_name),
+                # TODO: filtrar por CUIT y por estado
+            ])
+
+    @api.depends('invoice_id')
+    def _compute_invoice_found(self):
+        for line in self:
+            line.invoice_found = bool(line.invoice_id)
+
+    invoice_id = fields.Many2one(string="Cbte Asociado", comodel_name="account.move", ondelete="set null", compute=_compute_invoice_id)
+    invoice_found = fields.Boolean(string="Existente", compute=_compute_invoice_found)
 
 class ImportPurchaseCompRecibidos(models.TransientModel):
     _name = "l10n_ar.import.purchase.comprecibidos"
@@ -94,6 +113,14 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
     file = fields.Binary(string="Archivo de Comprobantes (*.csv)")
 
     invoice_ids = fields.One2many(string="Comprobantes", comodel_name="l10n_ar.import.purchase.comprecibidos.line", inverse_name="import_id")
+    existing_invoice_ids = fields.Many2many(string="Comprobantes Existentes", comodel_name="account.move")
+
+    @api.depends('invoice_ids', 'invoice_ids.invoice_found')
+    def _compute_display_invoice_ids(self):
+        for imp in self:
+            imp.display_invoice_ids = imp.invoice_ids.filtered(lambda i: not i.invoice_found)
+
+    display_invoice_ids = fields.One2many(string="Comprobantes Filtrados", comodel_name="l10n_ar.import.purchase.comprecibidos.line", compute=_compute_display_invoice_ids)
     
     def compute(self):
         [data] = self.read()
@@ -118,17 +145,13 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
 
         # Computar Mis Comprobantes Recibidos AFIP
         for row in spamreader:
-            num = row[2].zfill(4) + "-" + row[3].zfill(8)
-                        
-            # print(row[0], row[1], row[2].zfill(4), row[3].zfill(8), row[7], row[8], row[11], row[14], row[15], imp, sep=",")
-
             # TODO: computar diferencia
 
             # Crear linea de compra en el wizard
             wizard_invoice_line = self.env['l10n_ar.import.purchase.comprecibidos.line'].create({ 
                 'date': datetime.datetime.strptime(row[0], '%d/%m/%Y'),
                 'invoice_type': helper_convert_invoice_type(row[1]),
-                'pos_number': row[2].zfill(4),
+                'pos_number': row[2].zfill(5),
                 'invoice_number': row[3].zfill(8),
                 'cuit': row[7],
                 'vendor': row[8],
@@ -141,6 +164,12 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
             })
 
             count += 1
+
+        self.existing_invoice_ids = self.env['account.move'].search([
+                ('move_type', 'in', ['in_invoice', 'in_refund']),
+                ('id', 'not in', self.invoice_ids.mapped('invoice_id').mapped('id'))
+        ])
+        _logger.info("Otros comprobantes: {}".format(self.existing_invoice_ids))
 
         return {
             'context': self.env.context,
@@ -157,7 +186,7 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
         # Obtener tipo de identificacion CUIT
         cuit_type = self.env.ref('l10n_ar.it_cuit') 
 
-        # Obtener condicion fiscal RI y Monotributo       
+        # Obtener condicion fiscal RI y Monotributo
         ri = self.env.ref('l10n_ar.res_IVARI')
         monotributo = self.env.ref('l10n_ar.res_RM')
 
@@ -176,6 +205,7 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
         # TODO: Validar que el CUIT sea correcto
 
         # TODO: USAR MIXIN
+        # TODO: tener en cuenta otras alicuotas
         tax_untaxed = self.env['account.tax'].search([
             ('type_tax_use', '=', 'purchase'),
             ('name', '=', 'IVA No Gravado'),
