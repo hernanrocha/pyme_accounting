@@ -25,6 +25,11 @@
 				<field name="vat_untaxed_base_amount" />
 			</group>
 		</field>
+		<field name="l10n_latam_document_type_id" position="after">
+			<!-- TODO: mostrar solo en comprobantes Z -->
+			<field name="z_desde" />
+			<field name="z_hasta" />
+		</field>
 	</field>
     </record>
 

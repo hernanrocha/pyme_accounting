@@ -13,6 +13,7 @@ ns = {'ss': 'urn:schemas-microsoft-com:office:spreadsheet'}
 
 def translate_invoice_type(tipo, letra, numero):
     t = ''
+    # TODO: las que tienen espacio en blanco son percepciones bancarias
     if tipo == 'F' or tipo == ' ':
         t = 'FA'
     elif tipo == 'C':
@@ -50,8 +51,9 @@ class PurchaseImportDeduccionesArbaPLine(models.TransientModel):
     amount = fields.Float(string="Importe Contrib")
     state = fields.Selection([('alta', 'Alta'), ('baja', 'Baja')], string="Estado")
 
-    # TODO: completar con consulta AFIP si es que no existe    
+    # TODO: completar con consulta AFIP si es que no existe
     partner = fields.Char(string="Proveedor", related='invoice_id.partner_id.name')
+    inv_perc_iibb = fields.Float(string="Cbte IIBB", compute="_compute_inv_perc_iibb")
     invoice_name = fields.Char('Cbte Asociado', related='invoice_id.name')
     amount2 = fields.Float(string="No Gravado")
 
@@ -61,9 +63,37 @@ class PurchaseImportDeduccionesArbaPLine(models.TransientModel):
             # TODO: tener en cuenta las notas de credito
             line.diff = abs(abs(line.amount) - abs(line.amount2)) > 0.005
 
+    @api.depends('invoice_id')
+    def _compute_inv_perc_iibb(self):
+        for line in self:
+            if line.invoice_id:
+                line.inv_perc_iibb = line.invoice_id.perc_iibb
+            else:
+                line.inv_perc_iibb = 0
+
     # TODO: tener en cuenta las percepciones existentes en el comprobante
     diff = fields.Boolean(string="Diferencia", compute=_compute_diff)
-    
+
+    @api.depends('diff', 'state')
+    def _compute_decoration(self):
+        for line in self:
+            line.decoration = ''
+            # Si la percepcion esta en estado "Baja" no se debe computar
+            if line.state == 'baja':
+                line.decoration = 'dark'
+            # Si la percepcion coincide con el comprobante, no se debe hacer nada
+            elif round(line.inv_perc_iibb, 2) == round(line.amount, 2):
+                line.decoration = 'success'
+            # Si no existe comprobante asociado, se debe crear
+            elif not line.invoice_found:
+                line.decoration = 'primary'
+            # Si existe una diferencia con el monto no gravado, mostrar advertencia
+            elif line.diff:
+                line.decoration = 'warning'
+            # TODO: tener en cuenta las percepciones bancarias (tipo de cbte vacio)
+
+    decoration = fields.Char(string="Decoration", compute=_compute_decoration)
+
     @api.depends('invoice_id')
     def _compute_invoice_found(self):
         for line in self:
@@ -334,6 +364,7 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
                 comp = percepcion.invoice_id
                 
                 # Pasar a borrador para poder editar
+                # TODO: bug que vuelve a default el valor fijo de las percepciones 
                 posted = comp.state == 'posted'
                 if posted:
                     comp.button_draft()

@@ -4,10 +4,17 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
+# IVA No Corresponde
+def novat_line(line):
+    codes = line.mapped('tax_ids').mapped('tax_group_id').mapped('l10n_ar_vat_afip_code')
+    return '0' in codes
+
+# No Gravado
 def untaxed_line(line):
     codes = line.mapped('tax_ids').mapped('tax_group_id').mapped('l10n_ar_vat_afip_code')
     return '1' in codes
     
+# Exento
 def exempt_line(line):
     codes = line.mapped('tax_ids').mapped('tax_group_id').mapped('l10n_ar_vat_afip_code')
     return '2' in codes
@@ -69,6 +76,7 @@ class AccountMove(models.Model):
         res = super(AccountMove, self).read_group(domain, fields, groupby, offset=offset, limit=limit, orderby=orderby, lazy=lazy)
         
         # Todos los campos computed se van a pedir juntos, y el IVA 21% aparece siempre
+        # TODO: generalizar esto para todos los computed
         if 'display_amount_tax_21' in fields:
             for line in res:
                 if '__domain' in line:
@@ -93,13 +101,14 @@ class AccountMove(models.Model):
 
         return res
 
-
     @api.depends('amount_untaxed', 'amount_tax', 'amount_total')
     def _compute_display_amount(self):
         for move in self:
             sign = -1 if move.move_type in [ 'in_refund', 'out_refund' ] else 1
 
-            move.display_amount_untaxed = sign * sum(move.invoice_line_ids.filtered(untaxed_line).mapped('price_total'))
+            untaxed = sum(move.invoice_line_ids.filtered(untaxed_line).mapped('price_total'))
+            novat = sum(move.invoice_line_ids.filtered(novat_line).mapped('price_total'))
+            move.display_amount_untaxed = sign * (untaxed + novat)
             move.display_amount_exempt = sign * sum(move.invoice_line_ids.filtered(exempt_line).mapped('price_total'))
             move.display_amount_total = sign * move.amount_total
     

@@ -1,6 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- TODO: editar importes en el formulario f8011 -->
+    <record id="view_import_sale_pem_f8011_line" model="ir.ui.view">
+        <field name="name">l10n_ar.import.sale.pem.line.form</field>
+        <field name="model">l10n_ar.import.sale.pem.line</field>
+        <field name="arch" type="xml">
+            <form string="Editar Linea F8011">
+
+                <group col="2">
+                    <field name="number" readonly="1" />
+                    <field name="range" readonly="1" />
+                    <field name="taxed" />
+                    <field name="untaxed" />
+                    <field name="exempt" />
+                    <field name="tax_21" />
+                    <field name="tax_6" />
+                    <field name="total" />
+                </group>
+
+            </form>
+        </field>
+    </record>
+
     <!-- IMPORTAR VENTAS PEM - FORM VIEW -->
     <record id="view_wizard_import_sale_pem_form" model="ir.ui.view">
         <field name="name">l10n_ar.import.sale.pem.form</field>
@@ -59,26 +81,30 @@
                     <field name="f8011_start_number" />
                     <field name="f8011_end_date" />
                     <field name="f8011_end_number" />
+                    <!-- TODO: la fecha de fin no coincide con el ultimo comprobante -->
                 </group>
 
-                <field name="invoice_ids" mode="tree" widget="section_and_note_one2many" 
-                    readonly="1" attrs="{'invisible': [('f8011_pos', '=', 0)]}">                                                
+                <!-- Campo necesario para mostrar/ocultar la columna IVA 6% -->
+                <field name="f8011_total_tax_6" invisible="1" />
+                <!-- TODO: Deshabilitar el boton "Crear" -->
+                <field name="invoice_ids" 
+                    mode="tree" widget="section_and_note_one2many" 
+                    
+                    attrs="{'invisible': [('f8011_pos', '=', 0)]}">                                                
                     <tree>
                         <field name="number" />
                         <field name="range" />
                         <field name="date" />
-                        <field name="taxed" />
-                        <field name="taxed_6" optional="hide" />
-                        <field name="untaxed" />
-                        <field name="exempt" />
-                        <field name="tax_6" optional="hide" />
-                        <field name="tax_21" />
-                        <field name="total" />
+                        <field name="taxed" sum="Total" />
+                        <field name="untaxed" sum="Total" />
+                        <field name="exempt" sum="Total" />
+                        <field name="tax_21" sum="Total" />
+                        <field name="tax_6" sum="Total" attrs="{'column_invisible':[('parent.f8011_total_tax_6', '=', False)]}" />
+                        <field name="total" sum="Total" />
                     </tree>
                 </field>
 
                 <!-- TODO: Agregar una nota diciendo que el IVA 6% se va a convertir a 21% y No Gravado -->
-                <!-- TODO: Agregar campos z_desde y z_hasta -->
 
                 <footer>
                     <button name="compute_f8010" string="Cargar F8010" type="object" class="btn-primary" />

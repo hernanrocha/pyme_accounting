@@ -31,8 +31,13 @@
                     <page string="Facturas">
 
                         <field name="invoice_ids" widget="section_and_note_one2many" options="{'reload_on_button': true}">
-                            <tree>
+                            <tree 
+                                default_order="invoice_found, vendor, date"
+                                decoration-success="total == invoice_amount_total">
+                                <field name="invoice_found" />
                                 <field name="date" edit="false" />
+                                <field name="cuit" />
+                                <field name="vendor" />
                                 <field name="invoice_display_name" />
                                 <field name="taxed_amount" />
                                 <field name="untaxed_amount" />
@@ -41,8 +46,24 @@
                                 <field name="iva" />
                                 <field name="difference" />
                                 <field name="total" />
-                                <field name="vendor" edit="false" />
-                                <field name="cuit" edit="false" />
+                                <field name="invoice_amount_total" />
+                            </tree>
+                        </field>
+                    </page>
+
+                    <page string="Otras facturas">
+                        <field name="existing_invoice_ids" nolabel="1" widget="section_and_note_one2many" options="{'reload_on_button': true}">
+                            <tree default_order="invoice_partner_display_name, name">
+                                <field name="state" invisible="1" />
+
+                                <field name="date" />
+                                <field name="name" />
+                                <field name="cuit" />
+                                <field name="invoice_partner_display_name" />
+                                <field name="display_amount_taxed" sum="Total" />
+                                <field name="display_amount_untaxed" sum="Total" />
+                                <field name="display_amount_exempt" sum="Total" />
+                                <field name="display_amount_total" sum="Total" />
                             </tree>
                         </field>
                     </page>

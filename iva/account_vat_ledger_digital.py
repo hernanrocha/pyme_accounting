@@ -752,6 +752,7 @@ class AccountVatLedger(models.Model):
 
     def _get_invoice_credito_fiscal(self, inv):
         vat_taxes = inv.line_ids.filtered(
+            # (0) No Corresponde (Monotributista, CF, Exento)
             # (1) No Gravado
             # (2) Exento 
             # (3) 0%

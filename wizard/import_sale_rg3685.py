@@ -62,6 +62,8 @@ class ImportSaleRg3685(models.TransientModel):
         # Borrar registros anteriores
         # self.write({ 'invoice_ids': [(5, 0, 0)] })
 
+        # TODO: soportar ventas (tipo de documento 46, doc 11111111)
+
         # Leer archivo AFIP de compras
         file_cbtes_content = base64.decodebytes(data['file_cbtes']).splitlines()
         file_alicuotas_content = base64.decodebytes(data['file_alicuotas']).splitlines()
@@ -204,7 +206,7 @@ class ImportSaleRg3685(models.TransientModel):
             # Create Invoice
             # TODO: mejorar esta query
             doc_type = self.env['l10n_latam.document.type'].search([('code', '=', cbte["tipo_comprobante"])])
-            
+
             move_data = {
                 'move_type': 'out_invoice',
                 'partner_id': partner.id,
@@ -215,6 +217,12 @@ class ImportSaleRg3685(models.TransientModel):
                 # TODO: Chequear (y validar) secuencia en PG
                 'l10n_latam_document_number': '{}-{}'.format(cbte["punto_de_venta"], cbte["numero_comprobante_desde"]),
             }
+            
+            # Para comprobantes Z, establecer valores desde/hasta
+            if cbte["tipo_comprobante"] == 83:
+                move_data['z_desde'] = cbte["numero_comprobante_desde"]
+                move_data['z_hasta'] = cbte["numero_comprobante_hasta"]
+            
             _logger.info("Invoice Data: {}".format(move_data))
             move = self.env['account.move'].create(move_data)
             _logger.info("Invoice: {}".format(move))

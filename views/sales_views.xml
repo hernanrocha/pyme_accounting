@@ -28,13 +28,12 @@
                 <field name="invoice_source_email" invisible="1"/>
                 <field name="invoice_partner_display_name" invisible="context.get('default_move_type') not in ('in_invoice', 'in_refund','in_receipt')" groups="base.group_user" string="Proveedor" />
                 <field name="invoice_partner_display_name" invisible="context.get('default_move_type') not in ('out_invoice', 'out_refund','out_receipt')" groups="base.group_user" string="Cliente" />
-                <!-- TODO: ver como calcular totales -->
                 <field name="display_amount_taxed" sum="Total" />
                 <field name="display_amount_untaxed" sum="Total" />
                 <field name="display_amount_exempt" sum="Total" />
                 <!-- TODO: IVA 0% -->
                 <!-- <field name="display_amount_tax_0" optional="hide" /> -->
-                <!-- TODO: Las ventas a CF tienen "IVA No Corresponde" -->
+                <!-- TODO: Scrollear y mostrar todas las columnas por defecto -->
                 <field name="display_amount_tax_21" sum="Total" />
                 <field name="display_amount_tax_10" sum="Total" optional="show" /> 
                 <field name="display_amount_tax_27" sum="Total" optional="hide" /> 
@@ -48,8 +47,6 @@
                 <!-- TODO: Otros tributos -->
 
                 <field name="display_amount_total" string="Total" sum="Total" decoration-bf="1"/>
-                
-                <!-- TODO: Positivo para facturas. Negativo para notas de credito -->
                 <field name="currency_id" invisible="1"/>
                 <field name="company_currency_id" invisible="1"/>
                 <field name="state" widget="badge" decoration-success="state == 'posted'" decoration-info="state == 'draft'" />
@@ -63,8 +60,8 @@
         <field name="res_model">account.move</field>
         <field name="view_mode">tree,form</field>
         <field name="view_id" ref="view_invoice_tree"/>
+        <!-- TODO: cambiar search view por filtros particulares -->
         <field name="search_view_id" ref="account.view_account_invoice_filter"/>
-        <!-- TODO: agregar rectificativas -->
         <field name="domain">[('move_type', 'in', ['in_invoice', 'in_refund'])]</field>
         <field name="context">{'default_move_type': 'in_invoice'}</field>
         <!-- TODO: add this -->
@@ -82,8 +79,8 @@
         <field name="res_model">account.move</field>
         <field name="view_mode">tree,form</field>
         <field name="view_id" ref="view_invoice_tree"/>
+        <!-- TODO: cambiar search view por filtros particulares -->
         <field name="search_view_id" ref="account.view_account_invoice_filter"/>
-        <!-- TODO: agregar rectificativas -->
         <field name="domain">[('move_type', 'in', ['out_invoice', 'out_refund'])]</field>
         <field name="context">{'default_move_type': 'out_invoice'}</field>
         <!-- TODO: add this -->

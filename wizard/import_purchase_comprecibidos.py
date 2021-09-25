@@ -105,6 +105,8 @@ class ImportPurchaseCompRecibidosLine(models.TransientModel):
 
     invoice_id = fields.Many2one(string="Cbte Asociado", comodel_name="account.move", ondelete="set null", compute=_compute_invoice_id)
     invoice_found = fields.Boolean(string="Existente", compute=_compute_invoice_found)
+    currency_id = fields.Many2one('res.currency', related="invoice_id.currency_id")
+    invoice_amount_total = fields.Monetary(string='Cbte Total', related="invoice_id.amount_total")
 
 class ImportPurchaseCompRecibidos(models.TransientModel):
     _name = "l10n_ar.import.purchase.comprecibidos"

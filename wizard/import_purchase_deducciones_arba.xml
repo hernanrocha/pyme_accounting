@@ -33,7 +33,14 @@
                 <notebook string="Deducciones Cargadas" col="2">
                     <page string="Percepciones">
                             <field name="percepciones" nolabel="1" widget="section_and_note_one2many" options="{'reload_on_button': true}">
-                            <tree decoration-warning="diff">
+                            <tree 
+                                default_order="state, partner, date"
+                                decoration-success="decoration == 'success'"
+                                decoration-primary="decoration == 'primary'"
+                                decoration-dark="decoration == 'dark'"
+                                decoration-warning="decoration == 'warning'">
+
+                                <field name="decoration" invisible="1" />
                                 <field name="diff" invisible="1" />
                                 
                                 <!-- Datos del archivo -->
@@ -41,13 +48,14 @@
                                 <field name="cuit" edit="false" />
                                 <field name="partner" />
                                 <field name="invoice_number" edit="false" />
-                                <field name="amount_agente" edit="false" />
-                                <field name="amount" edit="false" />
+                                <field name="amount_agente" edit="false" sum="Total" />
+                                <field name="amount" edit="false" sum="Total" />
                                 <field name="state" />
                                 
                                 <!-- Datos del comprobante asociado -->
                                 <field name="invoice_found" edit="false" />
-                                <field name="amount2" edit="false" />
+                                <field name="amount2" edit="false" sum="Total" />
+                                <field name="inv_perc_iibb" edit="false" sum="Total" />
                                 <field name="diff" edit="false" />
                             </tree>
                         </field>
