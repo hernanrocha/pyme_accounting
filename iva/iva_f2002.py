@@ -43,9 +43,13 @@ def format_iva(code):
     return codes[code]
 
 def split_iva(vat_taxes, label):
-    _logger.info(" - Splitting: {} - {}".format(vat_taxes, vat_taxes.mapped('tax_group_id.l10n_ar_vat_afip_code')))
+    # Filtrar solo las lineas que aplican al IVA
+    # No tiene en cuenta percepciones
+    t = list(filter(lambda x: x, vat_taxes.mapped('tax_group_id.l10n_ar_vat_afip_code')))
+    
+    _logger.info(" - Splitting: {} - {}".format(vat_taxes, t))
     lines = []
-    for afip_code in vat_taxes.mapped('tax_group_id.l10n_ar_vat_afip_code'):
+    for afip_code in t:
         taxes = vat_taxes.filtered(lambda x: x.tax_group_id.l10n_ar_vat_afip_code == afip_code)
         
         # TODO: factura en otra moneda
@@ -69,9 +73,11 @@ def split_iva(vat_taxes, label):
 # Las lineas que tienen un mismo IVA se agrupan en una sola
 
 # TODO: No duplicar estas funciones
+
+# TODO: Tambien se incluyen las compras a Monotributistas/Exentos?
 def untaxed_exempt_line(line):
     codes = line.mapped('tax_ids').mapped('tax_group_id').mapped('l10n_ar_vat_afip_code')
-    return '1' in codes or '2' in codes
+    return '0' in codes or '1' in codes or '2' in codes
 
 def taxed_0_line(line):
     codes = line.mapped('tax_ids').mapped('tax_group_id').mapped('l10n_ar_vat_afip_code')

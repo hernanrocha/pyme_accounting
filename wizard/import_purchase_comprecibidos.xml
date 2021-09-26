@@ -8,6 +8,8 @@
         <field name="arch" type="xml">
             <form>
                 
+                <!-- <p><b>NOTA: La diferencia entre el monto total y los otros importes detallados a continuación, serán cargados como monto no gravado. Estos montos en general suelen corresponder a percepciones aplicadas al comprobante, y pueden ser modificadas desde Importar - IIBB - Deducciones</b></p> -->
+
                 <!-- <div class="card bg-primary">
                     <div class="card-body">
                         <p>Existen 2 tipos de archivos que pueden ser importados:</p>

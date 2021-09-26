@@ -29,7 +29,6 @@ class ImportSaleRg3685(models.TransientModel):
             raise UserError('No puede haber más de 1 punto de venta con el mismo número')
 
         if len(journal) == 0:
-            # TODO: Sacar de account.chart.template
             account_sale = self.env['account.account'].search([
                 # TODO: hacer dependiente de la compañia
                 ('company_id', '=', self.env.company.id),
@@ -193,8 +192,11 @@ class ImportSaleRg3685(models.TransientModel):
                 else:
                     # Actualizar datos del cliente
                     partner = partner[0]
-            else:
+            # Tipo de documento CF
+            elif tipo_doc == 99:
                 partner = consumidor_final
+            else:
+                raise UserError("Tipo de documento invalido: {}".format(tipo_doc))
             
             _logger.info("Partner: {}".format(partner))
 
@@ -204,7 +206,6 @@ class ImportSaleRg3685(models.TransientModel):
                 lines_alicuotas)
 
             # Create Invoice
-            # TODO: mejorar esta query
             doc_type = self.env['l10n_latam.document.type'].search([('code', '=', cbte["tipo_comprobante"])])
 
             move_data = {
@@ -304,19 +305,19 @@ class ImportSaleRg3685(models.TransientModel):
             move._recompute_payment_terms_lines()
             move._compute_amount()
 
-            # Post Entry
-            # move.action_post()
+        # TODO: mostrar mensaje success
 
-        return {
-            'context': self.env.context,
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'l10n_ar.import.sale.rg3685',
-            'res_id': self.id,
-            'view_id': False,
-            'type': 'ir.actions.act_window',
-            'target': 'new',
-        }
+        # return {
+        #     'context': self.env.context,
+        #     'view_type': 'form',
+        #     'view_mode': 'form',
+        #     'res_model': 'l10n_ar.import.sale.rg3685',
+        #     'res_id': self.id,
+        #     'view_id': False,
+        #     'type': 'ir.actions.act_window',
+        #     'target': 'new',
+        # }
 
+    # TODO: permitir previsualizar y editar antes de importar
     def generate(self):
         pass

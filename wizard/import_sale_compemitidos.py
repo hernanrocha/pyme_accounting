@@ -61,12 +61,38 @@ class ImportSalesAfipLine(models.TransientModel):
             line.invoice_display_name = "{} {}-{}".format(line.invoice_type, line.pos_number, line.invoice_number)
 
 
-    @api.depends('taxed_amount', 'iva', 'total')
+    @api.depends('taxed_amount', 'untaxed_amount', 'exempt_amount', 'iva', 'total')
     def compute_difference(self):
         for line in self:
-            line.difference = line.total - (line.taxed_amount + line.iva)
+            line.difference = line.total - (line.taxed_amount + line.iva + line.exempt_amount + line.untaxed_amount)
 
     difference = fields.Float(string="Diferencia", compute=compute_difference)
+
+    # TODO: generalizar esto en todos los metodos de importacion
+    @api.depends('invoice_display_name')
+    def _compute_invoice_id(self):
+        for line in self:
+            line.invoice_id = self.env['account.move'].search([
+                ('move_type', 'in', ['out_invoice', 'out_refund']),
+                ('name', '=', line.invoice_display_name),
+                # TODO: filtrar por CUIT y por estado
+            ])
+
+    @api.depends('invoice_id')
+    def _compute_invoice_found(self):
+        for line in self:
+            line.invoice_found = bool(line.invoice_id)
+
+    invoice_id = fields.Many2one(string="Cbte Asociado", comodel_name="account.move", ondelete="set null", compute=_compute_invoice_id)
+    invoice_found = fields.Boolean(string="Existente", compute=_compute_invoice_found)
+    currency_id = fields.Many2one('res.currency', related="invoice_id.currency_id")
+    invoice_amount_total = fields.Monetary(string='Cbte Total', related="invoice_id.amount_total")
+    
+    def _compute_match_total(self):
+        for line in self:
+            line.match_total = round(line.total, 2) == round(line.invoice_amount_total, 2)
+
+    match_total = fields.Boolean(string="Coincide", compute=_compute_match_total)
 
 # El metodo parse_sales esta repetido
 class ImportSalesAfip(models.TransientModel):
@@ -75,8 +101,6 @@ class ImportSalesAfip(models.TransientModel):
     
     afip_file = fields.Binary(string="Ventas AFIP (*.csv)")
     invoice_ids = fields.One2many(string="Facturas", comodel_name="l10n_ar.afip.import_sale.line", inverse_name="import_id")
-
-    notes = fields.Char(string="Notas", readonly=True)
 
     # TODO: usar el mixin creado para esto
     def get_pos(self, pos_number):
@@ -127,9 +151,9 @@ class ImportSalesAfip(models.TransientModel):
         next(csvfile)
 
         spamreader = csv.reader(csvfile, delimiter=',', quotechar='"', )
-        
-        count = 0
-        total_amount = 0
+
+        # Borrar comprobantes anteriores
+        self.write({ 'invoice_ids': [(5, 0, 0)] })
 
         # Computar ventas AFIP
         for row in spamreader:
@@ -149,13 +173,9 @@ class ImportSalesAfip(models.TransientModel):
                 'total': row[15],
                 'import_id': self.id,
             })
-
-            count += 1
-            total_amount += line.total
-
-        self.notes = "{} facturas cargadas correctamente. Total: ${}".format(count, total_amount)
         
         return {
+            # TODO: agregar titulo a la ventana
             'context': self.env.context,
             'view_type': 'form',
             'view_mode': 'form',
@@ -168,7 +188,6 @@ class ImportSalesAfip(models.TransientModel):
 
     def generate_sales(self):
         consumidor_final = self.env['res.partner'].search([('name', '=', 'Consumidor Final Anónimo')])
-        print("CONSUMIDOR FINAL", consumidor_final) 
 
         # Obtener tipo de identificacion CUIT
         cuit_type = self.env.ref('l10n_ar.it_cuit') 
@@ -190,12 +209,25 @@ class ImportSalesAfip(models.TransientModel):
             ('code', '=', '4.1.1.01.010'),
             ('name', '=', 'Venta de mercadería'),
         ])
+
+        tax_21 = self.env['account.tax'].search([
+            ('type_tax_use', '=', 'sale'),
+            ('name', '=', 'IVA 21%'),
+        ])
         tax_untaxed = self.env['account.tax'].search([
             ('type_tax_use', '=', 'sale'),
             ('name', '=', 'IVA No Gravado'),
         ])
+        tax_exempt = self.env['account.tax'].search([
+            ('type_tax_use', '=', 'sale'),
+            ('name', '=', 'IVA Exento'),
+        ])
 
         for invoice in self.invoice_ids:
+            # Omitir los comprobantes ya existentes
+            if invoice.invoice_found:
+                continue
+
             # Obtener/Crear diario segun el PdV automaticamente
             journal_id = self.get_pos(invoice.pos_number)
 
@@ -213,17 +245,12 @@ class ImportSalesAfip(models.TransientModel):
                     # TODO: Si es Resp Inscripto, corroborar si es monotributo/RI
                     'l10n_ar_afip_responsibility_type_id': cf.id
                 }
-                print("PartnerData", partner_data)
                 if len(partner) == 0:
                     partner = self.env['res.partner'].create(partner_data)
-                else:
-                    # Actualizar datos del cliente
-                    partner = partner[0]
-                    partner.write(partner_data)
             else:
                 partner = consumidor_final
             
-            print("Partner", partner)
+            _logger.info("Partner: {}".format(partner))
 
             # TODO: Revisar tambien montos gravados y exentos 
 
@@ -245,6 +272,18 @@ class ImportSalesAfip(models.TransientModel):
             move = self.env['account.move'].create(move_data)
             print("Invoice", move)
 
+            # TODO: revisar que no haya otro tipo de IVA en los comprobantes
+            if invoice.taxed_amount > 0:
+                # IVA 21%
+                line = move.line_ids.create({
+                    'move_id': move.id,
+                    'name': 'Monto Gravado al 21%',
+                    'account_id': account_sale.id,
+                    'quantity': 1,
+                    'price_unit': invoice.taxed_amount + (invoice.iva if tax_21.price_include else 0),
+                })
+                line.tax_ids += self.tax_21
+
             # IVA No Gravado
             if invoice.untaxed_amount > 0:
                 line = move.line_ids.create({
@@ -255,15 +294,24 @@ class ImportSalesAfip(models.TransientModel):
                     'price_unit': invoice.untaxed_amount,
                 })
                 line.tax_ids += tax_untaxed
-                print("LINE", line)
+                _logger.info("No Gravado: {}".format(line))
+
+            # IVA Exento
+            if invoice.exempt_amount > 0:
+                line = move.line_ids.create({
+                    'move_id': move.id,
+                    'name': 'Monto Exento',
+                    'account_id': account_sale.id,
+                    'quantity': 1,
+                    'price_unit': invoice.exempt_amount,
+                })
+                line.tax_ids += tax_exempt
+                _logger.info("No Exento: {}".format(line))
 
             # Recalculate totals
             move._recompute_dynamic_lines(recompute_all_taxes=True, recompute_tax_base_amount=True)
             move._recompute_payment_terms_lines()
             move._compute_amount()
-
-            # Post Entry
-            move.action_post()
 
             # TODO: que pasa si faltan facturas?? al ser correlativas deberian coincidir
 

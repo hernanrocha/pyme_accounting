@@ -8,17 +8,13 @@
         <field name="arch" type="xml">
             <form>
                 
-                <!-- <div class="card bg-primary">
+                <div class="card bg-primary">
                     <div class="card-body">
-                        <p>Existen 2 tipos de archivos que pueden ser importados:</p>
-                        <ul>
-                            <li>F8010: importar comprobantes individuales.</li>
-                            <li>F8011: importar comprobantes Z</li>
-                        </ul>
-                        <p>Por el momento, el sistema solo permite importar el archivo F8011.</p>
-                        <p>Se generará un comprobante por cada Z, comúnmente generado al finalizar cada día.</p>
+                        <p>El asistente permite importar compras a partir del Libro IVA Digital generado previamente en otro sistema.</p>
+                        <p>Cargar a continuación los archivos COMPRAS_CBTES y COMPRAS_ALICUOTAS.</p>
+                        <p><b>NOTA: Por el momento, no se cargarán las percepciones encontradas en el archivo.</b></p>
                     </div>
-                </div> -->
+                </div>
 
                 <group string="Archivo" col="2">
 
@@ -51,8 +47,8 @@
 
                 <footer>
                     <!-- TODO: convertir a action -->
-                    <button name="compute" string="Cargar" type="object" class="btn-primary" />
-                    <button name="generate" string="Generar Facturas" type="object" class="btn-primary" /> 
+                    <button name="compute" string="Importar" type="object" class="btn-primary" />
+                    <!-- <button name="generate" string="Generar Facturas" type="object" class="btn-primary" />  -->
                         <!-- TODO attrs="{'invisible': [('loaded', '=', True)]}" /> -->
                     <button string="Cancelar" class="btn-secondary" special="cancel"/>
                 </footer>

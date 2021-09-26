@@ -6,6 +6,7 @@ from dateutil.parser import parse
 import os
 import logging
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 _logger = logging.getLogger(__name__)
 
@@ -83,8 +84,9 @@ class SaleImportPemF8010Line(models.TransientModel):
     number = fields.Integer(string="Comprobante")
     description = fields.Char(string="Descripción")
     # TODO: generar un mixin con estos campos
-    taxed_21 = fields.Float(string="Gravado 21%")
+    taxed_21 = fields.Float(string="Gravado")
     tax_21 = fields.Float(string="IVA 21%")
+    # TODO: borrar este campo
     taxed_6 = fields.Float(string="Gravado 6%")
     tax_6 = fields.Float(string="IVA 6%")
     untaxed = fields.Float(string="No Gravado")
@@ -109,15 +111,13 @@ class SaleImportPEMLine(models.TransientModel):
     number = fields.Integer(string="Z")
     range_from = fields.Integer(string="Comprobante Desde")
     range_to = fields.Integer(string="Comprobante Hasta")
-    # TODO: renombrar a taxed_21
     # TODO: generar un mixin con estos campos
-    taxed = fields.Float(string="Gravado 21%")
+    taxed = fields.Float(string="Gravado")
     untaxed = fields.Float(string="No Gravado")
     exempt = fields.Float(string="Exento")
     total = fields.Float(string="Total")
     tax_21 = fields.Float(string="IVA 21%")
     tax_6 = fields.Float(string="IVA 6%")
-    taxed_6 = fields.Float(string="Gravado 6%")
 
     pem_id = fields.Many2one(comodel_name="l10n_ar.import.sale.pem", ondelete="cascade", invisible=True)
 
@@ -132,6 +132,10 @@ class SaleImportPEM(models.TransientModel):
     _name = "l10n_ar.import.sale.pem"
     _description = "Importar archivo de Controlador Fiscal PEM"
     _inherit = [ 'mixin.l10n_ar.account' ]
+
+    # TODO: Permitir guardarse y acceder los XML
+    f8010_xml_file = fields.Binary(string="F8010 archivo XML", readonly=True)
+    f8011_xml_file = fields.Binary(string="F8011 archivo XML", readonly=True)
 
     # TODO: soportar comprobante f8010
     # pem_type = fields.Select(string="Tipo", options=['f8010', 'f8011'])
@@ -154,9 +158,15 @@ class SaleImportPEM(models.TransientModel):
     f8011_end_date = fields.Date(string="Fecha Hasta", readonly=True)
     f8011_start_number = fields.Integer(string="Primer Comprobante", readonly=True)
     f8011_end_number = fields.Integer(string="Ultimo Comprobante", readonly=True)
-
     invoice_ids = fields.One2many(string="Comprobantes", comodel_name="l10n_ar.import.sale.pem.line", inverse_name="pem_id")
     
+    f8011_total_tax_6 = fields.Boolean(string="Total IVA 6%", compute="_compute_f8011_total_tax_6")
+
+    @api.depends('invoice_ids', 'invoice_ids.tax_6')
+    def _compute_f8011_total_tax_6(self):
+        for pem in self:
+            pem.f8011_total_tax_6 = sum(pem.invoice_ids.mapped('tax_6')) > 0
+
     # Referencias
     tax_21 = fields.Many2one(comodel_name="account.tax", ondelete="cascade")
     tax_untaxed = fields.Many2one(comodel_name="account.tax", ondelete="cascade")
@@ -171,20 +181,14 @@ class SaleImportPEM(models.TransientModel):
             ('type_tax_use', '=', 'sale'),
             ('name', '=', 'IVA 21%'),
         ])
-        if len(self.tax_21) != 1:
-            raise UserError("Debe haber un impuesto de Ventas IVA 21%")
         self.tax_untaxed = self.env['account.tax'].search([
             ('type_tax_use', '=', 'sale'),
             ('name', '=', 'IVA No Gravado'),
         ])
-        if len(self.tax_untaxed) != 1:
-            raise UserError("Debe haber un impuesto de Ventas IVA No Gravado")
         self.tax_exempt = self.env['account.tax'].search([
             ('type_tax_use', '=', 'sale'),
             ('name', '=', 'IVA Exento'),
         ])
-        if len(self.tax_exempt) != 1:
-            raise UserError("Debe haber un impuesto de Ventas IVA Exento")
 
         # Account
         # TODO: Sacar de account.chart.template
@@ -204,22 +208,33 @@ class SaleImportPEM(models.TransientModel):
         })
         _logger.info("PEM: {}".format(attachment.id))
 
-        # Convertir PEM a XML
-        # TODO: Borrar archivos temporales despues de usarlos
         xmlfile = attachment.store_fname.replace("/", "")
         fullpath = os.path.join(attachment._filestore(), attachment.store_fname)
         _logger.info("XML File {} {}".format(xmlfile, fullpath))
+        
+        # Make sure /tmp/odoo exists
+        Path("/tmp/odoo").mkdir(parents=True, exist_ok=True) 
+
+        # Convertir PEM a XML
         ret = os.system('openssl cms -verify -in {} -inform PEM -noverify -out /tmp/odoo/{}.xml'.format(fullpath, xmlfile))
+        if ret != 0:
+            raise UserError("Hubo un error analizando el archivo .PEM")
         _logger.info("Return OpenSSL {}".format(ret))
         
         # Parsear archivo XML
         tree = ET.parse('/tmp/odoo/{}.xml'.format(xmlfile))
+
+        # TODO: Borrar archivos temporales despues de usarlos o attachearlo a Odoo
+
         return tree.getroot()
 
+    @api.depends('f8010_file')
     def compute_f8010(self):
 
         # TODO: chequear CUIT con compañia
         # TODO: Guardar un registro de los pems, pasar a readonly los archivos raw y attachear los XML
+        # TODO: poner "nombre" de la controladora fiscal???
+        # TODO: listar productos encontrados, permitir configurar entre No Gravado / Exento
 
         [data] = self.read()
 
@@ -234,78 +249,94 @@ class SaleImportPEM(models.TransientModel):
         text_fecha_desde = root.findtext('fechaDesde')
         text_fecha_hasta = root.findtext('fechaHasta')
 
-        # print('CUIT:   ', text_cuit)
-        # print('PdV:    ', text_pdv)
-        # print()
-
         self.f8010_cuit = text_cuit
         self.f8010_pos = int(text_pdv)
         self.f8010_start_date = text_fecha_desde[:10]
         self.f8010_end_date = text_fecha_hasta[:10]
         
-        # Fill relations
+        # Fill relations (Taxes, Accounts)
         self._find_relations()
+
+        # Find Point of Sale (Sale Journal)
         self.journal = self.get_pos(self.f8010_pos)
         
         comprobantes = {}
 
+        # Borrar comprobantes cargados anteriormente
+        # TODO: Borrar esto una vez que este funcionando. Puede ser util cargar varios PEM
+        self.write({ 'f8010_invoice_ids': [(5, 0, 0)] })
+
         grupoComprobantes = root.find('arrayGruposComprobantesFiscales').find('grupoComprobantes')
+        
+        # Recorrer listado de comprobantes
         for detalleComprobante in grupoComprobantes.find('arrayDetallesComprobantes').findall('detalleComprobante'):
-            numeroComprobante = detalleComprobante.findtext('numeroComprobante')
+            numeroComprobante = int(detalleComprobante.findtext('numeroComprobante'))
             fechaHoraEmision = detalleComprobante.findtext('fechaHoraEmision')
-            fecha = fechaHoraEmision[:10]
+            fecha = fechaHoraEmision[:10] # 2021-02-01T10:16:01 => 2021-02-01
 
             # TODO: generar rango de comprobantes
 
-            # print('Comprobante', numeroComprobante)
-            # print('Fecha:', fecha)
-            # print()
+            # Recorrer items y agrupar por producto
+            # TODO: agrupar por numero de comprobante y no por fecha (Puede haber 2 Zs diarios)
+            # TODO: para eso, se deben procesar los 2 archivos juntos
 
-            # print('Descripcion              Gravado   IVA %    IVA     Total')
-
-            # Items
+            # Recorrer listado de items
             for item in detalleComprobante.find('arrayItems').findall('item'):
                 descripcion = item.findtext('descripcion')
                 codigoCondicionIVA = item.findtext('codigoCondicionIVA')
-                # cantidad = item.findtext('cantidad')                      #   1.000000
+                # precioUnitario = item.findtext('precioUnitario')        # 250.000000
+                # cantidad = item.findtext('cantidad')                    #   1.000000
                 porcentajeIVA = item.findtext('porcentajeIVA') or '0.00'  #  21.00
-                importeIVA = item.findtext('importeIVA')                  #  43.39
-                importeItem = item.findtext('importeItem')                # 250.00
-
-                # print('- {:<20} {:>8.2f} {:>8.2f} {:>8.2f} {:>8.2f}'.format(descripcion, float(importeItem) - float(importeIVA), float(porcentajeIVA), float(importeIVA), float(importeItem)))
+                importeIVA = float(item.findtext('importeIVA'))           #  43.39
+                importeItem = float(item.findtext('importeItem'))         # 250.00
 
                 c_fecha = comprobantes.get(fecha, {})
                 c_fecha_item = c_fecha.get(descripcion, {
+                    'comprobante_desde': numeroComprobante,
+                    'comprobante_hasta': numeroComprobante,
                     'codigoCondicionIVA': codigoCondicionIVA, 
                     'porcentajeIVA': porcentajeIVA, 
                     'importeItem': 0, 
                     'importeIVA': 0,
                     'importeGravado': 0,
                 })
-                c_fecha_item['importeItem'] += float(importeItem)
-                c_fecha_item['importeIVA'] += float(importeIVA)
-                c_fecha_item['importeGravado'] += float(importeItem) - float(importeIVA)
-                
+                c_fecha_item['importeItem'] += importeItem
+                c_fecha_item['importeIVA'] += importeIVA
+                c_fecha_item['importeGravado'] += importeItem - importeIVA
+                c_fecha_item['comprobante_desde'] = min(c_fecha_item['comprobante_desde'], numeroComprobante)
+                c_fecha_item['comprobante_hasta'] = max(c_fecha_item['comprobante_hasta'], numeroComprobante)
+
                 c_fecha[descripcion] = c_fecha_item
                 comprobantes[fecha] = c_fecha
+
+                self.f8010_invoice_ids.create({
+                    'number': numeroComprobante,
+                    'description': descripcion,
+                    'date': fecha,
+                    'taxed_21': importeItem - importeIVA,   # Gravado
+                    'tax_21': importeIVA, # IVA
+                    'taxed_6': porcentajeIVA, # Porcentaje IVA
+                    'total': importeItem,
+                    'pem_id': self.id
+                })
 
         # Obtener tique
         tique = self.env.ref('l10n_ar.dc_t')
 
         print('Fecha      Descripcion           Gravado      IVA %        IVA      Total')
         for fecha, items in comprobantes.items():
-            # Create Invoice
-            move = self.env['account.move'].create({
-                'move_type': 'out_invoice',
-                'partner_id': 7, # TODO: Consumidor Final
-                'journal_id': self.journal.id,
-                'date': fecha,
-                'invoice_date': fecha,
-                'l10n_latam_document_type_id': tique.id,
-                # TODO: Chequear (y validar) secuencia en PG
-                # TODO: Revisar este valor del Z???
-                # 'l10n_latam_document_number': '{}-{}'.format(self.f8010_pos, invoice.number),
-            })
+            # # Create Invoice
+            # move = self.env['account.move'].create({
+            #     'move_type': 'out_invoice',
+            #     'partner_id': 7, # TODO: Consumidor Final
+            #     'journal_id': self.journal.id,
+            #     'date': fecha,
+            #     'invoice_date': fecha,
+            #     'l10n_latam_document_type_id': tique.id,
+            #     # TODO: Chequear (y validar) secuencia en PG
+            #     # TODO: Revisar este valor del Z???
+            #     # 'l10n_latam_document_number': '{}-{}'.format(self.f8010_pos, invoice.number),
+            # })
 
             # range_from = fields.Integer(string="Comprobante Desde")
             # range_to = fields.Integer(string="Comprobante Hasta")
@@ -336,73 +367,85 @@ class SaleImportPEM(models.TransientModel):
                     'exempt': 0
                 }
 
-                if item['porcentajeIVA'] == '21.00':
-                    # IVA 21%
-                    invoice_data['taxed_21'] = float(item['importeGravado'])
-                    invoice_data['tax_21'] = float(item['importeIVA'])
+                # TODO: borrar lo innecesario
+                # self.f8010_invoice_ids.create({
+                #     'number': item['comprobante_desde'],
+                #     'description': desc,
+                #     'date': fecha,
+                #     'taxed_21': item['importeGravado'],   # Gravado
+                #     'tax_21': item['importeIVA'], # IVA
+                #     'taxed_6': item['porcentajeIVA'], # Porcentaje IVA
+                #     'total': item['importeGravado'] + item['importeIVA'],
+                #     'pem_id': self.id
+                # })
 
-                    line = move.line_ids.create({
-                        'move_id': move.id,
-                        'name': desc,
-                        'account_id': self.account_sale.id,
-                        'quantity': 1,
-                        # TODO: chequear que el impuesto este incluido en el precio
-                        'price_unit': invoice_data['taxed_21'] + invoice_data['tax_21'],
-                    })
-                    line.tax_ids += self.tax_21
-                elif item['porcentajeIVA'] == '6.00':
-                    invoice_data['taxed_6'] = float(item['importeGravado'])
-                    invoice_data['tax_6'] = float(item['importeIVA'])
+                # if item['porcentajeIVA'] == '21.00':
+                #     # IVA 21%
+                #     invoice_data['taxed_21'] = float(item['importeGravado'])
+                #     invoice_data['tax_21'] = float(item['importeIVA'])
 
-                    taxed_21 = invoice_data['tax_6']/ 0.21
-                    tax_21 = invoice_data['tax_6']
-                    untaxed = invoice_data['taxed_6'] - taxed_21
+                #     line = move.line_ids.create({
+                #         'move_id': move.id,
+                #         'name': desc,
+                #         'account_id': self.account_sale.id,
+                #         'quantity': 1,
+                #         # TODO: chequear que el impuesto este incluido en el precio
+                #         'price_unit': invoice_data['taxed_21'] + invoice_data['tax_21'],
+                #     })
+                #     line.tax_ids += self.tax_21
+                # elif item['porcentajeIVA'] == '6.00':
+                #     invoice_data['taxed_6'] = float(item['importeGravado'])
+                #     invoice_data['tax_6'] = float(item['importeIVA'])
 
-                    # Crear linea de Monto Gravado al 21%
-                    line = move.line_ids.create({
-                        'move_id': move.id,
-                        'name': '{} (Monto Gravado 21%)'.format(desc),
-                        'account_id': self.account_sale.id,
-                        'quantity': 1,
-                        'price_unit': taxed_21 + tax_21,
-                    })
-                    line.tax_ids += self.tax_21
+                #     taxed_21 = invoice_data['tax_6']/ 0.21
+                #     tax_21 = invoice_data['tax_6']
+                #     untaxed = invoice_data['taxed_6'] - taxed_21
 
-                    # Crear linea de Monto Exento
-                    line = move.line_ids.create({
-                        'move_id': move.id,
-                        'name': '{} (Monto Exento)'.format(desc),
-                        'account_id': self.account_sale.id,
-                        'quantity': 1,
-                        'price_unit': untaxed,
-                    })
-                    line.tax_ids += self.tax_exempt
-                elif item['porcentajeIVA'] == '0.00' and item['codigoCondicionIVA'] == '1':
-                    # No gravado
-                    invoice_data['untaxed'] = float(item['importeItem'])
+                #     # Crear linea de Monto Gravado al 21%
+                #     line = move.line_ids.create({
+                #         'move_id': move.id,
+                #         'name': '{} (Monto Gravado 21%)'.format(desc),
+                #         'account_id': self.account_sale.id,
+                #         'quantity': 1,
+                #         'price_unit': taxed_21 + tax_21,
+                #     })
+                #     line.tax_ids += self.tax_21
+
+                #     # Crear linea de Monto Exento
+                #     line = move.line_ids.create({
+                #         'move_id': move.id,
+                #         'name': '{} (Monto Exento)'.format(desc),
+                #         'account_id': self.account_sale.id,
+                #         'quantity': 1,
+                #         'price_unit': untaxed,
+                #     })
+                #     line.tax_ids += self.tax_exempt
+                # elif item['porcentajeIVA'] == '0.00' and item['codigoCondicionIVA'] == '1':
+                #     # No gravado
+                #     invoice_data['untaxed'] = float(item['importeItem'])
                     
-                    line = move.line_ids.create({
-                        'move_id': move.id,
-                        'name': desc,
-                        'account_id': self.account_sale.id,
-                        'quantity': 1,
-                        'price_unit': invoice_data['untaxed'],
-                    })
-                    line.tax_ids += self.tax_untaxed
-                elif item['porcentajeIVA'] == '0.00' and item['codigoCondicionIVA'] == '2':
-                    # Exento
-                    invoice_data['exempt'] = float(item['importeItem'])
+                #     line = move.line_ids.create({
+                #         'move_id': move.id,
+                #         'name': desc,
+                #         'account_id': self.account_sale.id,
+                #         'quantity': 1,
+                #         'price_unit': invoice_data['untaxed'],
+                #     })
+                #     line.tax_ids += self.tax_untaxed
+                # elif item['porcentajeIVA'] == '0.00' and item['codigoCondicionIVA'] == '2':
+                #     # Exento
+                #     invoice_data['exempt'] = float(item['importeItem'])
                     
-                    line = move.line_ids.create({
-                        'move_id': move.id,
-                        'name': desc,
-                        'account_id': self.account_sale.id,
-                        'quantity': 1,
-                        'price_unit': invoice_data['exempt'],
-                    })
-                    line.tax_ids += self.tax_exempt
-                else:
-                    raise UserError("IVA desconocido {} {}".format(item['porcentajeIVA'], item['codigoCondicionIVA']))
+                #     line = move.line_ids.create({
+                #         'move_id': move.id,
+                #         'name': desc,
+                #         'account_id': self.account_sale.id,
+                #         'quantity': 1,
+                #         'price_unit': invoice_data['exempt'],
+                #     })
+                #     line.tax_ids += self.tax_exempt
+                # else:
+                #     raise UserError("IVA desconocido {} {}".format(item['porcentajeIVA'], item['codigoCondicionIVA']))
 
                 # TODO: mostrar previsualizacion correcta en la UI
                 # self.env["l10n_ar.import.sale.pem.f8010.line"].create(invoice_data)
@@ -411,10 +454,20 @@ class SaleImportPEM(models.TransientModel):
             # display_type = line_note
 
             # Recalculate totals
-            move._recompute_dynamic_lines(recompute_all_taxes=True, recompute_tax_base_amount=True)
-            move._recompute_payment_terms_lines()
-            move._compute_amount()
+            # move._recompute_dynamic_lines(recompute_all_taxes=True, recompute_tax_base_amount=True)
+            # move._recompute_payment_terms_lines()
+            # move._compute_amount()
                 
+        return {
+            'context': self.env.context,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'l10n_ar.import.sale.pem',
+            'res_id': self.id,
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+        }
 
         # TODO: retornar vista de los tiques creados. Asi retorna una lista generica
         return {
@@ -481,18 +534,17 @@ class SaleImportPEM(models.TransientModel):
         # Convertir PEM a XML
         root = self._parse_pem(data['f8011_file'])
 
-        text_date = root.findtext('fechaHoraEmisionAuditoria')
-
+        # text_date = root.findtext('fechaHoraEmisionAuditoria')
         emisor = root.find('emisor')
         text_cuit = emisor.findtext('cuitEmisor')
         text_pdv = emisor.findtext('numeroPuntoVenta')
 
-        print('CUIT:   ', text_cuit)
-        print('PdV:    ', text_pdv)
-        print('Fecha:  ', text_date)
-        print()
         self.f8011_cuit = text_cuit
         self.f8011_pos = int(text_pdv)
+
+        # Borrar comprobantes cargados anteriormente
+        # TODO: Borrar esto una vez que este funcionando. Puede ser util cargar varios PEM
+        self.write({ 'invoice_ids': [(5, 0, 0)] })
 
         for comprobanteAuditoria in root.find('arrayComprobantesAuditoria').findall('comprobanteAuditoria'):
             rango = comprobanteAuditoria.find('rangoEncontrado')
@@ -507,11 +559,6 @@ class SaleImportPEM(models.TransientModel):
             self.f8011_start_date = text_date_from
             self.f8011_end_date = text_date_to
 
-            print('Numero:  {}-{}'.format(text_number_from, text_number_to))
-            print('Desde:   {}'.format(text_date_from))
-            print('Hasta:   {}'.format(text_date_to))
-            print()
-
             for cierreZFecha in comprobanteAuditoria.find('arrayCierresZ').findall('cierreZFecha'):
                 text_z_date = cierreZFecha.findtext('fechaHoraEmisionCierreZ')
                 cierreZ = cierreZFecha.find('cierreZ')
@@ -521,24 +568,18 @@ class SaleImportPEM(models.TransientModel):
                 text_z_exempt = cierreZ.findtext('totalExentoComprobantesFiscales')
                 text_z_total = cierreZ.findtext('importeTotalComprobantesFiscales')
                 
-                # TODO: chequear que no haya mas de 1
                 comp_fiscales = cierreZ.find('arrayConjuntosComprobantesFiscales').find('conjuntoComprobantesFiscales')
-                # text_z_codigo_comprobante = comp_fiscales.findtext('codigoTipoComprobante') # 83
-                text_z_range_from = comp_fiscales.findtext('primerNumeroComprobante')
-                text_z_range_to = comp_fiscales.findtext('ultimoNumeroComprobante')
-                
-                print('Comprobante', text_z_number)
-                print('  - Fecha de Cierre:', text_z_date)
-                print('  - Gravado:        ', text_z_taxed)
-                print('  - No Gravado:     ', text_z_untaxed)
-                print('  - Exento:         ', text_z_exempt)
-                print('  - Total:          ', text_z_total)
+
+                _logger.info('Comprobante {}'.format(text_z_number))
+                _logger.info('  - Fecha de Cierre: {}'.format(text_z_date))
+                _logger.info('  - Gravado:        {}'.format(text_z_taxed))
+                _logger.info('  - No Gravado:     {}'.format(text_z_untaxed))
+                _logger.info('  - Exento:         {}'.format(text_z_exempt))
+                _logger.info('  - Total:          {}'.format(text_z_total))
 
                 invoice_data = {
                     'date': text_z_date[:10], # 2021-02-20T...
                     'number': text_z_number,
-                    'range_from': int(text_z_range_from),
-                    'range_to': int(text_z_range_to),
                     'taxed': float(text_z_taxed),
                     'untaxed': float(text_z_untaxed),
                     'exempt': float(text_z_exempt),
@@ -548,12 +589,23 @@ class SaleImportPEM(models.TransientModel):
                     'tax_6': 0
                 }
 
+                # A veces la lista de comprobantes esta vacia
+                # TODO: Controlar que esto genere correctamente las ventas
+                # En el IVA digital, se debe agregar una linea con el numero del comprobante Z, con todo en 0, 
+                # con operacion E (Exento) y con 1 alicuota en 0 (codigo 3)
+                if comp_fiscales:
+                    # text_z_codigo_comprobante = comp_fiscales.findtext('codigoTipoComprobante') # 83
+                    text_z_range_from = comp_fiscales.findtext('primerNumeroComprobante')
+                    text_z_range_to = comp_fiscales.findtext('ultimoNumeroComprobante')
+                
+                    invoice_data['range_from'] = int(text_z_range_from)
+                    invoice_data['range_to'] = int(text_z_range_to)
+
                 for subtotalIVA in cierreZ.find('arraySubtotalesIVA').findall('subtotalIVA'):
                     text_vat_percentage = subtotalIVA.findtext('porcentajeIVA')
                     text_vat_subtotal = subtotalIVA.findtext('importe')
                     
-                    print('  - {}%: {}'.format(text_vat_percentage, text_vat_subtotal))
-
+                    # TODO: tener en cuenta otros tipos de IVA
                     if text_vat_percentage == '21.00':
                         invoice_data['tax_21'] = float(text_vat_subtotal)
                     elif text_vat_percentage == '6.00':
@@ -562,7 +614,6 @@ class SaleImportPEM(models.TransientModel):
                         raise UserError("IVA desconocido {}".format(text_vat_percentage))
 
                 self.env["l10n_ar.import.sale.pem.line"].create(invoice_data)
-                print()
 
         # Fill relations
         self._find_relations()
@@ -596,11 +647,9 @@ class SaleImportPEM(models.TransientModel):
                 'l10n_latam_document_type_id': tique.id,
                 # TODO: Chequear (y validar) secuencia en PG
                 'l10n_latam_document_number': '{}-{}'.format(self.f8011_pos, invoice.number),
+                'z_desde': invoice.range_from,
+                'z_hasta': invoice.range_to,
             })
-
-            # range_from = fields.Integer(string="Comprobante Desde")
-            # range_to = fields.Integer(string="Comprobante Hasta")
-            # total = fields.Float(string="Total")
 
             # IVA 21%
             if (invoice.tax_21 > 0):
@@ -609,8 +658,7 @@ class SaleImportPEM(models.TransientModel):
                     'name': 'Monto Gravado al 21%',
                     'account_id': self.account_sale.id,
                     'quantity': 1,
-                    # TODO: chequear que el impuesto este incluido en el precio
-                    'price_unit': invoice.taxed + invoice.tax_21,
+                    'price_unit': invoice.taxed + (invoice.tax_21 if tax_21.price_include else 0),
                 })
                 line.tax_ids += self.tax_21
 

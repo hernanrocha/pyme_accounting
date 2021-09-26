@@ -237,7 +237,7 @@
             <menuitem name="Mis Comprobantes Recibidos" sequence="1" 
                 id="menu_import_purchases_comp_recibidos" action="action_import_purchases_comp_recibidos" />
                 
-            <menuitem name="Archivo RG3685" sequence="3" 
+            <menuitem name="RG3685 (IVA Digital)" sequence="3" 
                 id="menu_import_purchases_rg3685" action="action_import_purchase_rg3685" />
 
             <!-- <menuitem name="Archivo Excel" sequence="4" 
@@ -262,12 +262,12 @@
             <!-- <menuitem name="[RevisarNombre] Retenciones AFIP" sequence="9" 
                 id="menu_import_sale_rg3685" action="action_wizard_import_sale_pem" /> -->
 
-            <menuitem name="Archivo RG3685" sequence="3" 
+            <menuitem name="RG3685 (IVA Digital)" sequence="3" 
                 id="menu_import_sale_rg3685" action="action_import_sale_rg3685" />
 
 
             <!-- MENU Facturacion/Importar/Controlador Fiscal (*.PEM) -->
-            <menuitem name="Archivo Controlador Fiscal (*.PEM)" sequence="4" 
+            <menuitem name="Controlador Fiscal (*.PEM)" sequence="4" 
                 id="menu_import_sale_pem" action="action_wizard_import_sale_pem" />
             
             <!-- MENU Facturacion/Importar/Archivo Excel -->
@@ -411,6 +411,8 @@
             <!-- TODO: Chequear estado de AFIP (WebService + reporte de caido)-->
 
             <!-- TODO: Vista de Puntos de Venta en AFIP (opcion a traerlos configurandolo) -->
+
+            <!-- TODO: puntos de venta en el sistema (journals de venta) -->
 
         </menuitem>  
 

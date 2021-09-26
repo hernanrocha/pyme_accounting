@@ -8,26 +8,36 @@
         <field name="arch" type="xml">
             <form string="Importar Ventas">
 
+                <div class="card bg-primary">
+                    <div class="card-body">
+                        <p>Cargar a continuacion el archivo generado por AFIP en la sección Mis Comprobantes Emitidos, para cargar automáticamente todos los comprobantes emitidos desde la página de AFIP durante el período determinado.</p>
+                        <p>Los comprobantes ya existentes en el sistema no se cargarán duplicados. En cambio, se mostrará el monto total ya cargado indicando si coincide con la información registrada en AFIP.</p>
+                    </div>
+                </div>
+
                 <group string="Archivo" col="2">
                     <field name="afip_file" />
                 </group>
                 
                 <group string="Ventas Cargadas" col="2">
-                    <field name="invoice_ids" nolabel="1" widget="section_and_note_one2many" options="{'reload_on_button': true}">
-                        <tree>
+                    <field name="invoice_ids" nolabel="1" mode="tree" widget="section_and_note_one2many" options="{'reload_on_button': true}">
+                        <tree default_order="invoice_display_name">
                             <field name="date" edit="false" />
                             <field name="invoice_display_name" edit="false" />
+                            <field name="cuit" />
                             <!-- <field name="invoice_type" edit="false" /> -->
                             <!-- <field name="pos_number" edit="false" /> -->
                             <!-- <field name="invoice_number" edit="false" /> -->
                             <field name="taxed_amount" sum="Total" />
                             <field name="untaxed_amount" sum="Total" optional="show" />
                             <field name="exempt_amount" sum="Total" optional="show" />
-                            <field name="iva" />
+                            <field name="iva" sum="Total" />
                             <field name="difference" sum="Total" optional="hide" />
-                            <field name="total" />
+                            <field name="total" sum="Total" />
+                            <field name="invoice_found" />
+                            <field name="match_total" />
+                            <field name="invoice_amount_total" sum="Total" />
                             <field name="partner" string="Cliente" optional="hide" edit="false" />
-                            <field name="cuit" optional="hide" edit="false" />
                         </tree>
                     </field>
                 </group>
@@ -40,9 +50,8 @@
                 y que mas adelante se pueden cargar las percepciones -->
 
                 <footer>
-                    <field name="notes" />
-                    <separator />
                     <button name="parse_sales" string="Cargar" type="object" class="btn-primary" />
+                    <!-- TODO: habilitar solo despues de parsear -->
                     <button name="generate_sales" string="Generar Comprobantes" type="object" class="btn-primary" />
                     <button string="Cancelar" class="btn-secondary" special="cancel"/>
                 </footer>

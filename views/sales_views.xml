@@ -51,6 +51,8 @@
                 <field name="company_currency_id" invisible="1"/>
                 <field name="state" widget="badge" decoration-success="state == 'posted'" decoration-info="state == 'draft'" />
                 <!-- <field name="payment_state" widget="badge" decoration-danger="payment_state == 'not_paid'" decoration-warning="payment_state in ('partial', 'in_payment')" decoration-success="payment_state in ('paid', 'reversed')" attrs="{'invisible': [('payment_state', 'in', ('invoicing_legacy'))]}"/> -->
+
+                <!-- TODO: tener en cuenta orden y filtros aplicados al descargar XLS -->
             </tree>
         </field>
     </record>

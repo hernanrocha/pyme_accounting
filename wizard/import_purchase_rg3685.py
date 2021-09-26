@@ -151,7 +151,7 @@ class ImportPurchaseRg3685(models.TransientModel):
         monotributo = self.env.ref('l10n_ar.res_RM')
     
         # Obtener tipo de identificacion CUIT
-        # TODO: tener en cuenta DNIs
+        # TODO: tener en cuenta DNIs para compras de consumidores finales
         cuit_type = self.env.ref('l10n_ar.it_cuit')
 
         account_purchase = self.env['account.account'].search([
@@ -174,7 +174,8 @@ class ImportPurchaseRg3685(models.TransientModel):
                 'name': cbte["nombre_comprador"],
                 'vat': cbte["doc_numero_comprador"],
                 'l10n_latam_identification_type_id': cuit_type.id,
-                # TODO: Si es factura C, cargar como monotributo
+                # TODO: Si es factura C, cargar como monotributo/exento
+                # Para esto se debe poder consultar la API de CUITs
                 'l10n_ar_afip_responsibility_type_id': monotributo.id if es_comprobante_c(cbte["tipo_comprobante"]) else ri.id 
             }
             if len(partner) == 0:
@@ -186,12 +187,10 @@ class ImportPurchaseRg3685(models.TransientModel):
                 partner = partner[0]
 
             # Create Invoice
-            # TODO: mejorar esta query
             doc_type = self.env['l10n_latam.document.type'].search([('code', '=', cbte["tipo_comprobante"])])
-            _logger.info("DOC TYPE: {}".format(doc_type))
 
-            # TODO: investigar mas los casos de uso de IVA No Corresponde (account_move.py)
-            # Fix a error "En la factura con id "645" debe usar IVA NO Corresponde en cada línea."
+            # Cuando es comprobante C, generado por monotributo/exento,
+            # se debe colocar "IVA No Corresponde"
             no_iva = doc_type.purchase_aliquots == 'zero'
 
             move_data = {
@@ -203,10 +202,9 @@ class ImportPurchaseRg3685(models.TransientModel):
                 'l10n_latam_document_type_id': doc_type.id,
                 'l10n_latam_document_number': '{}-{}'.format(cbte["punto_de_venta"], cbte["numero_comprobante_desde"]),
             }
-            print("Invoice Data", move_data)
+            _logger.info("Invoice Data: {}".format(move_data))
 
             move = self.env['account.move'].create(move_data)
-            print("Invoice", move)
 
             # Cargar alicuotas de IVA
             for alic in alicuotas:
@@ -287,8 +285,8 @@ class ImportPurchaseRg3685(models.TransientModel):
             move._recompute_payment_terms_lines()
             move._compute_amount()
 
-            # Post Entry
-            # move.action_post()
+        # TODO: mostrar mensaje success
 
+    # TODO: Permitir editar antes de importar
     def generate(self):
         pass
