@@ -496,4 +496,12 @@
         - Posiciones fiscales: NO
     -->
 
+    <!-- TODO:
+        Panel de administracion para ver:
+        - logs importantes (carga de archivos, mails enviados, webservice)
+        - manejo de usuarios
+        - version del programa
+        - errores del sistema
+    -->
+
 </odoo>

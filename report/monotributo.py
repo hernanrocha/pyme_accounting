@@ -13,72 +13,73 @@ locale.localeconv = _temp_localeconv
 
 # TODO: mover esto a su propio modelo
 # https://www.afip.gob.ar/monotributo/categorias.asp
+# Vigente desde 07/2021 a la fecha
 categories = [
     {
         'char': 'A',
-        'max_invoice': 282444.69,
-        'service_payment': 1955.68,
-        'goods_payment': 1955.68
+        'max_invoice': 370000.00,
+        'service_payment': 2646.22,
+        'goods_payment': 2646.22
     },
     {
         'char': 'B',
-        'max_invoice': 423667.03,
-        'service_payment': 2186.80,
-        'goods_payment': 2186.80
+        'max_invoice': 550000.00,
+        'service_payment': 2958.95,
+        'goods_payment': 2958.95
     },
     {
         'char': 'C',
-        'max_invoice': 564889.40,
-        'service_payment': 2499.91,
-        'goods_payment': 2457.65
+        'max_invoice': 770000.00,
+        'service_payment': 3382.62,
+        'goods_payment': 3325.44
     },
     {
         'char': 'D',
-        'max_invoice': 847334.12,
-        'service_payment': 2947.94,
-        'goods_payment': 2878.37
+        'max_invoice': 1060000.00,
+        'service_payment': 3988.85,
+        'goods_payment': 3894.71
     },
     {
         'char': 'E',
-        'max_invoice': 1129778.77,
-        'service_payment': 3872.18,
-        'goods_payment': 3482.04
+        'max_invoice': 1400000.00,
+        'service_payment': 5239.44,
+        'goods_payment': 4711.54
     },
     {
         'char': 'F',
-        'max_invoice': 1412223.49,
-        'service_payment': 4634.89,
-        'goods_payment': 4003.69
+        'max_invoice': 1750000.00,
+        'service_payment': 6271.46,
+        'goods_payment': 5417.38
     },
     {
         'char': 'G',
-        'max_invoice': 1694668.19,
-        'service_payment': 5406.02,
-        'goods_payment': 4558.61
+        'max_invoice': 2100000.00,
+        'service_payment': 7314.87,
+        'goods_payment': 6168.24
     },
     {
         'char': 'H',
-        'max_invoice': 2353705.82,
-        'service_payment': 9451.93,
-        'goods_payment': 7886.41
+        'max_invoice': 2600000.00,
+        'service_payment': 12789.38,
+        'goods_payment': 10671.08
     },
     {
         'char': 'I',
-        'max_invoice': 2765604.35,
+        'max_invoice': 2910000.00,
         'service_payment': 0,
-        'goods_payment': 11336.71
+        'goods_payment': 15339.68
     },
     {
         'char': 'J',
-        'max_invoice': 3177502.86,
+        'max_invoice': 3335000.00,
         'service_payment': 0,
-        'goods_payment': 13019.83
+        'goods_payment': 17617.10
     },
     {
         'char': 'K',
-        'max_invoice': 3530558.74,
+        'max_invoice': 3700000.00,
         'service_payment': 0,
-        'goods_payment': 14716.41
+        'goods_payment': 19912.74
     },
 ]
 
