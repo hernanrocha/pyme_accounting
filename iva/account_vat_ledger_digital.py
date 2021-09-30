@@ -283,7 +283,6 @@ class AccountVatLedger(models.Model):
             currency_rate = inv.l10n_ar_currency_rate
             currency_code = inv.currency_id.l10n_ar_afip_code
             doc_number = int(inv.name.split('-')[2])
-            cbte_z = inv.l10n_latam_document_type_id.code in ['83']
 
             untaxed_amount = sum(inv.invoice_line_ids.filtered(untaxed_line).mapped('price_total'))
             exempt_amount = sum(inv.invoice_line_ids.filtered(exempt_line).mapped('price_total'))
@@ -309,12 +308,12 @@ class AccountVatLedger(models.Model):
                 # En el supuesto de registrar de manera agrupada por totales
                 # diarios, se deberá consignar el primer número de comprobante
                 # del rango a considerar.
-                "{:0>20d}".format(inv.z_desde if cbte_z else doc_number),
+                "{:0>20d}".format(inv.z_desde if inv.z_desde else doc_number),
 
                 # VENTAS Campo 5: Número de Comprobante Hasta.
-                # TODO agregar esto En el resto de los casos se consignará el
+                # En el resto de los casos se consignará el
                 # dato registrado en el campo 4
-                "{:0>20d}".format(inv.z_hasta if cbte_z else doc_number),
+                "{:0>20d}".format(inv.z_hasta if inv.z_hasta else doc_number),
 
                 # VENTAS Campo 6: Código de documento del comprador.
                 self.get_partner_document_code(inv.commercial_partner_id),
@@ -683,22 +682,23 @@ class AccountVatLedger(models.Model):
         if self.type == 'sale':
             doc_number = int(inv.name.split('-')[2])
             row = [
-                # Campo 1: Tipo de Comprobante
+                # ALICUOTA VENTA Campo 1: Tipo de Comprobante
                 "{:0>3d}".format(int(inv.l10n_latam_document_type_id.code)),
 
-                # Campo 2: Punto de Venta
+                # ALICUOTA VENTA Campo 2: Punto de Venta
                 self.get_point_of_sale(inv),
 
-                # Campo 3: Número de Comprobante
-                "{:0>20d}".format(doc_number),
+                # ALICUOTA VENTA Campo 3: Número de Comprobante
+                # Para los comprobantes Z, indicar el numero desde
+                "{:0>20d}".format(inv.z_desde if inv.z_desde else doc_number),
 
-                # Campo 4: Importe Neto Gravado
+                # ALICUOTA VENTA Campo 4: Importe Neto Gravado
                 self.format_amount(base, invoice=inv),
 
-                # Campo 5: Alícuota de IVA.
+                # ALICUOTA VENTA Campo 5: Alícuota de IVA.
                 str(code).rjust(4, '0'),
 
-                # Campo 6: Impuesto Liquidado.
+                # ALICUOTA VENTA Campo 6: Impuesto Liquidado.
                 self.format_amount(tax_amount, invoice=inv),
             ]
         elif impo:
@@ -770,6 +770,10 @@ class AccountVatLedger(models.Model):
     # A partir de un invoice, se determinan tipos de alicuota y se devuelve un array
     def get_invoice_alicuotas(self, inv, impo):
         lines = []
+
+        # No retornar alicuotas para comprobantes en 0
+        if inv.amount_total == 0:
+            return lines
 
         # reportamos como linea de iva si:
         # * el impuesto es iva cero

@@ -45,7 +45,7 @@
         <field name="arch" type="xml">
             <form string="Compañía">
                 <sheet>
-                    <field name="logo" widget="image" class="oe_avatar" modifiers="{}" id="logo"/>
+                    <!-- <field name="logo" widget="image" class="oe_avatar" modifiers="{}" id="logo"/> -->
                     <field name="partner_gid" invisible="True" modifiers="{'invisible':true,'readonly':true}" id="partner_gid"/>
 
                     <div class="oe_title">

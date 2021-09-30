@@ -29,6 +29,7 @@
                             <!-- <field name="pos_number" edit="false" /> -->
                             <!-- <field name="invoice_number" edit="false" /> -->
                             <field name="taxed_amount" sum="Total" />
+                            <field name="taxed_amount_21" sum="Total" optional="hide" />
                             <field name="untaxed_amount" sum="Total" optional="show" />
                             <field name="exempt_amount" sum="Total" optional="show" />
                             <field name="iva" sum="Total" />

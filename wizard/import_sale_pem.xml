@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- TODO: editar importes en el formulario f8011 -->
+    <!-- TODO: guardar registro historico de los PEM importados -->
+
+    <record id="view_f8010_grouped" model="ir.ui.view">
+        <field name="name">l10n_ar.import.sale.pem.f8010.grouped.pivot</field>
+        <field name="model">l10n_ar.import.sale.pem.f8010.grouped</field>
+
+        <field name="arch" type="xml">
+            <pivot>
+                <field name="z" type="row" />
+                <field name="description" type="col" />
+                <field name="total" type="measure" />
+            </pivot>
+        </field>
+    </record>
+
     <record id="view_import_sale_pem_f8011_line" model="ir.ui.view">
         <field name="name">l10n_ar.import.sale.pem.line.form</field>
         <field name="model">l10n_ar.import.sale.pem.line</field>
@@ -49,31 +63,7 @@
                 
                 </group>
 
-                <!-- Datos del F8010 -->
-                <group string="Datos Cargados" col="4" attrs="{'invisible': [('f8010_pos', '=', 0)]}">
-                    <field name="f8010_cuit" />
-                    <field name="f8010_pos" />
-                    <field name="f8010_start_date" />
-                    <field name="f8010_end_date" />
-                </group>
-
-                <field name="f8010_invoice_ids" mode="tree" widget="section_and_note_one2many" 
-                    readonly="1" attrs="{'invisible': [('f8010_pos', '=', 0)]}">                                                
-                    <tree>
-                        <field name="number" />
-                        <field name="date" />
-                        <field name="description" />
-                        <field name="taxed_21" />
-                        <field name="tax_21" />
-                        <field name="taxed_6" optional="hide" />
-                        <field name="tax_6" optional="hide" />
-                        <field name="untaxed" />
-                        <field name="exempt" />
-                        <field name="total" />
-                    </tree>
-                </field>
-
-                <!-- Datos del F8011 -->
+                <!-- Encabezado del F8011 -->
                 <group string="Datos Cargados" col="4" attrs="{'invisible': [('f8011_pos', '=', 0)]}">
                     <field name="f8011_cuit" />
                     <field name="f8011_pos" />
@@ -84,33 +74,78 @@
                     <!-- TODO: la fecha de fin no coincide con el ultimo comprobante -->
                 </group>
 
-                <!-- Campo necesario para mostrar/ocultar la columna IVA 6% -->
-                <field name="f8011_total_tax_6" invisible="1" />
-                <!-- TODO: Deshabilitar el boton "Crear" -->
-                <field name="invoice_ids" 
-                    mode="tree" widget="section_and_note_one2many" 
-                    
-                    attrs="{'invisible': [('f8011_pos', '=', 0)]}">                                                
-                    <tree>
-                        <field name="number" />
-                        <field name="range" />
-                        <field name="date" />
-                        <field name="taxed" sum="Total" />
-                        <field name="untaxed" sum="Total" />
-                        <field name="exempt" sum="Total" />
-                        <field name="tax_21" sum="Total" />
-                        <field name="tax_6" sum="Total" attrs="{'column_invisible':[('parent.f8011_total_tax_6', '=', False)]}" />
-                        <field name="total" sum="Total" />
-                    </tree>
-                </field>
+                <notebook attrs="{'invisible': [('f8011_pos', '=', 0)]}">
+
+                    <page string="F8011">
+                        <!-- Campo necesario para mostrar/ocultar la columna IVA 6% -->
+                        <field name="f8011_total_tax_6" invisible="1" />
+
+                        <!-- TODO: Deshabilitar el boton "Crear" -->
+                        <field name="invoice_ids" mode="tree" widget="section_and_note_one2many">
+                            <tree editable="0">
+                                <field name="number" />
+                                <field name="range" />
+                                <field name="date" />
+                                <field name="taxed" sum="Total" />
+                                <field name="untaxed" sum="Total" />
+                                <field name="exempt" sum="Total" />
+                                <field name="tax_21" sum="Total" />
+                                <field name="tax_6" sum="Total" attrs="{'column_invisible':[('parent.f8011_total_tax_6', '=', False)]}" />
+                                <field name="total" sum="Total" />
+
+                                <control><div></div></control>
+                            </tree>
+                        </field>
+                    </page>
+
+                    <field name="f8010_pos" invisible="1" />
+
+                    <page string="F8010" attrs="{'invisible': [('f8010_pos', '=', 0)]}">
+                        <field name="f8010_invoice_ids" mode="tree" widget="section_and_note_one2many" readonly="1">
+                            <tree editable="0">
+                                <field name="number" />
+                                <field name="date" />
+                                <field name="description" />
+                                <field name="taxed_21" />
+                                <field name="tax_21" />
+                                <field name="taxed_6" optional="hide" />
+                                <field name="tax_6" optional="hide" />
+                                <field name="untaxed" />
+                                <field name="exempt" />
+                                <field name="total" />
+                            </tree>
+                        </field>
+                    </page>
+
+                    <page string="Detalle Items" attrs="{'invisible': [('f8010_pos', '=', 0)]}">
+                        <button name="show_pivot" string="Ver Tabla" type="object" class="btn-primary" />
+
+                        <field name="f8010_grouped_ids" mode="tree" widget="section_and_note_one2many" readonly="1">
+                            <tree editable="false">
+                                <field name="z" />
+                                <field name="description" />
+                                <field name="total" sum="Total" />
+                            </tree>
+                        </field>
+                    </page>
+
+                </notebook>
+
+                <!-- Datos del F8010 -->
+                <!-- <group string="Datos Cargados" col="4" attrs="{'invisible': [('f8010_pos', '=', 0)]}">
+                    <field name="f8010_cuit" />
+                    <field name="f8010_pos" />
+                    <field name="f8010_start_date" />
+                    <field name="f8010_end_date" />
+                </group> -->
+
+                
 
                 <!-- TODO: Agregar una nota diciendo que el IVA 6% se va a convertir a 21% y No Gravado -->
 
                 <footer>
-                    <button name="compute_f8010" string="Cargar F8010" type="object" class="btn-primary" />
+                    <button name="compute" string="Cargar" type="object" class="btn-primary" />
                     <!-- TODO: convertir a action -->
-                    <!-- TODO: Fusionar botones -->
-                    <button name="compute_f8011" string="Cargar F8011" type="object" class="btn-primary" />
                     <button name="generate_f8011" string="Generar Facturas" type="object" class="btn-primary" 
                         attrs="{'invisible': [('f8011_pos', '=', 0)]}" />
                     <button string="Cancelar" class="btn-secondary" special="cancel"/>

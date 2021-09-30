@@ -5,7 +5,7 @@
         <field name="name">account.invoice.tree</field>
         <field name="model">account.move</field>
         <field name="arch" type="xml">
-            <tree string="Invoices" js_class="account_tree" sample="1">
+            <tree string="Invoices" class="w-150" js_class="account_tree" sample="1">
                 <!-- <header>
                     <button name="action_register_payment" type="object" string="Register Payment"
                         groups="account.group_account_user"

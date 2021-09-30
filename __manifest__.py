@@ -34,6 +34,10 @@
         # Session Manager
     ],
     'data': [
+        # https://github.com/odoo/odoo/blob/bbc338438518bbb7d0e9ad1a313e872f95a36870/addons/web/static/src/js/views/list/list_renderer.js
+        # Web
+        'views/web.xml',
+
         # CTMIL Odoo-Argentina. Modulos account_move_tax, vat_ledger, iva_digital
         # TODO: Mover a un modulo diferente
         'iva/move_view.xml',

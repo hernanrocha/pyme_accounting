@@ -47,6 +47,14 @@ class ImportSalesAfipLine(models.TransientModel):
     cuit = fields.Char(string="CUIT")
     partner = fields.Char()
     taxed_amount = fields.Float(string="Gravado")
+    
+    @api.depends('taxed_amount')
+    def _compute_taxed_amount_21(self):
+        for line in self:
+            line.taxed_amount_21 = line.taxed_amount * 0.21
+
+    taxed_amount_21 = fields.Float(string=".21", compute=_compute_taxed_amount_21)
+    
     untaxed_amount = fields.Float(string="No Gravado")
     exempt_amount = fields.Float(string="Exento")
     iva = fields.Float(string="IVA")
@@ -122,7 +130,7 @@ class ImportSalesAfip(models.TransientModel):
 
             # Create new journal for this POS
             journal = self.env['account.journal'].create({
-                'name': 'PDV {} - Comprobantes Emitidos'.format(pos_number),
+                'name': 'PDV {} - Comprobantes Emitidos'.format(int(pos_number)),
                 'type': 'sale',
                 'l10n_latam_use_documents': True,
                 'l10n_ar_afip_pos_number': pos_number,
@@ -282,7 +290,7 @@ class ImportSalesAfip(models.TransientModel):
                     'quantity': 1,
                     'price_unit': invoice.taxed_amount + (invoice.iva if tax_21.price_include else 0),
                 })
-                line.tax_ids += self.tax_21
+                line.tax_ids += tax_21
 
             # IVA No Gravado
             if invoice.untaxed_amount > 0:

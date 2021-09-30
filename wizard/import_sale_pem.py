@@ -56,7 +56,6 @@ class AccountMixin(models.AbstractModel):
         return journal
 
 # BUG: El informe de IVA no muestra el 6% y muestra de todas las compañias.
-# TODO: crear impuestos IVA 21%, 6%, No Gravado, Exento para ventas/compras en empresas nuevas.
 # TODO: incluir en el precio para las ventas 
 
 
@@ -73,6 +72,17 @@ class AccountMixin(models.AbstractModel):
 
 # sequence.mixin en account/models/sequence_mixin.py
 # _get_last_sequence(self, relaxed=False) debe devolver [] cuando se trata legalmente
+
+class SaleImportPemF8010Grouped(models.TransientModel):
+    _name = "l10n_ar.import.sale.pem.f8010.grouped"
+    _description = "Comprobantes Controlador Fiscal PEM F8010 agrupados por Z"
+
+    z = fields.Integer(string="Comprobante Z")
+    description = fields.Char(string="Descripción")
+    total = fields.Float(string="Total")
+
+    pem_id = fields.Many2one(comodel_name="l10n_ar.import.sale.pem", ondelete="cascade", invisible=True)
+
 
 class SaleImportPemF8010Line(models.TransientModel):
     _name = "l10n_ar.import.sale.pem.f8010.line"
@@ -148,6 +158,8 @@ class SaleImportPEM(models.TransientModel):
     f8010_start_date = fields.Date(string="Fecha Desde", readonly=True)
     f8010_end_date = fields.Date(string="Fecha Hasta", readonly=True)
     f8010_invoice_ids = fields.One2many(string="Comprobantes", comodel_name="l10n_ar.import.sale.pem.f8010.line", inverse_name="pem_id")
+
+    f8010_grouped_ids = fields.One2many(string="Ventas por Z", comodel_name="l10n_ar.import.sale.pem.f8010.grouped", inverse_name="pem_id")
 
     # Listado de comprobantes Z
     f8011_file = fields.Binary(string="Archivo F8011 (*.pem)")
@@ -228,6 +240,11 @@ class SaleImportPEM(models.TransientModel):
 
         return tree.getroot()
 
+    @api.depends('f8010_file', 'f8011_file')
+    def compute(self):
+        self.compute_f8010()
+        return self.compute_f8011()
+
     @api.depends('f8010_file')
     def compute_f8010(self):
 
@@ -236,10 +253,14 @@ class SaleImportPEM(models.TransientModel):
         # TODO: poner "nombre" de la controladora fiscal???
         # TODO: listar productos encontrados, permitir configurar entre No Gravado / Exento
 
+        # Borrar comprobantes cargados anteriormente
+        # TODO: Borrar esto una vez que este funcionando. Puede ser util cargar varios PEM
+        self.write({ 'f8010_invoice_ids': [(5, 0, 0)] })
+
         [data] = self.read()
 
         if not data['f8010_file']:
-            raise UserError("Debes cargar el archivo de ventas F8010")
+            return
 
         # Convertir PEM a XML
         root = self._parse_pem(data['f8010_file'])
@@ -261,10 +282,6 @@ class SaleImportPEM(models.TransientModel):
         self.journal = self.get_pos(self.f8010_pos)
         
         comprobantes = {}
-
-        # Borrar comprobantes cargados anteriormente
-        # TODO: Borrar esto una vez que este funcionando. Puede ser util cargar varios PEM
-        self.write({ 'f8010_invoice_ids': [(5, 0, 0)] })
 
         grupoComprobantes = root.find('arrayGruposComprobantesFiscales').find('grupoComprobantes')
         
@@ -484,40 +501,6 @@ class SaleImportPEM(models.TransientModel):
             'default_move_type': 'out_invoice',
         }
 
-    # def generate_f8010(self):
-        # TODO: generar un comprobante del estilo:
-        # Dia: 1
-        # Productos:
-        # - Cigarrillo 21%
-        # - Cigarrillo Exento
-        # - Formulario (Ex)
-        # - Lib (21%)
-
-        # move = self.env['account.move'].create({
-        #     'move_type': 'out_invoice',
-        #     'partner_id': 7, # TODO: Consumidor Final
-        #     'journal_id': self.journal.id,
-        #     'date': parse(fechaHoraEmision), # Date
-        #     'invoice_date': parse(fechaHoraEmision), # Date
-        #     'l10n_latam_document_type_id': 11, # TODO: Factura C?
-        #     'l10n_latam_document_number': '1-{}'.format(numeroComprobante),
-        # })
-
-        # line = move.line_ids.create({
-        #     'move_id': move.id,
-        #     'name': descripcion,
-        #     'account_id': account_sale.id,
-        #     'quantity': float(cantidad),
-        #     'price_unit': float(importeItem),
-        #     'price_subtotal': float(importeItem)
-        # })
-        
-        # Recalculate totals
-        # move._recompute_dynamic_lines(recompute_all_taxes=True, recompute_tax_base_amount=True)
-        # move._recompute_payment_terms_lines()
-        # move._compute_amount()
-        # pass
-
     # TODO: seems to be a bug in Odoo 14.0 https://github.com/odoo/odoo/pull/59740
     @api.depends('f8011_file')
     def compute_f8011(self):
@@ -621,6 +604,27 @@ class SaleImportPEM(models.TransientModel):
 
         # TODO: chequear starting sequence aca
 
+        # Si ya esta cargado el F8010, agrupar los productos por Z
+        if self.f8010_invoice_ids:
+            # TODO: descomentar esta linea
+            # self.write({ 'f8010_grouped_ids', [(5, 0, 0)] })
+
+            for z in self.invoice_ids:
+                cbtes = self.f8010_invoice_ids.filtered(lambda i: i.number >= z.range_from and i.number <= z.range_to)
+                _logger.info("Comprobante Z {}: {} individuales".format(z.number, len(cbtes)))
+                products = list(dict.fromkeys(cbtes.mapped('description')))
+                _logger.info("Productos: {}".format(products))
+                for p in products:
+                    product_items = cbtes.filtered(lambda i: i.description == p)
+                    tot = sum(product_items.mapped('total'))
+
+                    self.f8010_grouped_ids.create({
+                        'z': z.number,
+                        'description': p,
+                        'total': tot,
+                        'pem_id': self.id
+                    })
+
         return {
             'context': self.env.context,
             'view_type': 'form',
@@ -630,6 +634,20 @@ class SaleImportPEM(models.TransientModel):
             'view_id': False,
             'type': 'ir.actions.act_window',
             'target': 'new',
+        }
+
+    def show_pivot(self):
+        return {
+            'name': "Detalle Items",
+            'context': self.env.context,
+            'view_type': 'pivot',
+            'view_mode': 'pivot',
+            'res_model': 'l10n_ar.import.sale.pem.f8010.grouped',
+            # 'res_id': self.f8010_grouped_ids.id,
+            'domain': [ ('pem_id', '=', self.id) ],
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'target': 'current',
         }
 
     def generate_f8011(self):
@@ -651,14 +669,23 @@ class SaleImportPEM(models.TransientModel):
                 'z_hasta': invoice.range_to,
             })
 
+            # Valor "Gravado" que no se utilizo (solo ocurre con el cigarrillo)
+            taxed_not_used = invoice.taxed
+
             # IVA 21%
             if (invoice.tax_21 > 0):
+                # El monto gravado puede estar mezclado con otros, por lo que se
+                # determina el valor especifico para este IVA,
+                # y se descuenta del valor original
+                t = invoice.tax_21 / 0.21
+                taxed_not_used -= t
+
                 line = move.line_ids.create({
                     'move_id': move.id,
                     'name': 'Monto Gravado al 21%',
                     'account_id': self.account_sale.id,
                     'quantity': 1,
-                    'price_unit': invoice.taxed + (invoice.tax_21 if tax_21.price_include else 0),
+                    'price_unit': t + (invoice.tax_21 if self.tax_21.price_include else 0),
                 })
                 line.tax_ids += self.tax_21
 
@@ -673,8 +700,8 @@ class SaleImportPEM(models.TransientModel):
                 })
                 line.tax_ids += self.tax_untaxed
 
-            # IVA Exento
-            if invoice.exempt > 0:
+            # IVA Exento (o comprobante en 0)
+            if invoice.exempt > 0 or invoice.total == 0:
                 line = move.line_ids.create({
                     'move_id': move.id,
                     'name': 'Monto Exento',
@@ -688,7 +715,7 @@ class SaleImportPEM(models.TransientModel):
             if invoice.tax_6 > 0:
                 taxed_21 = invoice.tax_6 / 0.21
                 tax_21 = invoice.tax_6
-                untaxed = invoice.taxed_6 - taxed_21
+                taxed_not_used -= taxed_21
 
                 # Crear linea de Monto Gravado al 21%
                 line = move.line_ids.create({
@@ -700,28 +727,20 @@ class SaleImportPEM(models.TransientModel):
                 })
                 line.tax_ids += self.tax_21
 
-                # Crear linea de Monto Exento
+                # Crear linea de Monto No Gravado
                 line = move.line_ids.create({
                     'move_id': move.id,
-                    'name': '[IVA 6%] Monto Exento',
+                    'name': '[IVA 6%] Monto No Gravado',
                     'account_id': self.account_sale.id,
                     'quantity': 1,
-                    'price_unit': untaxed,
+                    'price_unit': taxed_not_used,
                 })
-                line.tax_ids += self.tax_exempt
-
-                # raise UserError('El archivo contiene facturas con IVA 6%')
-
-            # TODO: Add note with invoice range
-            # display_type = line_note
+                line.tax_ids += self.tax_untaxed
 
             # Recalculate totals
             move._recompute_dynamic_lines(recompute_all_taxes=True, recompute_tax_base_amount=True)
             move._recompute_payment_terms_lines()
             move._compute_amount()
-
-            # Post Entry
-            move.action_post()
 
         # TODO: retornar vista de los tiques creados. Asi retorna una lista generica
         return {

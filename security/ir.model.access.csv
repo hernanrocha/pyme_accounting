@@ -24,6 +24,7 @@ security_import_purchase_rg3685,Compras RG3685,model_l10n_ar_import_purchase_rg3
 security_import_sale_pem,Importar ventas PEM,model_l10n_ar_import_sale_pem,account.group_account_manager,1,1,1,1
 security_import_sale_pem_line,Linea de venta de archivo PEM,model_l10n_ar_import_sale_pem_line,account.group_account_manager,1,1,1,1
 security_import_sale_pem_f8080_line,Linea de venta de archivo PEM F8010,model_l10n_ar_import_sale_pem_f8010_line,account.group_account_manager,1,1,1,1
+security_import_sale_pem_f8080_grouped,Archivo PEM F8010 agrupado por Z,model_l10n_ar_import_sale_pem_f8010_grouped,account.group_account_manager,1,1,1,1
 security_import_sale_compenlinea,Importar Comprobantes en Linea,model_l10n_ar_import_sale_compenlinea,account.group_account_manager,1,1,1,1
 security_import_sale_compenlinea_line,Linea de Comprobantes en Linea,model_l10n_ar_import_sale_compenlinea_line,account.group_account_manager,1,1,1,1
 security_import_sale_excel,Importar Comprobantes desde Excel,model_l10n_ar_import_sale_excel,account.group_account_manager,1,1,1,1

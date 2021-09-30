@@ -49,7 +49,7 @@ class PurchaseImportDeduccionesArbaPLine(models.TransientModel):
     invoice_number = fields.Char(string="Comprobante")
     amount_agente = fields.Float(string="Importe Agente")
     amount = fields.Float(string="Importe Contrib")
-    state = fields.Selection([('alta', 'Alta'), ('baja', 'Baja')], string="Estado")
+    state = fields.Selection([('alta', 'Alta'), ('modificacion', 'Modificacion'), ('baja', 'Baja')], string="Estado")
 
     # TODO: completar con consulta AFIP si es que no existe
     partner = fields.Char(string="Proveedor", related='invoice_id.partner_id.name')
@@ -224,7 +224,7 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
                 'amount': float(importe.replace(",", "")),
                 'amount_agente': float(importe_agente.replace(",", "")),
                 'cuit': cuit,
-                'state': 'alta' if estado == 'Alta' else 'baja',
+                'state': estado.lower(),
                 'invoice_number': translate_invoice_type(tipo_comprobante, letra_comprobante, numero_comprobante),
                 'import_id': self.id,
             })
@@ -359,8 +359,9 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
             })
             print("Percepcion", perc)
 
-            # Actualizar factura coincidente (solo si esta marcada como "Alta")
-            if percepcion.invoice_id and percepcion.state == 'alta':
+            # Actualizar factura coincidente 
+            # Solo si no esta como "Baja" ("Alta" o "Modificacion")
+            if percepcion.invoice_id and percepcion.state != 'baja':
                 comp = percepcion.invoice_id
                 
                 # Pasar a borrador para poder editar
