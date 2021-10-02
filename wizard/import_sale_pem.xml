@@ -43,7 +43,12 @@
         <field name="model">l10n_ar.import.sale.pem</field>
         <field name="arch" type="xml">
             <form>
-                
+                <style>
+                    div.o_cp_bottom {
+                        display: none;
+                    }
+                </style>
+
                 <div class="card bg-primary">
                     <div class="card-body">
                         <p>Existen 2 tipos de archivos que pueden ser importados:</p>
@@ -58,8 +63,13 @@
 
                 <group string="Archivo" col="2">
 
-                    <field name="f8010_file" />
-                    <field name="f8011_file" />
+                    <!-- TODO: Una vez que se carga el archivo se pierde el valor -->
+                    <field name="f8010_file" filename="f8010_filename" />
+                    <!-- <field name="f8010_filename" readonly="1" /> -->
+                    <field name="f8011_file" filename="f8011_filename" />
+                    <!-- <field name="f8011_filename" readonly="1" /> -->
+                    <field name="f8012_file" filename="f8012_filename" />
+                    <!-- <field name="f8012_filename" readonly="1" /> -->
                 
                 </group>
 
@@ -74,9 +84,9 @@
                     <!-- TODO: la fecha de fin no coincide con el ultimo comprobante -->
                 </group>
 
-                <notebook attrs="{'invisible': [('f8011_pos', '=', 0)]}">
+                <notebook>
 
-                    <page string="F8011">
+                    <page string="F8011" attrs="{'invisible': [('f8011_pos', '=', 0)]}">
                         <!-- Campo necesario para mostrar/ocultar la columna IVA 6% -->
                         <field name="f8011_total_tax_6" invisible="1" />
 
@@ -117,6 +127,14 @@
                         </field>
                     </page>
 
+                    <field name="f8012_display" invisible="1" />
+                    <page string="F8012" attrs="{'invisible': [('f8012_display', '=', False)]}">
+                        <group col="4">
+                            <field name="f8012_start_date" />
+                            <field name="f8012_end_date" />
+                        </group>
+                    </page>
+
                     <page string="Detalle Items" attrs="{'invisible': [('f8010_pos', '=', 0)]}">
                         <button name="show_pivot" string="Ver Tabla" type="object" class="btn-primary" />
 
@@ -154,12 +172,37 @@
         </field>
     </record>
 
+    <!-- IMPORTAR VENTAS PEM - TREE VIEW -->
+    <record id="view_wizard_import_sale_pem_tree" model="ir.ui.view">
+        <field name="name">l10n_ar.import.sale.pem.tree</field>
+        <field name="model">l10n_ar.import.sale.pem</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="state" />
+                <field name="f8011_cuit" />
+                <field name="f8011_pos" />
+                <field name="f8011_start_date" />
+                <field name="f8011_start_number" />
+                <field name="f8011_end_date" />
+                <field name="f8011_end_number" />
+            </tree>
+        </field>
+    </record>
+
     <!-- IMPORTAR VENTAS PEM - WINDOW ACTION -->
     <record id="action_wizard_import_sale_pem" model="ir.actions.act_window">
         <field name="name">Importar Ventas de Controlador Fiscal</field>
         <field name="res_model">l10n_ar.import.sale.pem</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
+    </record>
+
+    <!-- ADMIN - IMPORTAR VENTAS PEM - WINDOW ACTION -->
+    <record id="action_admin_import_pem" model="ir.actions.act_window">
+        <field name="name">PEM Importados</field>
+        <field name="res_model">l10n_ar.import.sale.pem</field>
+        <field name="view_mode">tree,form</field>
+        <field name="target">main</field>
     </record>
 
 </odoo>

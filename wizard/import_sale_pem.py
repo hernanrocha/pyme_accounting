@@ -7,6 +7,7 @@ import os
 import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
+import base64
 
 _logger = logging.getLogger(__name__)
 
@@ -73,7 +74,7 @@ class AccountMixin(models.AbstractModel):
 # sequence.mixin en account/models/sequence_mixin.py
 # _get_last_sequence(self, relaxed=False) debe devolver [] cuando se trata legalmente
 
-class SaleImportPemF8010Grouped(models.TransientModel):
+class SaleImportPemF8010Grouped(models.Model):
     _name = "l10n_ar.import.sale.pem.f8010.grouped"
     _description = "Comprobantes Controlador Fiscal PEM F8010 agrupados por Z"
 
@@ -83,8 +84,7 @@ class SaleImportPemF8010Grouped(models.TransientModel):
 
     pem_id = fields.Many2one(comodel_name="l10n_ar.import.sale.pem", ondelete="cascade", invisible=True)
 
-
-class SaleImportPemF8010Line(models.TransientModel):
+class SaleImportPemF8010Line(models.Model):
     _name = "l10n_ar.import.sale.pem.f8010.line"
     _description = "Linea de comprobante de Controlador Fiscal PEM F8010"
 
@@ -111,7 +111,7 @@ class SaleImportPemF8010Line(models.TransientModel):
 #   - Exento:          0.00
 #   - Total:           8025.00
 #   - 21.00%: 1392.77
-class SaleImportPEMLine(models.TransientModel):
+class SaleImportPEMLine(models.Model):
     _name = "l10n_ar.import.sale.pem.line"
     _description = "Linea de comprobante de Controlador Fiscal PEM"
 
@@ -138,10 +138,28 @@ class SaleImportPEMLine(models.TransientModel):
         for line in self:
             line.range = "{}-{}".format(line.range_from, line.range_to)
 
-class SaleImportPEM(models.TransientModel):
+class SaleImportPEM(models.Model):
     _name = "l10n_ar.import.sale.pem"
     _description = "Importar archivo de Controlador Fiscal PEM"
     _inherit = [ 'mixin.l10n_ar.account' ]
+
+    state = fields.Selection([
+        ('draft', 'Borrador'),
+        ('loaded', 'Cargado'),
+        ('load_error', 'Error'),
+        ('done', 'OK'),
+        ('import_error', 'Error')
+    ], "Estado", default="draft")
+
+    # Listado de comprobantes individuales
+    f8010_file = fields.Binary(string="Archivo F8010 (*.pem)")
+    f8010_filename = fields.Char(string="Archivo F8010")
+    # Listado de comprobantes Z
+    f8011_file = fields.Binary(string="Archivo F8011 (*.pem)")
+    f8011_filename = fields.Char(string="Archivo F8010")
+    # Informacion del CF y el periodo seleccionado
+    f8012_file = fields.Binary(string="Archivo F8012 (*.pem)")
+    f8012_filename = fields.Char(string="Archivo F8010")
 
     # TODO: Permitir guardarse y acceder los XML
     f8010_xml_file = fields.Binary(string="F8010 archivo XML", readonly=True)
@@ -150,9 +168,6 @@ class SaleImportPEM(models.TransientModel):
     # TODO: soportar comprobante f8010
     # pem_type = fields.Select(string="Tipo", options=['f8010', 'f8011'])
 
-    # Listado de comprobantes individuales
-    f8010_file = fields.Binary(string="Archivo F8010 (*.pem)")
-
     f8010_cuit = fields.Char(string="CUIT", readonly=True)
     f8010_pos = fields.Integer(string="Punto de Venta", readonly=True)
     f8010_start_date = fields.Date(string="Fecha Desde", readonly=True)
@@ -160,9 +175,6 @@ class SaleImportPEM(models.TransientModel):
     f8010_invoice_ids = fields.One2many(string="Comprobantes", comodel_name="l10n_ar.import.sale.pem.f8010.line", inverse_name="pem_id")
 
     f8010_grouped_ids = fields.One2many(string="Ventas por Z", comodel_name="l10n_ar.import.sale.pem.f8010.grouped", inverse_name="pem_id")
-
-    # Listado de comprobantes Z
-    f8011_file = fields.Binary(string="Archivo F8011 (*.pem)")
 
     f8011_cuit = fields.Char(string="CUIT", readonly=True)
     f8011_pos = fields.Integer(string="Punto de Venta", readonly=True)
@@ -173,6 +185,10 @@ class SaleImportPEM(models.TransientModel):
     invoice_ids = fields.One2many(string="Comprobantes", comodel_name="l10n_ar.import.sale.pem.line", inverse_name="pem_id")
     
     f8011_total_tax_6 = fields.Boolean(string="Total IVA 6%", compute="_compute_f8011_total_tax_6")
+
+    f8012_display = fields.Boolean(string="Mostrar F8012")
+    f8012_start_date = fields.Date(string="Fecha Desde", readonly=True)
+    f8012_end_date = fields.Date(string="Fecha Hasta", readonly=True)
 
     @api.depends('invoice_ids', 'invoice_ids.tax_6')
     def _compute_f8011_total_tax_6(self):
@@ -242,8 +258,49 @@ class SaleImportPEM(models.TransientModel):
 
     @api.depends('f8010_file', 'f8011_file')
     def compute(self):
+        
+        # TODO: Borrar todos los archivos cargados cada vez que se apreta Cargar
+
+        # TODO: esto no se carga bien
+        # f8010_filename = self.f8010_filename
+        _logger.info("F8010 FILE NAME {}".format(self.f8010_filename))
+
+        # Cargar F8010 (opcional)
         self.compute_f8010()
-        return self.compute_f8011()
+
+        # Cargar F8011 (obligatorio)
+        self.compute_f8011()
+
+        # Cargar F8012 (opcional)
+        self.compute_f8012()
+        
+        # self.f8010_filename = f8010_filename
+
+        # Esto para generar los archivos XML descargables
+        # self.digital_aliquots_file = base64.encodestring(
+        #     self.REGDIGITAL_CV_ALICUOTAS.encode('ISO-8859-1'))
+        # self.digital_aliquots_filename = "F8010.xml"
+        # <field name="digital_vouchers_file" filename="digital_vouchers_filename"/>
+        # <field name="digital_aliquots_file" filename="digital_aliquots_filename"/>
+
+        self.state = "loaded"
+
+        return {
+            'name': 'Importar Ventas de Controlador Fiscal',
+            # 'context': self.env.context.update({
+            #     'default_f8010_filename': self.,
+            #     'default_f8011_filename': "880000",
+            #     'default_f8012_filename': "88880000",
+            # }),
+            'context': self.env.context,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'l10n_ar.import.sale.pem',
+            'res_id': self.id,
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+        }
 
     @api.depends('f8010_file')
     def compute_f8010(self):
@@ -506,8 +563,10 @@ class SaleImportPEM(models.TransientModel):
     def compute_f8011(self):
         [data] = self.read()
 
+        # TODO: mostrar mensaje de error indicando que es obligatorio
         if not data['f8011_file']:
-            raise UserError("Debes cargar el archivo de ventas F8011")
+            return
+            # raise UserError("Debes cargar el archivo de ventas F8011")
 
         # TODO: error handling si el formato es incorrecto o es otro formulario
         # TODO: borrar los registros cargados anteriormente
@@ -625,16 +684,41 @@ class SaleImportPEM(models.TransientModel):
                         'pem_id': self.id
                     })
 
-        return {
-            'context': self.env.context,
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'l10n_ar.import.sale.pem',
-            'res_id': self.id,
-            'view_id': False,
-            'type': 'ir.actions.act_window',
-            'target': 'new',
-        }
+    @api.depends('f8012_file')
+    def compute_f8012(self):
+        [data] = self.read()
+
+        self.f8012_display = False
+
+        if not data['f8012_file']:
+            return
+
+        # Convertir PEM a XML
+        root = self._parse_pem(data['f8012_file'])
+
+        self.f8012_display = True
+        self.f8012_start_date = root.findtext('fechaDesde')
+        self.f8012_end_date = root.findtext('fechaHasta')
+
+        # <tns:cintaTestigoDigital xmlns:tns="http://ar.gob.afip.controladorfiscal/cinta_testigo_digital"
+        #     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ar.gob.afip.controladorfiscal/cinta_testigo_digital cinta_testigo_digital.xsd">
+        #     <controladorFiscal>
+        #         <codigoFabricaCF>SE</codigoFabricaCF>
+        #         <codigoMarcaCF>SH</codigoMarcaCF>
+        #         <codigoModeloCF>RA</codigoModeloCF>
+        #         <numeroSerieCF>0000001428</numeroSerieCF>
+        #         <versionEquipo>1.00</versionEquipo>
+        #     </controladorFiscal>
+        #     <cuitEmisor>30714010820</cuitEmisor>
+        #     <numeroPuntoVenta>6</numeroPuntoVenta>
+        #     <fechaDesde>2021-05-01T10:07:14</fechaDesde>
+        #     <fechaHasta>2021-05-31T19:08:19</fechaHasta>
+        #     <arrayGruposComprobantesFiscales></arrayGruposComprobantesFiscales>
+        #     <arrayGruposComprobantesNoFiscHomo></arrayGruposComprobantesNoFiscHomo>
+        #     <arrayGruposComprobantesDonacion></arrayGruposComprobantesDonacion>
+        #     <arrayGruposComprobantesNoFiscOtros></arrayGruposComprobantesNoFiscOtros>
+        #     <codigoTipoInfRep>908</codigoTipoInfRep>
+        # </tns:cintaTestigoDigital>
 
     def show_pivot(self):
         return {
@@ -741,6 +825,8 @@ class SaleImportPEM(models.TransientModel):
             move._recompute_dynamic_lines(recompute_all_taxes=True, recompute_tax_base_amount=True)
             move._recompute_payment_terms_lines()
             move._compute_amount()
+
+        self.state = "done"
 
         # TODO: retornar vista de los tiques creados. Asi retorna una lista generica
         return {

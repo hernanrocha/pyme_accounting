@@ -4,6 +4,10 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
+import logging
+
+_logger = logging.getLogger(__name__)
+
 class Company(models.Model):
     _inherit = "res.company"
 
@@ -15,6 +19,11 @@ class Company(models.Model):
     l10n_ar_afip_responsibility_type_id = fields.Many2one(related="partner_id.l10n_ar_afip_responsibility_type_id")
     l10n_ar_gross_income_type = fields.Selection(related="partner_id.l10n_ar_gross_income_type")
     l10n_ar_gross_income_number = fields.Char(related="partner_id.l10n_ar_gross_income_number")
+
+    # TODO: se puede cambiar de monotributo a responsable inscripto en cualquier momento
+    # Error: "No se puede cambiar la responsabilidad AFIP de esta compañía porque ya existen movimientos contables."
+    # TODO: de RI a monotributo solo se puede cambiar despues de 3 años calendario
+    # (01/01 dentro de mas de 3 años)
 
     # Monotributo
     monotributo_category = fields.Selection([
@@ -33,6 +42,54 @@ class Company(models.Model):
     def _default_country_id(self):
         country_ar = self.env['res.country'].search([('code', '=', 'AR')])
         return country_ar
+
+    def query_afip(self):
+        # TODO: Don't save in DB yet
+        # https://www.odoo.com/es_ES/forum/ayuda-1/how-to-access-the-return-values-of-on-change-without-saving-38961
+        _logger.info("Query CUIT {}".format(self.vat))
+        result = {
+            "datosGenerales": {
+                "apellido": "ARANGUREN",
+                "nombre": "JUAN FRANCISCO",
+                "tipoPersona": "FISICA"
+            },
+            "datosRegimenGeneral": {
+                "actividad": [
+                    {
+                        "descripcionActividad": "VENTA AL POR MENOR POR INTERNET",
+                        "idActividad": "479101",
+                        "orden": "1"
+                    }
+                ],
+                "impuesto": [
+                    {
+                        "descripcionImpuesto": "GANANCIAS PERSONAS FISICAS",
+                        "idImpuesto": "11",
+                        "periodo": "202104"
+                    }
+                ],
+                "categoriaAutonomo": {
+                    "descripcionCategoria": "T3 CAT I INGRESOS HASTA $25.000",
+                    "idCategoria": "301",
+                    "idImpuesto": "308"
+                }
+            }
+        }
+        
+        datos = result["datosGenerales"]
+        if datos["tipoPersona"] == "FISICA":
+            # Nombre y apellido
+            self.name = "{} {}".format(datos["nombre"], datos["apellido"])
+
+            if result["datosMonotributo"]:
+                # Monotributo
+                self.monotributo_category = "A"
+            else:
+                # Responsable Inscripto
+                self.monotributo_category = ""
+        else:
+            # Razon social
+            self.name = "{}".format(datos["razonSocial"])
 
     @api.model
     def create(self, vals):

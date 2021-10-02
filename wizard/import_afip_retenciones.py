@@ -19,8 +19,18 @@ class ImportAfipMisRetencionesLine(models.TransientModel):
     date = fields.Date(string="Fecha Cbte")
     cuit = fields.Char(string="CUIT")
     partner = fields.Char(string="Proveedor")
-    impuesto = fields.Selection([('767', '767 - SICORE Perc/Ret IVA')], string="Impuesto")
-    regimen = fields.Selection([('493', '493 - Percepción IVA de Proveedores')], string="Regimen")
+    impuesto = fields.Selection([
+        # SICORE
+        ('767', '767 - SICORE Perc/Ret IVA'),
+        # SIRE
+        ('216', '216 - SIRE IVA')
+    ], string="Impuesto")
+    regimen = fields.Selection([
+        # SICORE
+        ('493', '493 - Percepción IVA de Proveedores'),
+        # SIRE
+        ('17', '17 - Pagos con Tarjetas de Crédito')
+    ], string="Regimen")
     descripcion = fields.Char(string="Descripcion")
     numero_comprobante = fields.Char(string="Numero Cbte")
     total = fields.Float(string="Total")
@@ -95,7 +105,7 @@ class ImportAfipMisRetenciones(models.TransientModel):
             _logger.info(values)
 
         for retencion in retenciones:
-            self.invoice_ids.create({
+            r = self.invoice_ids.create({
                 'date': datetime.strptime(retencion[11], '%d/%m/%Y'),
                 'cuit': retencion[0],
                 'partner': retencion[1],
@@ -107,7 +117,26 @@ class ImportAfipMisRetenciones(models.TransientModel):
                 'descripcion_cbte': retencion[12],
                 'date_registered': datetime.strptime(retencion[13], '%d/%m/%Y'),
                 'import_id': self.id
-            })        
+            })
+
+            # TODO: Solo funciona para percepciones
+            cbte = ''
+            
+            # 0000561800014834 => FA-A 05618-00014834
+            if len(r.numero_comprobante) == 16:
+                cbte = f'{r.numero_comprobante[3:8]}-{r.numero_comprobante[8:]}'
+            # Formato desconocido. No se busca el comprobante asociado
+            else:
+                continue
+            
+            comp = self.env['account.move'].search([
+                ('move_type', 'in', ['in_invoice', 'in_refund']),
+                ('name', 'like', cbte),
+                # TODO: buscar por CUIT
+            ])
+            
+            if comp:
+                r.invoice_id = comp
 
         return {
             'context': self.env.context,
@@ -120,7 +149,7 @@ class ImportAfipMisRetenciones(models.TransientModel):
             'target': 'new',
         }
 
-    def generate(self, retenciones):
+    def generate(self):
         for retencion in self.invoice_ids:
             ret = self.env['l10n_ar.impuestos.deduccion'].create({
                 'state': 'available',
@@ -132,4 +161,56 @@ class ImportAfipMisRetenciones(models.TransientModel):
             })
             _logger.info("Retencion: {}".format(ret))
 
-            # TODO: generar linea de percepcion IIBB
+            # TODO: generar linea de percepcion IVA
+            comp = retencion.invoice_id
+            
+            if comp:
+
+                # Pasar a borrador para poder editar
+                # TODO: bug que vuelve a default el valor fijo de las percepciones 
+                posted = comp.state == 'posted'
+                if posted:
+                    comp.button_draft()
+
+                _logger.info("Comprobante: {}".format(comp))
+                _logger.info("Old Line IDs: {}".format(comp.line_ids))
+                _logger.info("Old Total: {}".format(comp.amount_total))
+
+                perc_iva = self.env['account.tax'].search([
+                    ('name', '=', "Percepción IVA Sufrida")
+                ])
+                _logger.info("PercepcionIVA: {}".format(perc_iva))
+
+                line = comp.invoice_line_ids[0]
+                line.tax_ids += perc_iva
+
+                # Actualizar factura
+                # TODO: revisar que no interfiera con los otros impuestos
+                # Revisar funcion "_recompute_dynamic_lines" y no asignar valor por defecto
+                # a un impuesto ya asignado
+                comp._recompute_dynamic_lines(recompute_all_taxes=True)
+                comp._recompute_payment_terms_lines()
+                comp._compute_amount()
+
+                # Obtener linea de percepcion IVA
+                iva_line = comp.line_ids.filtered(lambda line: line.tax_line_id.id == perc_iva.id)
+
+                perc = retencion.total
+                if perc >= 0:
+                    comp.write({'line_ids': [(1, iva_line.id, { 
+                        'debit': perc, 
+                        'credit': 0, 
+                        'amount_currency': perc,
+                    })]})
+                else:
+                    comp.write({'line_ids': [(1, iva_line.id, { 
+                        'debit': 0, 
+                        'credit': -perc, 
+                        'amount_currency': -perc,
+                    })]})
+
+                _logger.info("NewNew Total: {}".format(comp.amount_total))
+
+                # Volver al estado confirmado
+                if posted:
+                    comp.action_post()

@@ -93,6 +93,8 @@ class ImportPurchaseCompRecibidosLine(models.TransientModel):
     def _compute_invoice_id(self):
         for line in self:
             line.invoice_id = self.env['account.move'].search([
+                # TODO: agregar por dominio el filtrado de los account.move
+                ('company_id', '=', self.env.company.id),
                 ('move_type', 'in', ['in_invoice', 'in_refund']),
                 ('name', '=', line.invoice_display_name),
                 # TODO: filtrar por CUIT y por estado
@@ -107,6 +109,15 @@ class ImportPurchaseCompRecibidosLine(models.TransientModel):
     invoice_found = fields.Boolean(string="Existente", compute=_compute_invoice_found)
     currency_id = fields.Many2one('res.currency', related="invoice_id.currency_id")
     invoice_amount_total = fields.Monetary(string='Cbte Total', related="invoice_id.amount_total")
+
+    @api.depends('invoice_amount_total', 'total')
+    def _compute_match_total_amount(self):
+        for imp in self:
+            # Diferencia de 2 centavos
+            # TODO: permitir definir esta diferencia
+            imp.match_total_amount = abs(imp.invoice_amount_total - imp.total) < 0.02
+
+    match_total_amount = fields.Boolean(string="Coinciden", compute=_compute_match_total_amount)
 
 class ImportPurchaseCompRecibidos(models.TransientModel):
     _name = "l10n_ar.import.purchase.comprecibidos"
@@ -342,5 +353,5 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
             move._recompute_payment_terms_lines()
             move._compute_amount()
 
-            # Post Entry
-            move.action_post()
+            # # Post Entry
+            # move.action_post()

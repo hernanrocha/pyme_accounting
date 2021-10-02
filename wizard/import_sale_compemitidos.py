@@ -44,6 +44,8 @@ class ImportSalesAfipLine(models.TransientModel):
     invoice_type = fields.Char(string="Tipo de Comprobante")
     pos_number = fields.Char(string="Punto de Venta")
     invoice_number = fields.Char(string="N° Factura")
+    
+    # TODO: agregar columna tipo de documento y cambiar nombre de columna a "Documento"
     cuit = fields.Char(string="CUIT")
     partner = fields.Char()
     taxed_amount = fields.Float(string="Gravado")
@@ -199,6 +201,7 @@ class ImportSalesAfip(models.TransientModel):
 
         # Obtener tipo de identificacion CUIT
         cuit_type = self.env.ref('l10n_ar.it_cuit') 
+        dni_type = self.env.ref('l10n_ar.it_dni')
 
         # Obtener condicion fiscal consumidor final, RI, Monotributo
         cf = self.env.ref('l10n_ar.res_CF')
@@ -242,14 +245,18 @@ class ImportSalesAfip(models.TransientModel):
             # TODO: Permitir elegir que hacer con la diferencia
             invoice.untaxed_amount = invoice.difference
 
+            # Documentos soportados: DNI y CUIT
             if invoice.cuit:
                 # Get or Create Customer Partner (res.partner)
                 partner = self.env['res.partner'].search([('vat', '=', invoice.cuit)])
+                
+                # Los CUIT tienen 11 caracteres y nombre establecido
+                # Los DNI tienen una longitud menor y no tienen nombre establecido
                 partner_data = {
                     'type': 'contact',
-                    'name': invoice.partner,
+                    'name': invoice.partner or "Consumidor Final",
                     'vat': invoice.cuit,
-                    'l10n_latam_identification_type_id': cuit_type.id,
+                    'l10n_latam_identification_type_id': cuit_type.id if len(invoice.cuit) == 11 else dni_type.id,
                     # TODO: Si es Resp Inscripto, corroborar si es monotributo/RI
                     'l10n_ar_afip_responsibility_type_id': cf.id
                 }

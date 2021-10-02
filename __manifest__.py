@@ -32,6 +32,8 @@
 
         # Mantenimiento
         # Session Manager
+
+        ### PYTHON pip install python-json-logger
     ],
     'data': [
         # https://github.com/odoo/odoo/blob/bbc338438518bbb7d0e9ad1a313e872f95a36870/addons/web/static/src/js/views/list/list_renderer.js
@@ -66,6 +68,8 @@
         'wizard/import_afip_retenciones.xml',
         'wizard/import_bank_bapro.xml',
 
+        'templates/basic.xml',
+
         # Reports
         'report/basic_report.xml',
         'report/report_iva_f2002.xml',
@@ -99,4 +103,5 @@
     'application': True,
     # 'active': True, # This indicates whether this module must install automatically or not.
     # 'pre_init_hook': 'pre_init', takes a cursor as its only argument, this function is executed prior to the module’s installation.
+    # 'auto_install': True
 }

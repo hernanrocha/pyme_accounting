@@ -46,7 +46,7 @@
             <form string="Compañía">
                 <sheet>
                     <!-- <field name="logo" widget="image" class="oe_avatar" modifiers="{}" id="logo"/> -->
-                    <field name="partner_gid" invisible="True" modifiers="{'invisible':true,'readonly':true}" id="partner_gid"/>
+                    <!-- <field name="partner_gid" invisible="True" modifiers="{'invisible':true,'readonly':true}" id="partner_gid"/> -->
 
                     <div class="oe_title">
                         <label for="name" class="oe_edit_only"/>
@@ -58,8 +58,10 @@
                     <group string="AFIP" col="4">
                         <field name="vat" string="CUIT" required="1" id="vat"/>
                         <field name="l10n_ar_afip_responsibility_type_id" string="Condición Fiscal" required="1" options="{'no_open': True, 'no_create': True}" attrs="{'invisible': [('country_code', '!=', 'AR')]}" can_create="false" can_write="false" modifiers="{'invisible':[['country_code','!=','AR']]}" id="l10n_ar_afip_responsibility_type_id"/>
-                        <field name="l10n_ar_afip_start_date" attrs="{'invisible': [('country_code', '!=', 'AR')]}" modifiers="{'invisible':[['country_code','!=','AR']]}" id="l10n_ar_afip_start_date"/>
-                    
+                        <!-- <field name="l10n_ar_afip_start_date" attrs="{'invisible': [('country_code', '!=', 'AR')]}" modifiers="{'invisible':[['country_code','!=','AR']]}" id="l10n_ar_afip_start_date"/> -->
+                        
+                        <!-- <button name="query_afip" string="Consultar AFIP" type="object" class="btn-primary" /> -->
+
                         <!-- TODO: Agregar actividades en AFIP -->
                         <!-- https://serviciosweb.afip.gob.ar/genericos/nomencladorActividades/index.aspx -->
                         <!-- <separator /> -->
