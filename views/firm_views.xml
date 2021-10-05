@@ -32,6 +32,22 @@
     <!-- TODO: Cambiar ventana de "Nueva actividad" -->
     <!-- TODO: Cambiar vista por defecto de la barra de menu de "Actividades"-->
 
+    <record id="view_activities_calendar" model="ir.ui.view">
+        <field name="name">mail.activity.firm.calendar</field>
+        <field name="model">mail.activity</field>
+        <field name="arch" type="xml">
+            <calendar string="Calendario"
+                date_start="date_deadline"
+                        event_open_popup="false"
+                        color="state"
+                        mode="week"
+                        quick_add="false">
+                <field name="display_name"/>
+                <!-- <field name="technician_name"/> -->
+            </calendar>
+        </field>
+    </record>
+
     <!-- MI ESTUDIO - CALENDARIO - SERVER ACTION -->
     <record id="action_firm_calendar" model="ir.actions.server">
         <field name="name">Calendario</field>

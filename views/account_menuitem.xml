@@ -1,17 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- TODO: Borrar "My Company" de la lista de empresas -->
-    <!-- TODO: Borrar Checkbox de la lista de empresas -->
 
     <!-- TODOs:
-        - Borrar Conversaciones, Contactos, Ventas, Facturacion
-
         - Mi Estudio:
             - Agregar "autochange company"
             - Actividades: no tiene permisos
             - Clientes: aparece la compañia propia en la lista
         - Ventas: 
-            - Comprobantes: agregar columnas faltantes
             - Clientes: filtrar por compañia y mostrar solo la vista de lista
         - Contabilidad:
             - Agregar menus faltantes
@@ -20,9 +16,31 @@
             - Terminar Reporte IIBB
             - Terminar Libro IVA Digital
     -->
+    
+    <!-- Ocultar menu "Conversaciones" -->
+    <record model="ir.ui.menu" id="mail.menu_root_discuss">
+        <field name="active" eval="False"/>
+    </record>
 
-    <!-- TODO: Deshabilitar menu Facturacion -->
-    <!-- <menuitem id="account.menu_finance" name="Facturación" /> -->
+    <!-- Ocultar menu "Contactos" -->
+    <record model="ir.ui.menu" id="contacts.res_partner_menu_contacts">
+        <field name="active" eval="False"/>
+    </record>
+
+    <!-- Ocultar menu "Rastr. Enlaces" -->
+    <record model="ir.ui.menu" id="utm.menu_link_tracker_root">
+        <field name="active" eval="False"/>
+    </record>
+
+    <!-- Ocultar menu "Facturación" -->
+    <record model="ir.ui.menu" id="account.menu_finance">
+        <field name="active" eval="True"/>
+    </record>
+
+    <!-- TODO: Mostrar Facturacion solo en ERP Manager -->
+    <!-- <record id="original_module.menu_id" model="ir.ui.menu">
+        <field name="groups_id" eval="[(4,ref('base.group_erp_manager'))]"/>
+    </record> -->
 
     <menuitem name="Empresas"
         id="menu_finance"
@@ -57,8 +75,8 @@
             id="menu_firm_activities" action="action_firm_activities" />
 
         <!-- TODO: MENU Facturacion/Mi Estudio/Actividades  -->
-        <!-- <menuitem name="Calendario" sequence="3" 
-            id="menu_firm_calendar" action="action_firm_calendar" /> -->
+        <menuitem name="Calendario" sequence="3" 
+            id="menu_firm_calendar" action="action_firm_calendar" />
             
         <!-- MENU Facturacion/Mi Estudio/Mis Datos  -->
         <menuitem name="Mis Datos" sequence="4" 

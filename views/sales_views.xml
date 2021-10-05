@@ -19,7 +19,7 @@
         <field name="model">account.move</field>
         <field name="arch" type="xml">
             <tree string="Invoices" class="w-150" js_class="account_tree" sample="1"
-                default_order="invoice_date desc">
+                default_order="invoice_date desc" expand="1">
                 <!-- <header>
                     <button name="action_register_payment" type="object" string="Register Payment"
                         groups="account.group_account_user"
@@ -103,11 +103,11 @@
         <field name="search_view_id" ref="account.view_account_invoice_filter"/>
         <field name="domain">[('move_type', 'in', ['out_invoice', 'out_refund'])]</field>
         <!-- Ordenar por mes y luego por tipo de comprobante -->
+        <!-- 'search_default_l10n_latam_document_type': 'z' -->
         <field name="context">
         {
             'default_move_type': 'out_invoice',
-            'search_default_invoicedate': 'month',
-            'search_default_l10n_latam_document_type': 'z'
+            'search_default_invoicedate': 'month'
         }
         </field>
 

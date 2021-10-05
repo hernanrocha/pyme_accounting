@@ -20,7 +20,7 @@ def get_move_type(invoice_type):
 
 def es_comprobante_c(invoice_code):
     # Factura C, Nota de Debito C, Nota de Credito C, Recibo C
-    return invoice_code in ['11', '12', '13', '15']
+    return invoice_code in [11, 12, 13, 15]
 
 # TODO: credito_fiscal invalido
 # TODO: cargar los otros tipos de IVA que no sean 21%
@@ -277,6 +277,17 @@ class ImportPurchaseRg3685(models.TransientModel):
                     'price_unit': cbte["total_exento"],
                 })
                 line.tax_ids += tax_no_corresponde if no_iva else tax_exempt
+
+            # IVA No Corresponde (solo para Comprobantes C)
+            if cbte["total"] > move.amount_total and es_comprobante_c(cbte["tipo_comprobante"]):
+                line = move.line_ids.create({
+                    'move_id': move.id,
+                    'name': 'Monto No Gravado',
+                    'account_id': account_purchase.id,
+                    'quantity': 1,
+                    'price_unit': cbte["total"] - move.amount_total,
+                })
+                line.tax_ids += tax_no_corresponde
 
             # TODO: Importar percepciones IIBB y otras
 

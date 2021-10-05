@@ -101,6 +101,14 @@ class AccountMove(models.Model):
 
         return res
 
+    # override _compute_amount method
+    def _compute_amount(self):
+        super(AccountMove, self)._compute_amount()
+
+        self._compute_display_amount()
+        self._compute_display_tax()
+        self._compute_percepciones()
+
     @api.depends('amount_untaxed', 'amount_tax', 'amount_total')
     def _compute_display_amount(self):
         for move in self:

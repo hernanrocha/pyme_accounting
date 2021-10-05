@@ -7,9 +7,9 @@
         <field name="model">res.company</field>
         <field name="arch" type="xml">
             <search>
-                <filter string="IVA Responsable Inscripto" name="resp_inscripto" domain="[('l10n_ar_afip_responsibility_type_id.id', '=', 1)]" />
-                <filter string="Monotributista" name="monotributo" domain="[('l10n_ar_afip_responsibility_type_id.id', '=', 4)]" />
-                <filter string="IVA Exento" name="exento" domain="[('l10n_ar_afip_responsibility_type_id.id', '=', 6)]" />
+                <filter string="Responsable Inscripto" name="resp_inscripto" domain="[('l10n_ar_afip_responsibility_type_id.id', '=', 1)]" />
+                <filter string="Monotributista" name="monotributo" domain="[('l10n_ar_afip_responsibility_type_id.id', '=', 6)]" />
+                <filter string="IVA Exento" name="exento" domain="[('l10n_ar_afip_responsibility_type_id.id', '=', 4)]" />
 
                 <!-- TODO: para agrupar por Condicion Fiscal, se debe guardar en la tabla company -->            
                 <!-- <group expand="0" string="Agrupar Por">
