@@ -101,14 +101,6 @@ class AccountMove(models.Model):
 
         return res
 
-    # override _compute_amount method
-    def _compute_amount(self):
-        super(AccountMove, self)._compute_amount()
-
-        self._compute_display_amount()
-        self._compute_display_tax()
-        self._compute_percepciones()
-
     @api.depends('amount_untaxed', 'amount_tax', 'amount_total')
     def _compute_display_amount(self):
         for move in self:
@@ -138,7 +130,7 @@ class AccountMove(models.Model):
                 # (6) 27%
                 # (8) 5%
                 # (9) 2.5%
-                lambda l: l.tax_group_id and l.tax_group_id.tax_type == 'vat' and 
+                lambda l: l.tax_group_id and 
                 l.tax_group_id.l10n_ar_vat_afip_code in ['4', '5', '6', '8', '9']
             )
 
