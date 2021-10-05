@@ -50,7 +50,7 @@
                 <!-- TODO: Scrollear y mostrar todas las columnas por defecto -->
                 <field name="display_amount_tax_21" sum="Total" />
                 <field name="display_amount_tax_10" sum="Total" optional="show" /> 
-                <field name="display_amount_tax_27" sum="Total" optional="hide" /> 
+                <field name="display_amount_tax_27" sum="Total" optional="show" /> 
                 <field name="display_amount_tax_5" sum="Total" optional="hide" /> 
                 <field name="display_amount_tax_25" sum="Total" optional="hide" />
                 <field name="display_perc_nacionales" sum="Total" optional="hide" />
