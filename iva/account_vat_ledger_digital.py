@@ -337,7 +337,6 @@ class AccountVatLedger(models.Model):
                 self.format_amount(
                     sum(inv.move_tax_ids.filtered(lambda r: (
                         r.tax_id.tax_group_id.tax_type == 'withholding' and
-                        r.tax_id.tax_group_id.tax == 'vat' and
                         r.tax_id.tax_group_id.l10n_ar_tribute_afip_code == '01')
                     ).mapped('tax_amount')), invoice=inv),
 
@@ -349,7 +348,6 @@ class AccountVatLedger(models.Model):
                 self.format_amount(
                     sum(inv.move_tax_ids.filtered(lambda r: (
                         r.tax_id.tax_group_id.tax_type == 'withholding' and
-                        r.tax_id.tax_group_id.tax != 'vat' and
                         r.tax_id.tax_group_id.l10n_ar_tribute_afip_code == '01')
                     ).mapped('tax_amount')), invoice=inv),
 
@@ -530,7 +528,6 @@ class AccountVatLedger(models.Model):
                 self.format_amount(
                     sum(inv.move_tax_ids.filtered(lambda r: (
                         r.tax_id.tax_group_id.tax_type == 'withholding' and
-                        r.tax_id.tax_group_id.tax != 'vat' and
                         r.tax_id.tax_group_id.l10n_ar_tribute_afip_code == '01')
                     ).mapped('tax_amount')), invoice=inv),
 
@@ -761,7 +758,7 @@ class AccountVatLedger(models.Model):
             # (6) 27%
             # (8) 5%
             # (9) 2.5%
-            lambda l: l.tax_group_id and l.tax_group_id.tax_type == 'vat' and 
+            lambda l: l.tax_group_id and
             l.tax_group_id.l10n_ar_vat_afip_code in ['4', '5', '6', '8', '9']
         )
 
@@ -792,7 +789,7 @@ class AccountVatLedger(models.Model):
             # (6) 27%
             # (8) 5%
             # (9) 2.5%
-            lambda l: l.tax_group_id and l.tax_group_id.tax_type == 'vat' and 
+            lambda l: l.tax_group_id and 
             l.tax_group_id.l10n_ar_vat_afip_code in ['2','3', '4', '5', '6', '8', '9']
         )
 
