@@ -173,7 +173,7 @@ class AccountVatLedger(models.Model):
 
     def compute_digital_data(self):
         if self.type == 'sale':
-            alicuotas = self.get_REGDIGITAL_CV_ALICUOTAS()
+            alicuotas = self.get_REGDIGITAL_CV_ALICUOTAS_VENTAS()
 
             # sacamos todas las lineas y las juntamos
             lines = []
@@ -184,7 +184,7 @@ class AccountVatLedger(models.Model):
 
             self.get_REGDIGITAL_CV_CBTE_VENTAS(alicuotas)
         else:
-            alicuotas = self.get_REGDIGITAL_CV_ALICUOTAS()
+            alicuotas = self.get_REGDIGITAL_CV_ALICUOTAS_COMPRAS()
 
             # sacamos todas las lineas y las juntamos
             lines = []
@@ -195,7 +195,7 @@ class AccountVatLedger(models.Model):
 
             impo_alicuotas = {}
             if self.type == 'purchase':
-                impo_alicuotas = self.get_REGDIGITAL_CV_ALICUOTAS(impo=True)
+                impo_alicuotas = self.get_REGDIGITAL_CV_ALICUOTAS_COMPRAS(impo=True)
                 # sacamos todas las lineas y las juntamos
                 lines = []
                 for k, v in impo_alicuotas.items():
@@ -257,7 +257,6 @@ class AccountVatLedger(models.Model):
         self.ensure_one()
         invoices = self.env['account.move'].search([
             # ('l10n_latam_document_type_id.export_to_digital', '=', True),
-            # TODO: Ordenar diferente para compras y ventas
             ('id', 'in', self.invoice_ids.ids)], order='commercial_partner_name asc,sequence_number asc')
 
         return invoices
@@ -827,8 +826,7 @@ class AccountVatLedger(models.Model):
         return lines
     
     # impo indica es si es para (66) - Despacho de Importacion (True) o no (False)
-    # Se usa tanto para compras como para ventas
-    def get_REGDIGITAL_CV_ALICUOTAS(self, impo=False):
+    def get_REGDIGITAL_CV_ALICUOTAS_COMPRAS(self, impo=False):
         """
         Devolvemos un dict para calcular la cantidad de alicuotas cuando
         hacemos los comprobantes
@@ -848,7 +846,6 @@ class AccountVatLedger(models.Model):
                 lambda r: r.l10n_latam_document_type_id.code == '66')
         else:
             # Si no es importacion, filtrar los comprobantes tipo 66 (Despacho de Importacion)
-            # TODO: ordenar las alicuotas de la misma forma que las compras/ventas
             invoices = self.get_digital_invoices().filtered(
                 lambda r: r.l10n_latam_document_type_id.code != '66')
 
@@ -858,3 +855,20 @@ class AccountVatLedger(models.Model):
             res[inv] = self.get_invoice_alicuotas(inv, impo=impo)
         return res
 
+    def get_REGDIGITAL_CV_ALICUOTAS_VENTAS(self):
+        """
+        Devolvemos un dict para calcular la cantidad de alicuotas cuando
+        hacemos los comprobantes
+        """
+        self.ensure_one()
+        res = {}
+        
+        # No es necesario filtrar despachos de importación (66) para ventas
+        invoices = self.env['account.move'].search([
+            ('id', 'in', self.invoice_ids.ids)
+        ], order='sequence_number asc')
+
+        for inv in invoices:
+            # Por cada factura, obtener la lista de alicuotas
+            res[inv] = self.get_invoice_alicuotas(inv, impo=False)
+        return res
