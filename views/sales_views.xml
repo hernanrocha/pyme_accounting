@@ -17,6 +17,7 @@
     <record id="view_invoice_tree" model="ir.ui.view">
         <field name="name">account.invoice.tree</field>
         <field name="model">account.move</field>
+        <field name="priority" eval="1" />
         <field name="arch" type="xml">
             <tree string="Invoices" class="w-150" js_class="account_tree" sample="1"
                 default_order="invoice_date desc" expand="1">
@@ -120,5 +121,56 @@
             </p>
         </field> -->
     </record>
+
+    <record id="view_partner_tree" model="ir.ui.view">
+        <field name="name">res.partner.contacts</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <tree sample="1" multi_edit="1">
+                <field name="display_name" string="Name"/>
+                <field name="vat" readonly="1"/>
+                <field name="l10n_ar_afip_responsibility_type_id" />
+                <field name="phone" class="o_force_ltr" optional="show"/>
+                <field name="email" optional="show"/>
+                <field name="city" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="res_partner_action_customer" model="ir.actions.act_window">
+        <field name="name">Clientes</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_partner_tree"/>
+        <field name="context">
+        {
+            'search_default_customer': 1,
+            'res_partner_search_mode': 'customer', 
+            'default_is_company': True, 
+            'default_customer_rank': 1
+        }
+        </field>
+    </record>
+
+    <record id="res_partner_action_supplier" model="ir.actions.act_window">
+        <field name="name">Proveedores</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_partner_tree"/>
+        <field name="context">
+        {
+            'search_default_supplier': 1,
+            'res_partner_search_mode': 'supplier', 
+            'default_is_company': True, 
+            'default_supplier_rank': 1
+        }
+        </field>
+    </record>
+    <!-- TODO: Clientes/Proveedores: 
+    - Cambiar vista de search (solo por condicion fiscal o CUIT)
+    - Cambiar vista form (solo mostrar informacion basica, facturas de ventas y compras)
+    -->
 
 </odoo>

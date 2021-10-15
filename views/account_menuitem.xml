@@ -103,13 +103,15 @@
         <field name="model">account.journal</field>
         <field name="arch" type="xml">
             <!-- banner_route="/account/account_dashboard_onboarding"-->
-            <kanban create="false"  
+            <kanban create="false"
+                banner_route="/pyme_accounting/account_dashboard"
                 class="oe_background_grey o_kanban_dashboard o_account_kanban"
                 js_class="account_dashboard_kanban">
 
                 <field name="id"/>
                 <field name="name"/>
                 <field name="type"/>
+                <field name="afip_type"/>
                 <field name="color"/>
                 <field name="show_on_dashboard"/>
                 <field name="kanban_dashboard"/>
@@ -124,6 +126,7 @@
                             <!-- Variables -->
                             <t t-value="JSON.parse(record.kanban_dashboard.raw_value)" t-set="dashboard"/>
                             <t t-value="record.type.raw_value" t-set="journal_type"/>
+                            <t t-value="record.afip_type.raw_value" t-set="afip_type"/>
                             
                             <!-- Header -->
                             <t t-call="JournalTop"/>
@@ -241,16 +244,25 @@
 
                     <t t-name="JournalBodySalePurchase" id="account.JournalBodySalePurchase">
                         <div class="col-12 col-sm-5 mb-3 mb-sm-0 o_kanban_primary_left">
-                            <t t-if="journal_type == 'sale'">
-                                <button type="object" name="action_create_new" class="btn btn-primary o_invoice_new" groups="account.group_account_invoice">
-                                    <span>Nuevo</span>
+                            <!-- Importar Comprobantes Emitidos -->
+                            <t t-if="journal_type == 'sale' and afip_type == 'sale_emitidos'">
+                                <button type="object" name="action_import_comp_emitidos" class="btn btn-primary" groups="account.group_account_invoice">
+                                    <span>Importar</span>
+                                </button>
+                            </t>
+                            <!-- Importar Comprobantes Controlador Fiscal -->
+                            <t t-if="journal_type == 'sale' and afip_type == 'sale_pem'">
+                                <button type="object" name="action_import_pem" class="btn btn-primary" groups="account.group_account_invoice">
+                                    <span>Importar</span>
                                 </button>
                             </t>
                             <t t-if="journal_type == 'purchase'">
-                                <button class="btn btn-primary o_button_upload_bill oe_kanban_action_button" journal_type="purchase" groups="account.group_account_invoice">
+                                <!-- Importar Comprobantes Recibidos -->
+                                <button type="object" name="action_import_comp_recibidos" class="btn btn-primary" groups="account.group_account_invoice">
                                     <span>Importar</span>
                                 </button>
-                                <a type="object" name="action_create_new" class="o_invoice_new" groups="account.group_account_invoice"><span>Crear</span></a><span> manual</span>
+
+                                <a type="object" name="action_create_new" class="o_invoice_new" groups="account.group_account_invoice"><span>Crear manual</span></a>
                             </t>
                         </div>
                         <div class="col-12 col-sm-7 o_kanban_primary_right">
@@ -339,7 +351,7 @@
         <!-- <menuitem id="product_product_menu_sellable" name="Productos" action="account.product_product_action_sellable" sequence="100"/> -->
 
         <!-- TODO: mejorar esta vista -->
-        <menuitem id="menu_account_customer" name="Clientes" action="account.res_partner_action_customer" sequence="110"/>
+        <menuitem id="menu_account_customer" name="Clientes" action="res_partner_action_customer" sequence="110"/>
     </menuitem>
 
     <!-- MENU Facturacion/Compras --> 
@@ -350,7 +362,7 @@
         <!-- <menuitem id="product_product_menu_purchasable" name="Productos" action="account.product_product_action_purchasable" sequence="100"/> -->
 
         <!-- TODO: mejorar esta vista -->
-        <menuitem id="menu_account_supplier" name="Proveedores" action="account.res_partner_action_supplier" sequence="200"/>
+        <menuitem id="menu_account_supplier" name="Proveedores" action="res_partner_action_supplier" sequence="200"/>
     </menuitem>
 
     <!-- MENU Facturacion/Contabilidad  -->

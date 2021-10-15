@@ -69,6 +69,13 @@ class AccountMove(models.Model):
     display_perc_iibb = fields.Monetary(string='Perc. IIBB', compute='_compute_percepciones')
     display_perc_municipales = fields.Monetary(string='Perc. Municipales', compute='_compute_percepciones')
 
+    @api.depends('l10n_latam_document_type_id')
+    def _compute_display_z_desde_hasta(self):
+        for move in self:
+            move.display_z_desde_hasta = move.l10n_latam_document_type_id.code in ['83']
+
+    display_z_desde_hasta = fields.Boolean(compute=_compute_display_z_desde_hasta)
+
     # Al agrupar los comprobantes, si se quiere mostrar el total de un campo computed,
     # se debe calcular manualmente. La alternativa es setear store=True en el campo
     @api.model

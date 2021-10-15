@@ -63,7 +63,7 @@
 
     <!-- IMPORTAR VENTAS AFIP - ACTION -->
     <record id="action_afip_import_sale_wizard" model="ir.actions.act_window">
-        <field name="name">Ventas</field>
+        <field name="name">Importar Comprobantes Emitidos</field>
         <field name="res_model">l10n_ar.afip.import_sale</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>

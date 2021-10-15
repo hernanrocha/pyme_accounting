@@ -118,6 +118,7 @@
         </field>
     </record>
 
+    <!-- TODO: Revisar esto. Esta repetido -->
     <record id="action_move_in_invoice_type" model="ir.actions.act_window">
         <field name="name">Facturas</field>
         <field name="res_model">account.move</field>
