@@ -4,6 +4,10 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
+import logging
+
+_logger = logging.getLogger(__name__)
+
 # IVA No Corresponde
 def novat_line(line):
     codes = line.mapped('tax_ids').mapped('tax_group_id').mapped('l10n_ar_vat_afip_code')
@@ -35,6 +39,8 @@ class AccountMove(models.Model):
     cuit = fields.Char('CUIT', 
         related='commercial_partner_id.vat', store=True)
 
+    amount_total_untaxed = fields.Monetary(string='Total No Gravado', compute='_compute_display_amount')
+    amount_total_exempt = fields.Monetary(string='Total Exento', compute='_compute_display_amount')
     display_amount_untaxed = fields.Monetary(string='No Gravado', compute='_compute_display_amount') # inverse='_inverse_amount_total'
     display_amount_exempt = fields.Monetary(string='Exento', compute='_compute_display_amount')
     display_amount_total = fields.Monetary(string='Total', compute='_compute_display_amount')
@@ -50,13 +56,15 @@ class AccountMove(models.Model):
     amount_tax_27 = fields.Monetary(string='IVA 27%', compute='_compute_display_tax')
     amount_tax_5 = fields.Monetary(string='IVA 5%', compute='_compute_display_tax')
     amount_tax_25 = fields.Monetary(string='IVA 2.5%', compute='_compute_display_tax')
+    amount_total_tax = fields.Monetary(string='Total IVA', compute='_compute_display_tax')
     
     amount_taxed_21 = fields.Monetary(string='Gravado 21%', compute='_compute_display_tax')
     amount_taxed_10 = fields.Monetary(string='Gravado 10.5%', compute='_compute_display_tax')
     amount_taxed_27 = fields.Monetary(string='Gravado 27%', compute='_compute_display_tax')
     amount_taxed_5 = fields.Monetary(string='Gravado 5%', compute='_compute_display_tax')
     amount_taxed_25 = fields.Monetary(string='Gravado 2.5%', compute='_compute_display_tax')
-    
+    amount_total_taxed = fields.Monetary(string='Total Gravado', compute='_compute_display_tax')
+
     display_amount_taxed = fields.Monetary(string='Gravado', compute='_compute_display_tax')
     display_amount_tax_21 = fields.Monetary(string='IVA 21%', compute='_compute_display_tax')
     display_amount_tax_10 = fields.Monetary(string='IVA 10.5%', compute='_compute_display_tax')
@@ -108,8 +116,12 @@ class AccountMove(models.Model):
 
             untaxed = sum(move.invoice_line_ids.filtered(untaxed_line).mapped('price_total'))
             novat = sum(move.invoice_line_ids.filtered(novat_line).mapped('price_total'))
-            move.display_amount_untaxed = sign * (untaxed + novat)
-            move.display_amount_exempt = sign * sum(move.invoice_line_ids.filtered(exempt_line).mapped('price_total'))
+
+            move.amount_total_untaxed = untaxed + novat
+            move.amount_total_exempt = sum(move.invoice_line_ids.filtered(exempt_line).mapped('price_total'))
+
+            move.display_amount_untaxed = sign * move.amount_total_untaxed
+            move.display_amount_exempt = sign * move.amount_total_exempt
             move.display_amount_total = sign * move.amount_total
     
     @api.depends('amount_untaxed', 'amount_tax', 'amount_total')
@@ -147,6 +159,9 @@ class AccountMove(models.Model):
             move.amount_tax_27 = sum(taxes_27.mapped('price_subtotal'))
             move.amount_tax_5 = sum(taxes_5.mapped('price_subtotal'))
             move.amount_tax_25 = sum(taxes_25.mapped('price_subtotal'))
+            move.amount_total_tax = move.amount_tax_10 + \
+                move.amount_tax_21 + move.amount_tax_27 + \
+                move.amount_tax_5 +  move.amount_tax_25
 
             # Sumar para obtener el monto gravado por cada IVA
             move.amount_taxed_10 = sum(taxes_10.mapped('tax_base_amount'))
@@ -154,6 +169,9 @@ class AccountMove(models.Model):
             move.amount_taxed_27 = sum(taxes_27.mapped('tax_base_amount'))
             move.amount_taxed_5 = sum(taxes_5.mapped('tax_base_amount'))
             move.amount_taxed_25 = sum(taxes_25.mapped('tax_base_amount'))
+            move.amount_total_taxed = move.amount_taxed_10 + \
+                move.amount_taxed_21 + move.amount_taxed_27 + \
+                move.amount_taxed_5 +  move.amount_taxed_25
 
             # Para las NC, mostrar con signo negativo
             # El valor positivo se utiliza para IVA digital y otras DDJJ
@@ -163,9 +181,7 @@ class AccountMove(models.Model):
             move.display_amount_tax_5 = sign * move.amount_tax_5
             move.display_amount_tax_25 = sign * move.amount_tax_25
             
-            move.display_amount_taxed = sign * (move.amount_taxed_10 + \
-                move.amount_taxed_21 + move.amount_taxed_27 + \
-                move.amount_taxed_5 +  move.amount_taxed_25)
+            move.display_amount_taxed = sign * move.amount_total_taxed
 
     @api.depends('amount_untaxed', 'amount_tax', 'amount_total')
     def _compute_percepciones(self):

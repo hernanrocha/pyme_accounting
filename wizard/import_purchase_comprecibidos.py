@@ -44,9 +44,59 @@ def get_move_type(invoice_type):
 def es_comprobante_c(invoice_type):
     return invoice_type in ['FA-C', 'ND-C', 'NC-C']
 
+class CbteAsociadoMixin(models.AbstractModel):
+    _name = 'mixin.pyme_accounting.cbte_asociado'
+    _description = 'Mixin para todas las lineas de comprobante con cbte asociado'
+
+    @api.depends('invoice_display_name')
+    def _compute_invoice_id(self):
+        for line in self:
+            line.invoice_id = self.env['account.move'].search([
+                # TODO: agregar por dominio el filtrado de los account.move
+                ('company_id', '=', self.env.company.id),
+                ('move_type', 'in', ['in_invoice', 'in_refund']),
+                ('name', '=', line.invoice_display_name),
+                # TODO: filtrar por CUIT y por estado
+            ])
+
+    @api.depends('invoice_id')
+    def _compute_invoice_found(self):
+        for line in self:
+            line.invoice_found = bool(line.invoice_id)
+
+    @api.depends('invoice_amount_total', 'total')
+    def _compute_match_fields(self):
+        for imp in self:
+            # Diferencia de 2 centavos
+            # TODO: permitir definir esta diferencia
+            imp.match_total_amount = abs(imp.invoice_amount_total - imp.total) < 0.02
+
+            imp.match_all = imp.match_total_amount
+
+    # TODO: agregar matches iva, gravado, no gravado, exento
+
+    invoice_id = fields.Many2one(string="Cbte Asociado", comodel_name="account.move", ondelete="set null", compute=_compute_invoice_id)
+    invoice_found = fields.Boolean(string="Existente", compute=_compute_invoice_found)
+    
+    currency_id = fields.Many2one('res.currency', related="invoice_id.currency_id")
+    invoice_amount_total = fields.Monetary(string='Cbte Total', related="invoice_id.amount_total")
+    invoice_amount_total_taxed = fields.Monetary(string='Cbte Total Gravado', related="invoice_id.amount_total_taxed")
+    invoice_amount_total_tax = fields.Monetary(string='Cbte Total IVA', related="invoice_id.amount_total_tax")
+    invoice_amount_total_untaxed = fields.Monetary(string='Cbte Total No Gravado', related="invoice_id.amount_total_untaxed")
+    invoice_amount_total_exempt = fields.Monetary(string='Cbte Total Exento', related="invoice_id.amount_total_exempt")
+
+    # TODO: bug. match_all no esta funcionando cuando cambia el valor de un campo    
+    match_all = fields.Boolean(string="Coinciden", compute=_compute_match_fields)
+    match_total_amount = fields.Boolean(string="Coincide Total", compute=_compute_match_fields)
+    match_amount_taxed = fields.Boolean(string="Coincide Total", compute=_compute_match_fields)
+    match_amount_tax = fields.Boolean(string="Coincide Total", compute=_compute_match_fields)
+    match_amount_untaxed = fields.Boolean(string="Coincide Total", compute=_compute_match_fields)
+    match_amount_exempt = fields.Boolean(string="Coincide Total", compute=_compute_match_fields)
+
 class ImportPurchaseCompRecibidosLine(models.TransientModel):
     _name = "l10n_ar.import.purchase.comprecibidos.line"
     _description = "Linea de comprobante de Comprobantes Recibidos"
+    _inherit = [ 'mixin.pyme_accounting.cbte_asociado' ]
 
     date = fields.Date(string="Fecha")
     invoice_type = fields.Char(string="Tipo de Comprobante")
@@ -54,11 +104,11 @@ class ImportPurchaseCompRecibidosLine(models.TransientModel):
     invoice_number = fields.Char(string="N° Factura")
     cuit = fields.Char(string="CUIT")
     vendor = fields.Char(string="Proveedor")
-    taxed_amount = fields.Float(string="Gravado")
-    untaxed_amount = fields.Float(string="No Gravado")
-    exempt_amount = fields.Float(string="Exento")
-    iva = fields.Float(string="Monto IVA")
-    total = fields.Float(string="Total")
+    taxed_amount = fields.Monetary(string="Gravado")
+    untaxed_amount = fields.Monetary(string="No Gravado")
+    exempt_amount = fields.Monetary(string="Exento")
+    iva = fields.Monetary(string="Monto IVA")
+    total = fields.Monetary(string="Total")
 
     import_id = fields.Many2one(comodel_name="l10n_ar.import.purchase.comprecibidos", ondelete="cascade", invisible=True)
 
@@ -84,40 +134,6 @@ class ImportPurchaseCompRecibidosLine(models.TransientModel):
             if line.taxed_amount > 0:
                 line.iva_type = line.iva * 100 / line.taxed_amount
 
-    @api.depends('difference')
-    def compute_needs_attention(self):
-        for line in self:
-            line.needs_attention = line.difference > 0.01 or line.difference < -0.01
-
-    @api.depends('invoice_display_name')
-    def _compute_invoice_id(self):
-        for line in self:
-            line.invoice_id = self.env['account.move'].search([
-                # TODO: agregar por dominio el filtrado de los account.move
-                ('company_id', '=', self.env.company.id),
-                ('move_type', 'in', ['in_invoice', 'in_refund']),
-                ('name', '=', line.invoice_display_name),
-                # TODO: filtrar por CUIT y por estado
-            ])
-
-    @api.depends('invoice_id')
-    def _compute_invoice_found(self):
-        for line in self:
-            line.invoice_found = bool(line.invoice_id)
-
-    invoice_id = fields.Many2one(string="Cbte Asociado", comodel_name="account.move", ondelete="set null", compute=_compute_invoice_id)
-    invoice_found = fields.Boolean(string="Existente", compute=_compute_invoice_found)
-    currency_id = fields.Many2one('res.currency', related="invoice_id.currency_id")
-    invoice_amount_total = fields.Monetary(string='Cbte Total', related="invoice_id.amount_total")
-
-    @api.depends('invoice_amount_total', 'total')
-    def _compute_match_total_amount(self):
-        for imp in self:
-            # Diferencia de 2 centavos
-            # TODO: permitir definir esta diferencia
-            imp.match_total_amount = abs(imp.invoice_amount_total - imp.total) < 0.02
-
-    match_total_amount = fields.Boolean(string="Coinciden", compute=_compute_match_total_amount)
 
 class ImportPurchaseCompRecibidos(models.TransientModel):
     _name = "l10n_ar.import.purchase.comprecibidos"
@@ -134,7 +150,14 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
             imp.display_invoice_ids = imp.invoice_ids.filtered(lambda i: not i.invoice_found)
 
     display_invoice_ids = fields.One2many(string="Comprobantes Filtrados", comodel_name="l10n_ar.import.purchase.comprecibidos.line", compute=_compute_display_invoice_ids)
-    
+
+    @api.depends('invoice_ids')
+    def _compute_display_button_generate(self):
+        for imp in self:
+            imp.display_button_generate = imp.invoice_ids
+
+    display_button_generate = fields.Boolean(string="Mostrar Boton Generar", compute=_compute_display_button_generate)
+
     def compute(self):
         [data] = self.read()
 
@@ -185,6 +208,7 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
         _logger.info("Otros comprobantes: {}".format(self.existing_invoice_ids))
 
         return {
+            'title': 'Importar Comprobantes Recibidos',
             'context': self.env.context,
             'view_type': 'form',
             'view_mode': 'form',
@@ -241,12 +265,7 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
         print(tax_untaxed, tax_21, tax_exempt, tax_no_corresponde)
 
         for invoice in self.invoice_ids:
-            # TODO: Obtener diario de proveedores
-            # journal_id = self.get_pos(invoice.pos_number)
             journal = self.env['account.move'].with_context(default_move_type='in_invoice')._get_default_journal()
-
-            # TODO: Permitir elegir que hacer con la diferencia
-            # invoice.untaxed_amount = invoice.difference
 
             # Get or Create Vendor Partner (res.partner)
             partner = self.env['res.partner'].search([('vat', '=', invoice.cuit)])
