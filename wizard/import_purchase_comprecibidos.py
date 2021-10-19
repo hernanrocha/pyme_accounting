@@ -70,9 +70,15 @@ class CbteAsociadoMixin(models.AbstractModel):
             # Diferencia de 2 centavos
             # TODO: permitir definir esta diferencia
             imp.match_total_amount = abs(imp.invoice_amount_total - imp.total) < 0.02
+            imp.match_amount_taxed = abs(imp.invoice_amount_total_taxed - imp.taxed_amount) < 0.02
+            imp.match_amount_tax = abs(imp.invoice_amount_total_tax - imp.iva) < 0.02
+            imp.match_amount_untaxed = abs(imp.invoice_amount_total_untaxed - (imp.untaxed_amount + imp.difference)) < 0.02
+            imp.match_amount_exempt = abs(imp.invoice_amount_total_exempt - imp.exempt_amount) < 0.02
 
-            imp.match_all = imp.match_total_amount
-
+            imp.match_all = imp.match_total_amount and imp.match_amount_taxed and \
+                imp.match_amount_tax and imp.match_amount_untaxed and \
+                imp.match_amount_exempt
+            
     # TODO: agregar matches iva, gravado, no gravado, exento
 
     invoice_id = fields.Many2one(string="Cbte Asociado", comodel_name="account.move", ondelete="set null", compute=_compute_invoice_id)
@@ -375,3 +381,9 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
             move._recompute_dynamic_lines(recompute_all_taxes=True, recompute_tax_base_amount=True)
             move._recompute_payment_terms_lines()
             move._compute_amount()
+
+        # Volver a menu Empresas > Compras > Comprobantes Recibidos
+        ret = self.env["ir.actions.act_window"]._for_xml_id('pyme_accounting.action_move_in_invoice_type')
+        ret["target"] = "main"
+        
+        return ret

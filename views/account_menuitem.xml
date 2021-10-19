@@ -380,12 +380,12 @@
                 sequence="2" action="action_accountancy_journals_sales" />
 
             <!-- MENU Facturacion/Contabilidad/Subdiarios/Banco -->
-            <menuitem id="menu_accountancy_journals_bank" name="Banco" 
-                sequence="3" action="action_accountancy_journals_bank" />
+            <!-- <menuitem id="menu_accountancy_journals_bank" name="Banco" 
+                sequence="3" action="action_accountancy_journals_bank" /> -->
 
             <!-- MENU Facturacion/Contabilidad/Subdiarios/Caja -->
-            <menuitem id="menu_accountancy_journals_cash" name="Caja" 
-                sequence="4" action="action_accountancy_journals_cash" />
+            <!-- <menuitem id="menu_accountancy_journals_cash" name="Caja" 
+                sequence="4" action="action_accountancy_journals_cash" /> -->
 
             <!-- MENU Facturacion/Contabilidad/Subdiarios/Varios -->
             <menuitem id="menu_accountancy_journals_misc" name="Varios" 
@@ -557,8 +557,8 @@
         <menuitem id="menu_import_bank" name="Bancos" sequence="5">
                 
             <!-- MENU Facturacion/Importar/Banco/Resumen Bancario -->
-            <menuitem name="Resumen Bancario" sequence="2"
-                id="menu_import_bank_bapro" action="action_import_bank_bapro" />
+            <!-- <menuitem name="Resumen Bancario" sequence="2"
+                id="menu_import_bank_bapro" action="action_import_bank_bapro" /> -->
 
         </menuitem>
 
