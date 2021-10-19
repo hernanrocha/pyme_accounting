@@ -17,3 +17,7 @@
 .o_menu_systray .o_user_menu [data-menu="account"] {
     display: none;
 }
+
+.o_has_banner > .o_control_panel {
+    display: none;
+}

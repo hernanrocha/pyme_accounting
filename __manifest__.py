@@ -10,6 +10,10 @@
     # 'live_test_url': 'https://www.youtube.com/watch?v=0kaHMTtn7oY',
     'description': "",
     # 'website': 'https://www.odoomates.tech',
+    'external_dependencies': { 
+        "python": [], 
+        "bin": []
+    },
     'depends': [
         # Odoo Base Modules
         'base',            # Base

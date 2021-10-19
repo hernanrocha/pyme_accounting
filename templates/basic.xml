@@ -1,5 +1,19 @@
 <odoo>
+
     <data>
+
+        <template id="_assets_primary_variables" inherit_id="web._assets_primary_variables">
+            <xpath expr="//link[last()]" position="replace">
+                <link rel="stylesheet" type="text/scss" href="/pyme_accounting/static/src/scss/primary_variables.scss"/>
+            </xpath>
+        </template>
+
+        <template id="assets_backend" inherit_id="web.assets_common">
+            <xpath expr="//script[last()]" position="after">
+                <script type="text/javascript" src="/pyme_accounting/static/src/js/session.js"></script>
+            </xpath>
+        </template>
+
         <!-- Este anda bien -->
         <!-- <template id="base_template_id">
 

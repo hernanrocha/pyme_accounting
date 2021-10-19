@@ -155,7 +155,7 @@
 
     <!-- IMPORTAR COMPROBANTES RECIBIDOS - WINDOW ACTION -->
     <record id="action_import_purchases_comp_recibidos" model="ir.actions.act_window">
-        <field name="name">Importar Compras de Comprobantes Recibidos</field>
+        <field name="name">Importar Comprobantes Recibidos</field>
         <field name="res_model">l10n_ar.import.purchase.comprecibidos</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
