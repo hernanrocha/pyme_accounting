@@ -2,6 +2,8 @@ odoo.define('web.session.patch', function (require) {
 "use strict";
 
 var utils = require('web.utils');
+
+// Se sobreescribe la clase, no el objeto (service)
 var session = require('web.Session');
 
 utils.patch(session, 'session patch', {

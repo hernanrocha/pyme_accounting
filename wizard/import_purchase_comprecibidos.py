@@ -265,6 +265,11 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
         print(tax_untaxed, tax_21, tax_exempt, tax_no_corresponde)
 
         for invoice in self.invoice_ids:
+            # No procesar nuevamente los comprobantes ya existentes
+            if invoice.invoice_found:
+                continue
+
+            # Obtener Diario de proveedores
             journal = self.env['account.move'].with_context(default_move_type='in_invoice')._get_default_journal()
 
             # Get or Create Vendor Partner (res.partner)
@@ -274,7 +279,7 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
                 'name': invoice.vendor,
                 'vat': invoice.cuit,
                 'l10n_latam_identification_type_id': cuit_type.id,
-                # TODO: Si es factura C, cargar como monotributo
+                # TODO: Si es factura C, cargar como monotributo / exento
                 'l10n_ar_afip_responsibility_type_id': monotributo.id if es_comprobante_c(invoice.invoice_type) else ri.id 
             }
             if len(partner) == 0:
@@ -295,8 +300,7 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
             doc_type = self.env['l10n_latam.document.type'].search([('doc_code_prefix', '=', invoice.invoice_type)])
             print("DOC TYPE", doc_type)
 
-            # TODO: investigar mas los casos de uso de IVA No Corresponde (account_move.py)
-            # Fix a error "En la factura con id "645" debe usar IVA NO Corresponde en cada línea."
+            # El IVA No Corresponde se utiliza en los comprobantes C
             no_iva = doc_type.purchase_aliquots == 'zero'
 
             move_data = {
@@ -326,7 +330,7 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
                     'name': 'Monto Gravado',
                     'account_id': account_purchase.id,
                     'quantity': 1,
-                    'price_unit': invoice.taxed_amount + invoice.iva,
+                    'price_unit': invoice.taxed_amount + (invoice.iva if tax_21.price_include else 0),
                 })
                 line.tax_ids += tax_no_corresponde if no_iva else tax_21
                 print("Taxed Line", line)
@@ -371,6 +375,3 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
             move._recompute_dynamic_lines(recompute_all_taxes=True, recompute_tax_base_amount=True)
             move._recompute_payment_terms_lines()
             move._compute_amount()
-
-            # # Post Entry
-            # move.action_post()
