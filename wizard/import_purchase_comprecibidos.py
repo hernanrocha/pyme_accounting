@@ -54,7 +54,9 @@ class CbteAsociadoMixin(models.AbstractModel):
             line.invoice_id = self.env['account.move'].search([
                 # TODO: agregar por dominio el filtrado de los account.move
                 ('company_id', '=', self.env.company.id),
-                ('move_type', 'in', ['in_invoice', 'in_refund']),
+                # TODO: esto no es generalizable. hacer un campo select in/out
+                # y override el valor por defecto
+                # ('move_type', 'in', ['in_invoice', 'in_refund']),
                 ('name', '=', line.invoice_display_name),
                 # TODO: filtrar por CUIT y por estado
             ])
@@ -72,7 +74,8 @@ class CbteAsociadoMixin(models.AbstractModel):
             imp.match_total_amount = abs(imp.invoice_amount_total - imp.total) < 0.02
             imp.match_amount_taxed = abs(imp.invoice_amount_total_taxed - imp.taxed_amount) < 0.02
             imp.match_amount_tax = abs(imp.invoice_amount_total_tax - imp.iva) < 0.02
-            imp.match_amount_untaxed = abs(imp.invoice_amount_total_untaxed - (imp.untaxed_amount + imp.difference)) < 0.02
+            imp.match_amount_untaxed = abs((imp.invoice_amount_total_untaxed + imp.invoice_amount_total_perc) - \
+                (imp.untaxed_amount + imp.difference)) < 0.02
             imp.match_amount_exempt = abs(imp.invoice_amount_total_exempt - imp.exempt_amount) < 0.02
 
             imp.match_all = imp.match_total_amount and imp.match_amount_taxed and \
@@ -90,8 +93,8 @@ class CbteAsociadoMixin(models.AbstractModel):
     invoice_amount_total_tax = fields.Monetary(string='Cbte Total IVA', related="invoice_id.amount_total_tax")
     invoice_amount_total_untaxed = fields.Monetary(string='Cbte Total No Gravado', related="invoice_id.amount_total_untaxed")
     invoice_amount_total_exempt = fields.Monetary(string='Cbte Total Exento', related="invoice_id.amount_total_exempt")
+    invoice_amount_total_perc = fields.Monetary(string='Cbte Total Percepciones', related="invoice_id.perc_total")
 
-    # TODO: bug. match_all no esta funcionando cuando cambia el valor de un campo    
     match_all = fields.Boolean(string="Coinciden", compute=_compute_match_fields)
     match_total_amount = fields.Boolean(string="Coincide Total", compute=_compute_match_fields)
     match_amount_taxed = fields.Boolean(string="Coincide Total", compute=_compute_match_fields)
@@ -304,7 +307,6 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
             # Create Invoice
             # TODO: mejorar esta query
             doc_type = self.env['l10n_latam.document.type'].search([('doc_code_prefix', '=', invoice.invoice_type)])
-            print("DOC TYPE", doc_type)
 
             # El IVA No Corresponde se utiliza en los comprobantes C
             no_iva = doc_type.purchase_aliquots == 'zero'
@@ -319,10 +321,7 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
                 # TODO: Chequear (y validar) secuencia en PG
                 'l10n_latam_document_number': '{}-{}'.format(invoice.pos_number, invoice.invoice_number),
             }
-            print("Invoice Data", move_data)
-
             move = self.env['account.move'].create(move_data)
-            print("Invoice", move)
 
             # TODO: determinar el tipo de IVA (21%, 10.5%, etc)
 

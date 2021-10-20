@@ -101,6 +101,7 @@
         <field name="view_mode">tree,form</field>
         <field name="view_id" ref="view_invoice_tree"/>
         <!-- TODO: cambiar search view por filtros particulares -->
+        <!-- TODO: ordenar por tipo y numero de comprobante -->
         <field name="search_view_id" ref="account.view_account_invoice_filter"/>
         <field name="domain">[('move_type', 'in', ['out_invoice', 'out_refund'])]</field>
         <!-- Ordenar por mes y luego por tipo de comprobante -->

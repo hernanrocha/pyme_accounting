@@ -39,6 +39,7 @@ def helper_convert_invoice_type(afip_invoice_type):
 class ImportSalesAfipLine(models.TransientModel):
     _name = "l10n_ar.afip.import_sale.line"
     _description = "Linea de venta de AFIP"
+    _inherit = [ 'mixin.pyme_accounting.cbte_asociado' ]
 
     date = fields.Date(string="Fecha")
     invoice_type = fields.Char(string="Tipo de Comprobante")
@@ -47,62 +48,29 @@ class ImportSalesAfipLine(models.TransientModel):
     
     # TODO: agregar columna tipo de documento y cambiar nombre de columna a "Documento"
     cuit = fields.Char(string="CUIT")
-    partner = fields.Char()
-    taxed_amount = fields.Float(string="Gravado")
-    
-    @api.depends('taxed_amount')
-    def _compute_taxed_amount_21(self):
-        for line in self:
-            line.taxed_amount_21 = line.taxed_amount * 0.21
-
-    taxed_amount_21 = fields.Float(string=".21", compute=_compute_taxed_amount_21)
-    
-    untaxed_amount = fields.Float(string="No Gravado")
-    exempt_amount = fields.Float(string="Exento")
-    iva = fields.Float(string="IVA")
-    total = fields.Float(string="Total")
+    partner = fields.Char(string="Cliente")
     import_id = fields.Many2one(comodel_name="l10n_ar.afip.import_sale", ondelete="cascade")
 
-    invoice_display_name = fields.Char(string="Comprobante", compute="_compute_invoice_display_name", invisible=True)
-
+    # TODO: mover al mixin
     @api.depends('invoice_type', 'pos_number', 'invoice_number')
     def _compute_invoice_display_name(self):
         for line in self:
             line.invoice_display_name = "{} {}-{}".format(line.invoice_type, line.pos_number, line.invoice_number)
 
-
+    # TODO: mover al mixin
     @api.depends('taxed_amount', 'untaxed_amount', 'exempt_amount', 'iva', 'total')
     def compute_difference(self):
         for line in self:
             line.difference = line.total - (line.taxed_amount + line.iva + line.exempt_amount + line.untaxed_amount)
 
-    difference = fields.Float(string="Diferencia", compute=compute_difference)
-
-    # TODO: generalizar esto en todos los metodos de importacion
-    @api.depends('invoice_display_name')
-    def _compute_invoice_id(self):
-        for line in self:
-            line.invoice_id = self.env['account.move'].search([
-                ('move_type', 'in', ['out_invoice', 'out_refund']),
-                ('name', '=', line.invoice_display_name),
-                # TODO: filtrar por CUIT y por estado
-            ])
-
-    @api.depends('invoice_id')
-    def _compute_invoice_found(self):
-        for line in self:
-            line.invoice_found = bool(line.invoice_id)
-
-    invoice_id = fields.Many2one(string="Cbte Asociado", comodel_name="account.move", ondelete="set null", compute=_compute_invoice_id)
-    invoice_found = fields.Boolean(string="Existente", compute=_compute_invoice_found)
-    currency_id = fields.Many2one('res.currency', related="invoice_id.currency_id")
-    invoice_amount_total = fields.Monetary(string='Cbte Total', related="invoice_id.amount_total")
-    
-    def _compute_match_total(self):
-        for line in self:
-            line.match_total = round(line.total, 2) == round(line.invoice_amount_total, 2)
-
-    match_total = fields.Boolean(string="Coincide", compute=_compute_match_total)
+    # TODO: mover al mixin
+    invoice_display_name = fields.Char(string="Comprobante", compute="_compute_invoice_display_name", invisible=True)
+    taxed_amount = fields.Monetary(string="Gravado")    
+    untaxed_amount = fields.Monetary(string="No Gravado")
+    exempt_amount = fields.Monetary(string="Exento")
+    iva = fields.Monetary(string="IVA")
+    difference = fields.Monetary(string="Diferencia", compute=compute_difference)
+    total = fields.Monetary(string="Total")
 
 # El metodo parse_sales esta repetido
 class ImportSalesAfip(models.TransientModel):
@@ -111,6 +79,13 @@ class ImportSalesAfip(models.TransientModel):
     
     afip_file = fields.Binary(string="Ventas AFIP (*.csv)")
     invoice_ids = fields.One2many(string="Facturas", comodel_name="l10n_ar.afip.import_sale.line", inverse_name="import_id")
+
+    @api.depends('invoice_ids')
+    def _compute_display_button_generate(self):
+        for imp in self:
+            imp.display_button_generate = imp.invoice_ids
+
+    display_button_generate = fields.Boolean(string="Mostrar Boton Generar", compute=_compute_display_button_generate)
 
     # TODO: usar el mixin creado para esto
     def get_pos(self, pos_number):
@@ -185,7 +160,7 @@ class ImportSalesAfip(models.TransientModel):
             })
         
         return {
-            # TODO: agregar titulo a la ventana
+            'title': 'Importar Comprobantes Emitidos',
             'context': self.env.context,
             'view_type': 'form',
             'view_mode': 'form',
@@ -235,15 +210,12 @@ class ImportSalesAfip(models.TransientModel):
         ])
 
         for invoice in self.invoice_ids:
-            # Omitir los comprobantes ya existentes
+            # No procesar nuevamente los comprobantes ya existentes
             if invoice.invoice_found:
                 continue
 
             # Obtener/Crear diario segun el PdV automaticamente
             journal_id = self.get_pos(invoice.pos_number)
-
-            # TODO: Permitir elegir que hacer con la diferencia
-            invoice.untaxed_amount = invoice.difference
 
             # Documentos soportados: DNI y CUIT
             if invoice.cuit:
@@ -267,12 +239,10 @@ class ImportSalesAfip(models.TransientModel):
             
             _logger.info("Partner: {}".format(partner))
 
-            # TODO: Revisar tambien montos gravados y exentos 
-
-            # Create Invoice
             # TODO: mejorar esta query
             doc_type = self.env['l10n_latam.document.type'].search([('doc_code_prefix', '=', invoice.invoice_type)])
             
+            # Create Invoice
             move_data = {
                 'move_type': 'out_invoice',
                 'partner_id': partner.id,
@@ -283,9 +253,7 @@ class ImportSalesAfip(models.TransientModel):
                 # TODO: Chequear (y validar) secuencia en PG
                 'l10n_latam_document_number': '{}-{}'.format(invoice.pos_number, invoice.invoice_number),
             }
-            print("Invoice Data", move_data)
             move = self.env['account.move'].create(move_data)
-            print("Invoice", move)
 
             # TODO: revisar que no haya otro tipo de IVA en los comprobantes
             if invoice.taxed_amount > 0:
@@ -299,14 +267,18 @@ class ImportSalesAfip(models.TransientModel):
                 })
                 line.tax_ids += tax_21
 
+            # La diferencia entre el total y los otros campos,
+            # se toma también como Monto No Gravado
+            untaxed_amount = invoice.untaxed_amount + invoice.difference
+
             # IVA No Gravado
-            if invoice.untaxed_amount > 0:
+            if untaxed_amount > 0:
                 line = move.line_ids.create({
                     'move_id': move.id,
                     'name': 'Monto No Gravado',
                     'account_id': account_sale.id,
                     'quantity': 1,
-                    'price_unit': invoice.untaxed_amount,
+                    'price_unit': untaxed_amount,
                 })
                 line.tax_ids += tax_untaxed
                 _logger.info("No Gravado: {}".format(line))
@@ -330,14 +302,8 @@ class ImportSalesAfip(models.TransientModel):
 
             # TODO: que pasa si faltan facturas?? al ser correlativas deberian coincidir
 
-        # TODO: retornar a ventana con el filtro de las facturas hechas recientemente
-        # return {
-        #     'context': self.env.context,
-        #     'view_type': 'list',
-        #     'view_mode': 'list',
-        #     'res_model': 'account.move',
-        #     'res_ids': [ 1, 2 ],
-        #     'view_id': False,
-        #     'type': 'ir.actions.act_window',
-        #     'target': 'main',
-        # }
+        # Volver a menu Empresas > Ventas > Comprobantes Emitidos
+        ret = self.env["ir.actions.act_window"]._for_xml_id('pyme_accounting.action_move_out_invoice_type')
+        ret["target"] = "main"
+        
+        return ret

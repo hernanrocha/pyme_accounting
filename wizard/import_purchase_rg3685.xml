@@ -8,6 +8,9 @@
         <field name="arch" type="xml">
             <form>
                 
+                <!-- TODO: cargar percepciones (opcionalmente) -->
+                <!-- TODO: mostrar errores al cargar -->
+
                 <div class="card bg-primary">
                     <div class="card-body">
                         <p>El asistente permite importar compras a partir del Libro IVA Digital generado previamente en otro sistema.</p>

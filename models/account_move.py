@@ -50,6 +50,7 @@ class AccountMove(models.Model):
     perc_iva = fields.Monetary(string='Perc. IVA', readonly=True, compute='_compute_percepciones')
     perc_iibb = fields.Monetary(string='Perc. IIBB', readonly=True, compute='_compute_percepciones')
     perc_municipales = fields.Monetary(string='Perc. Municipales', readonly=True, compute='_compute_percepciones')
+    perc_total = fields.Monetary(string='Perc. Total', readonly=True, compute='_compute_percepciones')
 
     amount_tax_21 = fields.Monetary(string='IVA 21%', compute='_compute_display_tax')
     amount_tax_10 = fields.Monetary(string='IVA 10.5%', compute='_compute_display_tax')
@@ -200,6 +201,8 @@ class AccountMove(models.Model):
             move.perc_internos = move._get_percepcion('04')
             move.perc_iva = move._get_percepcion('06')
             move.perc_iibb = move._get_percepcion('07')
+            move.perc_total = move.perc_nacionales + move.perc_municipales + \
+                move.perc_internos + move.perc_iva + move.perc_iibb
             # TODO: Otros tributos
 
             move.display_perc_nacionales = sign * move.perc_nacionales

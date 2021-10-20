@@ -479,7 +479,7 @@
             <!-- <menuitem name="Importar AFIP" sequence="1"
                 id="menu_import_afip" action="action_arba_afip_upload"/> -->
 
-            <!-- MENU Facturacion/Importar/Compras/Comprobantes Emitidos  -->
+            <!-- MENU Facturacion/Importar/Compras/Comprobantes Recibidos  -->
             <menuitem name="Mis Comprobantes Recibidos" sequence="1" 
                 id="menu_import_purchases_comp_recibidos" action="action_import_purchases_comp_recibidos" />
                 
