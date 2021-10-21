@@ -138,4 +138,6 @@ class Company(models.Model):
         chart_template_id.sudo()._load(15.0, 15.0, c)
         print("Plan de cuentas creado")
 
+        # TODO: cambiar a empresa creada recientemente
+
         return c

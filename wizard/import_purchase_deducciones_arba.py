@@ -14,24 +14,21 @@ ns = {'ss': 'urn:schemas-microsoft-com:office:spreadsheet'}
 def translate_invoice_type(tipo, letra, numero):
     t = ''
     # TODO: las que tienen espacio en blanco son percepciones bancarias
-    if tipo == 'F' or tipo == ' ':
+    if tipo == 'F':
         t = 'FA'
     elif tipo == 'C':
         t = 'NC'
     elif tipo == 'D':
         t = 'ND'
+    elif tipo == ' ':
+        return 'Perc. Bancaria'
     else:
-        raise UserError("(NUEVO) Tipo de comprobante invalido: {}".format(tipo))
-        # t = "INVALIDO"
+        raise UserError("Tipo de comprobante invalido: {}".format(tipo))
 
-    if letra not in ['A', 'B', 'C', ' ']:
+    if letra not in ['A', 'B', 'C']:
         raise UserError("Letra de comprobante invalido: {}".format(letra))
 
-    l = letra
-    if letra == ' ':
-        l = 'C'
-
-    return '{}-{} {}'.format(t, l, numero)
+    return '{}-{} {}'.format(t, letra, numero)
 
 def cell_data(cells, index):
     return cells[index].find('ss:Data', ns).findtext('.')
@@ -53,9 +50,7 @@ class PurchaseImportDeduccionesArbaPLine(models.TransientModel):
 
     # TODO: completar con consulta AFIP si es que no existe
     partner = fields.Char(string="Proveedor", related='invoice_id.partner_id.name')
-    inv_perc_iibb = fields.Float(string="Cbte IIBB", compute="_compute_inv_perc_iibb")
     invoice_name = fields.Char('Cbte Asociado', related='invoice_id.name')
-    amount2 = fields.Float(string="No Gravado")
 
     @api.depends('amount', 'amount2')
     def _compute_diff(self):
@@ -79,31 +74,58 @@ class PurchaseImportDeduccionesArbaPLine(models.TransientModel):
         for line in self:
             line.decoration = ''
             # Si la percepcion esta en estado "Baja" no se debe computar
+            # El resto ("Modificacion", "Alta") deben procesarse
             if line.state == 'baja':
                 line.decoration = 'dark'
             # Si la percepcion coincide con el comprobante, no se debe hacer nada
             elif round(line.inv_perc_iibb, 2) == round(line.amount, 2):
                 line.decoration = 'success'
-            # Si no existe comprobante asociado, se debe crear
-            elif not line.invoice_found:
-                line.decoration = 'primary'
-            # Si existe una diferencia con el monto no gravado, mostrar advertencia
-            elif line.diff:
+            # Los siguientes son errores:
+            #  - Si no existe comprobante asociado, no se cargara
+            #    (Es un error porque no deberia tomarse como alta)
+            #  - Si ya hay una percepcion y no coinciden los montos
+            #  - Si el monto no gravado es mayor que el monto de la percepcion, 
+            #    cambia el total del comprobante
+            elif not line.invoice_found or line.inv_perc_iibb > 0 or \
+                line.amount > abs(line.amount2):
                 line.decoration = 'warning'
+            # Si existe una diferencia con el monto no gravado, mostrar advertencia
+            else:
+                line.decoration = 'primary'
             # TODO: tener en cuenta las percepciones bancarias (tipo de cbte vacio)
 
     decoration = fields.Char(string="Decoration", compute=_compute_decoration)
 
+    @api.depends('invoice_number')
+    def _compute_invoice_id(self):
+        for line in self:            
+            line.invoice_id = self.env['account.move'].search([
+                # TODO: agregar por dominio el filtrado de los account.move por compañia
+                ('company_id', '=', self.env.company.id),
+                ('move_type', 'in', ['in_invoice', 'in_refund']),
+                ('name', '=', line.invoice_number),
+                # TODO: filtrar por CUIT y por estado
+            ])
+
+    @api.depends('invoice_id')
+    def _compute_amount2(self):
+        for line in self:          
+            line.amount2 = 0
+            line_other = line.invoice_id.line_ids.filtered(lambda line: line.name == 'Otros Montos No Gravados')
+            if len(line_other) == 1:
+                line.amount2 = line_other.price_unit
+            
     @api.depends('invoice_id')
     def _compute_invoice_found(self):
         for line in self:
             line.invoice_found = bool(line.invoice_id)
 
-    invoice_found = fields.Boolean(string="Cbte Asociado", compute=_compute_invoice_found)
-
     # TODO: borrar esto de la vista de edicion
     import_id = fields.Many2one(comodel_name="l10n_ar.import.purchase.deducciones.arba", ondelete="cascade", readonly=True, invisible=True)
-    invoice_id = fields.Many2one(string="Cbte Asociado", comodel_name="account.move", ondelete="set null", readonly=True, invisible=True)
+    invoice_id = fields.Many2one(string="Cbte Asociado", comodel_name="account.move", ondelete="set null", compute=_compute_invoice_id)
+    invoice_found = fields.Boolean(string="Cbte Asociado", compute=_compute_invoice_found)
+    amount2 = fields.Float(string="Cbte No Gravado", compute=_compute_amount2)
+    inv_perc_iibb = fields.Float(string="Cbte IIBB", compute=_compute_inv_perc_iibb)
 
 class PurchaseImportDeduccionesArbaRLine(models.TransientModel):
     _name = "l10n_ar.import.purchase.deducciones.arba.rline"
@@ -144,6 +166,14 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
     # TODO: percepciones aduaneras
 
     notes = fields.Char(string="Notas", readonly=True)
+
+    @api.depends('percepciones', 'retenciones', 'retenciones_bancarias', 'devoluciones_bancarias')
+    def _compute_display_button_generate(self):
+        for imp in self:
+            imp.display_button_generate = imp.percepciones or imp.retenciones or \
+                imp.retenciones_bancarias or imp.devoluciones_bancarias
+
+    display_button_generate = fields.Boolean(string="Mostrar Boton Generar", compute=_compute_display_button_generate)
 
     def parse_purchases(self):
         [data] = self.read()
@@ -228,28 +258,6 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
                 'invoice_number': translate_invoice_type(tipo_comprobante, letra_comprobante, numero_comprobante),
                 'import_id': self.id,
             })
-
-            # TODO: hacer invoice_id computed que dependa de invoice_number
-            comp = self.env['account.move'].search([
-                ('move_type', 'in', ['in_invoice', 'in_refund']),
-                ('name', '=', str(p.invoice_number)),
-                # TODO: filtrar por CUIT y por estado
-            ])
-            _logger.info("Comprobantes: {}".format(comp))
-            
-            if len(comp) == 0:
-                _logger.info("Comprobante no encontrado: {}".format(p.invoice_number))
-            else:
-                p.write({
-                    'invoice_id': comp.id,
-                })
-                
-                # TODO: hacer invoice_id computed que dependa de invoice_number
-                line_other = comp.line_ids.filtered(lambda line: line.name == 'Otros Montos No Gravados')
-                if len(line_other) == 1:
-                    p.write({ 
-                        'amount2': line_other.price_unit, 
-                    })
 
         # TODO: Filtrar por fecha primero, y descontar las facturas que vayan coincidiendo
         comp = self.env['account.move'].search([
@@ -366,6 +374,8 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
                 
                 # Pasar a borrador para poder editar
                 # TODO: bug que vuelve a default el valor fijo de las percepciones 
+                # TODO: descontar monto de percepcion de lo no gravado
+                # Esto funciona ahora porque no se esta cargando en el IVA Digital
                 posted = comp.state == 'posted'
                 if posted:
                     comp.button_draft()
