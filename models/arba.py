@@ -74,17 +74,17 @@ class ImpuestosDeduccion(models.Model):
     # Tipo
     type = fields.Selection([
         # ARBA
-        ('arba_percepcion', 'ARBA - Percepción'),
-        ('arba_retencion', 'ARBA - Retención'),
-        ('arba_retencion_bancaria', 'ARBA - Retención Bancaria'),
-        ('arba_devolucion_bancaria', 'ARBA - Devolución Bancaria'),
+        ('arba_percepcion', 'Percepción'),
+        ('arba_retencion', 'Retención'),
+        ('arba_retencion_bancaria', 'Retención Bancaria'),
+        ('arba_devolucion_bancaria', 'Devolución Bancaria'),
 
         # IVA
         
         # 493 - REG.PER.AL VALOR AGREGADO - EMPRESAS PROVEEDORAS.
-        ('iva_percepcion', 'IVA - Percepción'),
+        ('iva_percepcion', 'Percepción'),
         # Not used yet
-        ('iva_retencion', 'IVA - Retención'),
+        ('iva_retencion', 'Retención'),
     ], 'Tipo de Deducción')
     # Regimen
     tax = fields.Selection([

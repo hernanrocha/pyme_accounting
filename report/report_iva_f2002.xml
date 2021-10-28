@@ -18,14 +18,14 @@
             font-size: 14px;
         }
         table tr.section th {
-            background-color: #4f81bd;
+            background-color: #1D3557;
             color: white;
             font-weight: bold;
         }
         table tr.subtotal td {
             font-weight: bold;
             color: black;
-            background-color: #dbe5f1;
+            background-color: white;
         }
         table tr.total td {
             font-weight: bold;
@@ -37,7 +37,6 @@
         }
         table tr.net td {
             background-color: #b8cce4;
-            /* background-color: #dbe5f1; */
             color: black;
             font-weight: bold;
             border-top: 2px solid black;
@@ -64,14 +63,17 @@
 
         <div class="text-center">
             <h2 t-esc="name"></h2>
+            <p><b>Septiembre 2021</b></p> 
         </div>
 
         <div class="row">
             <div class="col-md-8 offset-md-2">
                 <!-- PRIMER PARRAFO -->
 
+                <h3>Débito Fiscal</h3>
+
                 <!-- Debito - Ventas -->
-                <h4>Debito Fiscal - Operaciones de Ventas</h4> 
+                <h4>Ventas</h4> 
 
                 <table class="table table-bordered table-sm">
                     <tr class="section">
@@ -87,15 +89,15 @@
                         <tr>
                             <td><t t-esc="o[0]"></t></td>
                             <td><t t-esc="o[1]"></t></td>
-                            <td><t t-esc="o[2]"></t></td>
-                            <td class="number"><t t-esc="o[3]"></t></td>
-                            <td class="number"><t t-esc="o[4]"></t></td>
-                            <td class="number"><t t-esc="o[5]"></t></td>
+                            <td class="text-center"><t t-esc="o[2]"></t></td>
+                            <td class="number"><span>$</span><t t-esc="o[3]"></t></td>
+                            <td class="number"><span>$</span><t t-esc="o[4]"></t></td>
+                            <td class="number"><span>$</span><t t-esc="o[5]"></t></td>
                         </tr>
                     </t>
                     
                     <tr class="subtotal">
-                        <td colspan="3">Total Ventas</td>
+                        <td colspan="3">Total</td>
                         <td class="number line"><span>$</span><t t-esc="debito_ventas['total'][0]"></t></td>
                         <td class="number line"><span>$</span><t t-esc="debito_ventas['total'][1]"></t></td>
                         <td class="number line"><span>$</span><t t-esc="debito_ventas['total'][2]"></t></td>
@@ -119,23 +121,25 @@
                     <t t-foreach="debito_nc_recibidas['lines']" t-as="o">
                         <tr>
                             <td><t t-esc="o[1]"></t></td>
-                            <td><t t-esc="o[2]"></t></td>
-                            <td class="number"><t t-esc="o[3]"></t></td>
-                            <td class="number"><t t-esc="o[4]"></t></td>
-                            <td class="number"><t t-esc="o[5]"></t></td>
+                            <td class="text-center"><t t-esc="o[2]"></t></td>
+                            <td class="number"><span>$</span><t t-esc="o[3]"></t></td>
+                            <td class="number"><span>$</span><t t-esc="o[4]"></t></td>
+                            <td class="number"><span>$</span><t t-esc="o[5]"></t></td>
                         </tr>
                     </t>
                     
                     <tr class="subtotal">
-                        <td colspan="2">Total CF A Restituir</td>
+                        <td colspan="2">Total</td>
                         <td class="number line"><span>$</span><t t-esc="debito_nc_recibidas['total'][0]"></t></td>
                         <td class="number line"><span>$</span><t t-esc="debito_nc_recibidas['total'][1]"></t></td>
                         <td class="number line"><span>$</span><t t-esc="debito_nc_recibidas['total'][2]"></t></td>
                     </tr>
                 </table>
 
+                <h3>Crédito Fiscal</h3>
+
                 <!-- Credito - Compras -->
-                <h4>Crédito Fiscal - Compras</h4> 
+                <h4>Compras</h4> 
 
                 <table class="table table-bordered table-sm">
                     <tr class="section">
@@ -149,15 +153,15 @@
                     <t t-foreach="credito_compras['lines']" t-as="o">
                         <tr>
                             <td><t t-esc="o[1]"></t></td>
-                            <td><t t-esc="o[2]"></t></td>
-                            <td class="number"><t t-esc="o[3]"></t></td>
-                            <td class="number"><t t-esc="o[4]"></t></td>
-                            <td class="number"><t t-esc="o[5]"></t></td>
+                            <td class="text-center"><t t-esc="o[2]"></t></td>
+                            <td class="number"><span>$</span><t t-esc="o[3]"></t></td>
+                            <td class="number"><span>$</span><t t-esc="o[4]"></t></td>
+                            <td class="number"><span>$</span><t t-esc="o[5]"></t></td>
                         </tr>
                     </t>
                     
                     <tr class="subtotal">
-                        <td colspan="2">Total Compras Gravadas</td>
+                        <td colspan="2">Total</td>
                         <td class="number line"><span>$</span><t t-esc="credito_compras['total'][0]"></t></td>
                         <td class="number line"><span>$</span><t t-esc="credito_compras['total'][1]"></t></td>
                         <td class="number line"><span>$</span><t t-esc="credito_compras['total'][2]"></t></td>
@@ -181,15 +185,15 @@
                         <tr>
                             <td><t t-esc="o[0]"></t></td>
                             <td><t t-esc="o[1]"></t></td>
-                            <td><t t-esc="o[2]"></t></td>
-                            <td class="number"><t t-esc="o[3]"></t></td>
-                            <td class="number"><t t-esc="o[4]"></t></td>
-                            <td class="number"><t t-esc="o[5]"></t></td>
+                            <td class="text-center"><t t-esc="o[2]"></t></td>
+                            <td class="number"><span>$</span><t t-esc="o[3]"></t></td>
+                            <td class="number"><span>$</span><t t-esc="o[4]"></t></td>
+                            <td class="number"><span>$</span><t t-esc="o[5]"></t></td>
                         </tr>
                     </t>
                     
                     <tr class="subtotal">
-                        <td colspan="3">Total Notas de Crédito</td>
+                        <td colspan="3">Total</td>
                         <td class="number line"><span>$</span><t t-esc="credito_nc_emitidas['total'][0]"></t></td>
                         <td class="number line"><span>$</span><t t-esc="credito_nc_emitidas['total'][1]"></t></td>
                         <td class="number line"><span>$</span><t t-esc="credito_nc_emitidas['total'][2]"></t></td>
@@ -200,7 +204,18 @@
 
                 <!-- TODO: Credito Fiscal a cuenta de IVA -->
 
+                <h3>Liquidación</h3>
+                
+                <p>Total Débito Fiscal: $<t t-esc="total_debito"></t></p>
+                <p>Total Crédito Fiscal: $<t t-esc="total_credito"></t></p>
+                <p>Saldo Técnico período anterior: $<t t-esc="saldo_anterior"></t></p> 
+                <p t-if="saldo_libre_afip"><b>Saldo Libre disponibilidad a favor AFIP: $<t t-esc="saldo_libre_disp"></t></b></p>
+                <p t-else=""><b>Saldo Libre disponibilidad a favor del Responsable: $<t t-esc="saldo_libre_disp"></t></b></p>
 
+                <h5>Retenciones</h5>
+                <p>Retenciones Sufridas: $0.00</p> <!-- Regimen 17 -->
+                <p>Percepciones Impositivas Sufridas: $0.00</p> <!-- Regimen 493 -->
+                <p><b>Total: $<t t-esc="saldo_libre_disp"></t></b></p>
                 <!-- SEGUNDO PARRAFO -->
                 
             </div>

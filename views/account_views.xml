@@ -130,7 +130,7 @@
                 <field name="tax" invisible="1" />
                 <field name="date" />
                 <field name="type" />
-                <field name="amount" />
+                <field name="amount" sum="Total" />
                 <!-- <field name="control" />
                 <field name="cuit" />
                 <field name="invoice_pos" />
@@ -139,7 +139,14 @@
                 <field name="description" />
                 <field name="apply_date" />
                 <field name="publish_date" /> -->
-                <!-- <field name="state" /> -->
+                <field name="state" widget="label_selection" options="{
+                    'classes': {
+                        'available': 'primary', 
+                        'used': 'success',
+                        'discarded': 'muted',
+                        'expired': 'danger'
+                    }
+                }" />
             </tree>
         </field>
     </record>

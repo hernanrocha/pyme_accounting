@@ -34,7 +34,7 @@
 
     <!-- Ocultar menu "Facturación" -->
     <record model="ir.ui.menu" id="account.menu_finance">
-        <field name="active" eval="True"/>
+        <field name="active" eval="False"/>
     </record>
 
     <!-- TODO: Mostrar Facturacion solo en ERP Manager -->
@@ -64,7 +64,7 @@
         name="Mi Estudio"
         groups="account.group_account_readonly,account.group_account_invoice"
         web_icon="account,static/description/icon.png"
-        sequence="41">
+        sequence="43">
 
         <!-- MENU Facturacion/Mi Estudio/Clientes  -->
         <menuitem name="Clientes" sequence="1" 
@@ -590,10 +590,6 @@
             <!-- MENU Facturacion/Impuestos/IIBB/ARBA  -->
             <menuitem name="Liquidación ARBA" sequence="2"
                 id="menu_taxes_iibb_arba" action="action_iibb_arba_wizard"/>
-
-            <!-- MENU Facturacion/Impuestos/IIBB/ARBA  -->
-            <menuitem name="Reportes" sequence="3"
-                id="menu_tax_report" action="action_tax_report"/>
 
             <!-- TODO: la alicuota puede ser cualquier valor. -->
 

@@ -45,7 +45,7 @@
         <field name="arch" type="xml">
             <form string="Compañía">
                 <sheet>
-                    <!-- <field name="logo" widget="image" class="oe_avatar" modifiers="{}" id="logo"/> -->
+                    <field name="logo" widget="image" class="oe_avatar" modifiers="{}" id="logo"/>
                     <!-- <field name="partner_gid" invisible="True" modifiers="{'invisible':true,'readonly':true}" id="partner_gid"/> -->
 
                     <div class="oe_title">
@@ -60,12 +60,13 @@
                         <field name="l10n_ar_afip_responsibility_type_id" string="Condición Fiscal" required="1" options="{'no_open': True, 'no_create': True}" attrs="{'invisible': [('country_code', '!=', 'AR')]}" can_create="false" can_write="false" modifiers="{'invisible':[['country_code','!=','AR']]}" id="l10n_ar_afip_responsibility_type_id"/>
                         <!-- <field name="l10n_ar_afip_start_date" attrs="{'invisible': [('country_code', '!=', 'AR')]}" modifiers="{'invisible':[['country_code','!=','AR']]}" id="l10n_ar_afip_start_date"/> -->
                         
-                        <!-- <button name="query_afip" string="Consultar AFIP" type="object" class="btn-primary" /> -->
+                        <button name="query_afip" string="Consultar AFIP" type="object" class="btn-primary" />
 
                         <!-- TODO: Agregar actividades en AFIP -->
                         <!-- https://serviciosweb.afip.gob.ar/genericos/nomencladorActividades/index.aspx -->
                         <!-- <separator /> -->
-                        <field name="afip_activity_ids" colspan="4">
+                        <field name="afip_activity_ids" colspan="4" widget="many2many"
+                            context="{'tree_view_ref':'pyme_accounting.afip_acitivity_view_tree'}">
                             <tree>
                                 <field name="code" />
                                 <field name="name" />
@@ -73,8 +74,7 @@
                         </field>
                     </group>
 
-                    <!-- TODO: Solo habilitar para Monotributo -->
-                    <group string="Monotributo" col="4">
+                    <group string="Monotributo" col="4" attrs="{'invisible': [('l10n_ar_afip_responsibility_type_id', '!=', 6)]}" >
                         <field name="monotributo_category" string="Categoria" />
                         <field name="monotributo_type" string="Tipo" />
                     </group>
@@ -82,12 +82,17 @@
                     <group string="Ingresos Brutos" col="4">
 
                         <field string="Tipo" name="l10n_ar_gross_income_type" />
-                        <field string="Número" name="l10n_ar_gross_income_number" />
+                        <field string="Número" name="l10n_ar_gross_income_number" 
+                            attrs="{'invisible': [('l10n_ar_gross_income_type', '!=', 'multilateral')]}" />
+
+                        <newline />
 
                         <field name="iibb_tax_percentage" />
                         <field name="iibb_min_amount" />
 
                     </group>
+
+                    <!-- TODO: Puntos de Venta -->
 
                     <group string="Otros Datos">
                         <group>
@@ -95,12 +100,12 @@
                             <field name="partner_id" invisible="1" string="Contacto" readonly="1" required="0" on_change="1" can_create="true" can_write="true" modifiers="{'readonly':true}" id="partner_id"/>
                             <label for="street" string="Dirección"/>
                             <div class="o_address_format">
-                                <field name="street" placeholder="Calle" class="o_address_street" id="street"/>
-                                <field name="street2" placeholder="Número" class="o_address_street" id="street2"/>
+                                <field name="street" placeholder="Dirección" class="o_address_street" id="street"/>
+                                <!-- <field name="street2" placeholder="Número" class="o_address_street" id="street2"/> -->
                                 <field name="city" placeholder="Ciudad" class="o_address_city" id="city"/>
                                 <field name="state_id" class="o_address_state" placeholder="Provincia" options="{'no_open': True}" on_change="1" can_create="true" can_write="true" id="state_id"/>
                                 <field name="zip" placeholder="C.P." class="o_address_zip" id="zip"/>
-                                <field name="country_id" placeholder="País" class="o_address_country" options="{'no_open': True}" on_change="1" can_create="true" can_write="true" id="country_id"/>
+                                <field name="country_id" invisible="1" placeholder="País" class="o_address_country" options="{'no_open': True}" on_change="1" can_create="true" can_write="true" id="country_id"/>
                                 <field name="country_code" invisible="1" modifiers="{'invisible':true,'readonly':true}" id="country_code"/>
                             </div>
                         </group>
@@ -113,7 +118,11 @@
                         </group>
                     </group>
 
-                    <!-- TODO: Agregar Notas -->
+                    <!-- TODO: Seccion notas -->
+                    <!-- <div class="oe_chatter">
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div> -->
+
                 </sheet>
             </form>
         </field>

@@ -58,7 +58,7 @@ def split_iva(vat_taxes, label):
         imp_neto = sum(taxes.mapped('tax_base_amount'))
         imp_liquidado = sum(taxes.mapped('price_subtotal'))
         lines.append([ 
-            '1234',
+            '000000',
             label,
             format_iva(afip_code),
             format_amount(imp_neto),
@@ -90,6 +90,9 @@ def taxed_line(line):
 class ReportIvaF2002(models.Model):
     _name = 'report.pyme_accounting.report_iva_f2002'
 
+    # iibb_report_date_from = fields.Date(string="Fecha Desde", default='2021-09-01')
+    # iibb_report_date_to = fields.Date(string="Fecha Hasta", default='2021-09-30')
+
     def _get_report_values(self, docids, data=None):
         _logger.info("GETTING INFO F.2002")
 
@@ -98,11 +101,22 @@ class ReportIvaF2002(models.Model):
         _logger.info("NOTAS DE CREDITO EMITIDAS")
         credito_nc_emitidas = self.get_ventas(self.get_digital_invoices('out_refund'))
 
+        # TODO: separar entre: 
+        #   - Compras de bienes, 
+        #   - Locaciones 
+        #   - Prestaciones de servicios
+        #   - Compras de bienes usados 
         _logger.info("COMPROBANTES DE COMPRA RECIBIDOS")
         credito_compras = self.get_compras(self.get_digital_invoices('in_invoice'))        
         _logger.info("NOTAS DE CREDITO RECIBIDAS")
         debito_nc_recibidas = self.get_compras(self.get_digital_invoices('in_refund'))
         
+        # TODO: agregar contribuciones patronales (Total vs Computable)
+        # TODO: agregar impuesto al combustible
+        # TODO: Cuales son las que no generan credito fiscal???
+
+        total_debito = float(debito_ventas['total'][2]) + float(debito_nc_recibidas['total'][2])
+        total_credito =  float(credito_compras['total'][2]) + float(credito_nc_emitidas['total'][2])
 
         return {
             'name': 'IVA Por Actividad - F. 2002',
@@ -118,10 +132,14 @@ class ReportIvaF2002(models.Model):
             # 'credito_acuenta': [],
             # TODO
             # Segundo Parrafo
+            'total_debito': format_amount(total_debito),
+            'total_credito': format_amount(total_credito),
+            'saldo_anterior': format_amount(0.0),
+            'saldo_libre_afip': total_debito > total_credito,
+            'saldo_libre_disp': format_amount(abs(total_credito - total_debito)),
             'ingresos_retenciones': [],
             'ingresos_percepciones': [],
             'ingresos_acuenta': [],
-
         }
 
     def get_digital_invoices(self, move_type):
@@ -133,6 +151,8 @@ class ReportIvaF2002(models.Model):
                 ('company_id', '=', self.env.company.id),
                 ('state', '=', 'posted'),
                 ('move_type', '=', move_type),
+                ('date', '>=', '2021-09-01'),
+                ('date', '<=', '2021-09-30')
             ], 
             order='invoice_date asc')
 
@@ -193,7 +213,7 @@ class ReportIvaF2002(models.Model):
         if len(lines_taxed_0):
             amount = sum(lines_taxed_0.mapped('price_total'))
             lines.append([ 
-                '1234',
+                '000000',
                 "Operaciones Gravadas al 0%",
                 "0%",
                 format_amount(amount),
@@ -207,9 +227,9 @@ class ReportIvaF2002(models.Model):
         if len(lines_untaxed_exempt):
             amount = sum(lines_untaxed_exempt.mapped('price_total'))
             lines.append([ 
-                '1234',
+                '000000',
                 "Operaciones No Gravadas y Exentas",
-                "0%",
+                "-",
                 format_amount(amount),
                 format_amount(0),
                 format_amount(amount),
@@ -247,7 +267,7 @@ class ReportIvaF2002(models.Model):
         if len(lines_taxed_0):
             amount = sum(lines_taxed_0.mapped('price_total'))
             lines.append([ 
-                '1234',
+                '000000',
                 "Operaciones Gravadas al 0%",
                 "0%",
                 format_amount(amount),
@@ -261,9 +281,9 @@ class ReportIvaF2002(models.Model):
         if len(lines_untaxed_exempt):
             amount = sum(lines_untaxed_exempt.mapped('price_total'))
             lines.append([ 
-                '1234',
+                '000000',
                 "Operaciones No Gravadas y Exentas",
-                "0%",
+                "-",
                 format_amount(amount),
                 format_amount(0),
                 format_amount(amount),

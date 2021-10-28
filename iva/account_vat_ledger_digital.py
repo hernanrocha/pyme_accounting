@@ -767,8 +767,9 @@ class AccountVatLedger(models.Model):
     def get_invoice_alicuotas(self, inv, impo):
         lines = []
 
-        # No retornar alicuotas para comprobantes en 0
+        # Retornar 1 alicuota en 0 para comprobantes con total 0
         if inv.amount_total == 0:
+            lines.append(''.join(self.get_tax_row(inv, 0.0, 3, 0.0, impo=impo)))
             return lines
 
         # reportamos como linea de iva si:

@@ -39,6 +39,11 @@
 
         ### PYTHON pip install python-json-logger
     ],
+    'assets': {
+        'web._assets_primary_variables': [
+            'pyme_accounting/static/src/scss/primary_variables.scss'
+        ]
+    },
     'data': [
         # https://github.com/odoo/odoo/blob/bbc338438518bbb7d0e9ad1a313e872f95a36870/addons/web/static/src/js/views/list/list_renderer.js
         # Web
@@ -84,6 +89,7 @@
         'views/import_views.xml',
         'views/firm_views.xml',
         'views/sales_views.xml',
+        'views/afip_activities.xml',
 
         # Menu
         'views/account_menuitem.xml',
