@@ -44,3 +44,5 @@ security_report_monotributo,Reporte Mensual de Monotributo,model_report_pyme_acc
 security_report_iva_f2002,Reporte de IVA F.2002,model_report_pyme_accounting_report_iva_f2002,account.group_account_manager,1,1,1,1
 
 security_afip_actividad,Actividad AFIP,model_l10n_ar_afip_actividad,account.group_account_manager,1,0,0,0
+security_afip_apocrifos,CUITS Apocrifos,model_l10n_ar_afip_cuit_apocrifo,account.group_account_manager,1,0,0,0
+security_afip_apocrifos_wizard,Wizard CUITS Apocrifos,model_l10n_ar_afip_cuit_apocrifo_wizard,account.group_account_manager,1,1,1,1

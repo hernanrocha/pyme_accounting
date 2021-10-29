@@ -686,6 +686,12 @@
         <menuitem id="menu_admin_import_pem" name="Archivos PEM Importados" 
             sequence="5" action="action_admin_import_pem" />
 
+        <menuitem id="menu_admin_apocrifos" name="CUITs Apócrifos" 
+            sequence="6" action="action_admin_apocrifos" />
+
+        <menuitem id="menu_admin_apocrifos_wizard" name="Buscar Facturas Apócrifas" 
+            sequence="7" action="action_admin_apocrifos_wizard" />
+
     </menuitem>
 
     <!-- TODO:
