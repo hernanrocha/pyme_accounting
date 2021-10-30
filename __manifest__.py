@@ -63,6 +63,8 @@
         
         # Empresas - Contabilidad
         'views/account_views.xml',
+        'views/account_move_views.xml',
+        'views/product_views.xml',
 
         # Empresas - Importar
         'wizard/import_purchase_excel.xml',
@@ -90,6 +92,7 @@
         'views/firm_views.xml',
         'views/sales_views.xml',
         'views/afip_activities.xml',
+        'views/afip_apocrifos.xml',
 
         # Menu
         'views/account_menuitem.xml',

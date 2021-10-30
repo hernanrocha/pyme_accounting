@@ -348,10 +348,10 @@
     <menuitem id="menu_sales" name="Ventas" parent="menu_finance" sequence="2">
         <menuitem id="menu_action_move_out_invoice_type" name="Comprobantes Emitidos" action="action_move_out_invoice_type" sequence="1"/>
         <!-- <menuitem id="menu_action_account_payments_receivable" action="action_account_payments" sequence="15"/> -->
-        <!-- <menuitem id="product_product_menu_sellable" name="Productos" action="account.product_product_action_sellable" sequence="100"/> -->
 
-        <!-- TODO: mejorar esta vista -->
-        <menuitem id="menu_account_customer" name="Clientes" action="res_partner_action_customer" sequence="110"/>
+        <!-- TODO: mejorar estas vistas -->
+        <menuitem id="menu_account_customer" name="Clientes" action="res_partner_action_customer" sequence="100"/>
+        <menuitem id="product_product_menu_sellable" name="Productos" action="action_sales_products" sequence="110"/>
     </menuitem>
 
     <!-- MENU Facturacion/Compras --> 

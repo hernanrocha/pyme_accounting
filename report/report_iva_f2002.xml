@@ -68,6 +68,13 @@
 
         <div class="row">
             <div class="col-md-8 offset-md-2">
+                <p><b>Actividades</b></p>
+                <ul>
+                    <li t-foreach="actividades_afip" t-as="a">
+                        <t t-esc="a['code']" />: <t t-esc="a['name']" />
+                    </li>
+                </ul>
+
                 <!-- PRIMER PARRAFO -->
 
                 <h3>Débito Fiscal</h3>
@@ -77,7 +84,7 @@
 
                 <table class="table table-bordered table-sm">
                     <tr class="section">
-                        <th class="text-center">Cód. Actividad</th>
+                        <th class="text-center">Actividad</th>
                         <th class="text-center">Operaciones con...</th>
                         <th class="text-center">Tasa IVA</th>
                         <th class="text-center">Monto Neto</th>
@@ -87,7 +94,7 @@
 
                     <t t-foreach="debito_ventas['lines']" t-as="o">
                         <tr>
-                            <td><t t-esc="o[0]"></t></td>
+                            <td class="text-center"><t t-esc="o[0]"></t></td>
                             <td><t t-esc="o[1]"></t></td>
                             <td class="text-center"><t t-esc="o[2]"></t></td>
                             <td class="number"><span>$</span><t t-esc="o[3]"></t></td>
@@ -173,7 +180,7 @@
 
                 <table class="table table-bordered table-sm">
                     <tr class="section">
-                        <th class="text-center">Cód. Actividad</th>
+                        <th class="text-center">Actividad</th>
                         <th class="text-center">Operaciones con...</th>
                         <th class="text-center">Tasa IVA</th>
                         <th class="text-center">Monto Neto</th>
@@ -183,7 +190,7 @@
 
                     <t t-foreach="credito_nc_emitidas['lines']" t-as="o">
                         <tr>
-                            <td><t t-esc="o[0]"></t></td>
+                            <td class="text-center"><t t-esc="o[0]"></t></td>
                             <td><t t-esc="o[1]"></t></td>
                             <td class="text-center"><t t-esc="o[2]"></t></td>
                             <td class="number"><span>$</span><t t-esc="o[3]"></t></td>
