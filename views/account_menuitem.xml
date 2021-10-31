@@ -351,7 +351,7 @@
 
         <!-- TODO: mejorar estas vistas -->
         <menuitem id="menu_account_customer" name="Clientes" action="res_partner_action_customer" sequence="100"/>
-        <menuitem id="product_product_menu_sellable" name="Productos" action="action_sales_products" sequence="110"/>
+        <menuitem id="product_product_menu_sellable" name="Productos de Venta" action="action_sales_products" sequence="110"/>
     </menuitem>
 
     <!-- MENU Facturacion/Compras --> 
@@ -363,6 +363,7 @@
 
         <!-- TODO: mejorar esta vista -->
         <menuitem id="menu_account_supplier" name="Proveedores" action="res_partner_action_supplier" sequence="200"/>
+        <menuitem id="product_product_menu_purchase" name="Productos de Compra" action="action_purchases_products" sequence="210"/>
     </menuitem>
 
     <!-- MENU Facturacion/Contabilidad  -->
@@ -686,11 +687,15 @@
         <menuitem id="menu_admin_import_pem" name="Archivos PEM Importados" 
             sequence="5" action="action_admin_import_pem" />
 
+        <!-- TODO: borrar este menu -->
         <menuitem id="menu_admin_apocrifos" name="CUITs Apócrifos" 
             sequence="6" action="action_admin_apocrifos" />
 
         <menuitem id="menu_admin_apocrifos_wizard" name="Buscar Facturas Apócrifas" 
             sequence="7" action="action_admin_apocrifos_wizard" />
+
+        <menuitem id="menu_admin_actividades_afip" name="Actividades AFIP"
+            sequence="8" action="action_configuration_actividades_afip" />
 
     </menuitem>
 

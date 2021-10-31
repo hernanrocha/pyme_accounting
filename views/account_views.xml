@@ -7,6 +7,7 @@
         <field name="model">account.tax</field>
         <field name="arch" type="xml">
             <tree string="Impuestos" create="false">
+                <field name="active" widget="boolean_toggle" />
                 <field name="display_name" />
                 <field name="type_tax_use" />
                 <field name="tax_group_id" />
@@ -230,6 +231,17 @@
         <field name="name">Impuestos</field>
         <field name="res_model">account.tax</field>
         <field name="view_id" ref="view_account_tax_tree" />
+        <field name="view_mode">tree</field>
+        <!-- El valor active_test en false permite mostrar los impuestos deshabilitados -->
+        <field name="context">{ 'active_test': False, 'search_default_active': 1 }</field>
+        <field name="domain">[]</field>
+    </record>
+
+    <!-- TODO: mover a un archivo propio -->
+    <record id="action_configuration_actividades_afip" model="ir.actions.act_window">
+        <field name="name">Actividades AFIP</field>
+        <field name="res_model">l10n_ar.afip.actividad</field>
+        <!-- <field name="view_id" ref="view_account_tax_tree" /> -->
         <field name="view_mode">tree</field>
     </record>
 

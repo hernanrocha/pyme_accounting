@@ -8,9 +8,17 @@
         <field name="arch" type="xml">
     
             <notebook position="after">
-                <field name="available_afip_activity_ids" invisible="1" />
-                <!-- TODO: hacer invisible para compras -->
-                <field name="afip_activity_id" domain="[('id','in', available_afip_activity_ids)]" />
+                <group>
+                    <!-- Ventas -->
+                    <field name="available_afip_activity_ids" invisible="1" />
+                    <field name="afip_activity_id" 
+                        domain="[('id','in', available_afip_activity_ids)]" 
+                        attrs="{'invisible': [('sale_ok', '=', False)]}" />
+
+                    <!-- Compras -->
+                    <field name="afip_f2002_category" 
+                        attrs="{'invisible': [('purchase_ok', '=', False)]}" />
+                </group>
             </notebook>
 
         </field>
@@ -36,6 +44,15 @@
     <!-- VENTAS - PRODUCTOS - WINDOW ACTION -->
     <record id="action_sales_products" model="ir.actions.act_window">
         <field name="name">Productos de Venta</field>
+        <field name="res_model">product.product</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="pyme_accounting.view_sales_products_tree" />
+        <field name="target">main</field>
+    </record>
+
+    <!-- COMPRAS - PRODUCTOS - WINDOW ACTION -->
+    <record id="action_purchases_products" model="ir.actions.act_window">
+        <field name="name">Productos de Compra</field>
         <field name="res_model">product.product</field>
         <field name="view_mode">tree,form</field>
         <field name="view_id" ref="pyme_accounting.view_sales_products_tree" />

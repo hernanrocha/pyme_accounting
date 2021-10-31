@@ -82,9 +82,9 @@ class ImpuestosDeduccion(models.Model):
         # IVA
         
         # 493 - REG.PER.AL VALOR AGREGADO - EMPRESAS PROVEEDORAS.
-        ('iva_percepcion', 'Percepción'),
+        ('iva_percepcion', 'Percepción IVA'),
         # Not used yet
-        ('iva_retencion', 'Retención'),
+        ('iva_retencion', 'Retención IVA'),
     ], 'Tipo de Deducción')
     # Regimen
     tax = fields.Selection([

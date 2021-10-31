@@ -419,6 +419,9 @@ class PurchaseImportDeduccionesArba(models.TransientModel):
 
                 _logger.info("NewNew Total: {}".format(comp.amount_total))
 
+                # Actualizar valor de los pagos para agregar IIBB 
+                comp._recompute_payment_terms_lines()
+
                 # Volver al estado confirmado
                 if posted:
                     comp.action_post()

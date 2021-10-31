@@ -16,6 +16,19 @@
         </field>
     </record>
 
+    <record id="view_import_sale_pem_product" model="ir.ui.view">
+        <field name="name">l10n_ar.import.sale.pem.product.form</field>
+        <field name="model">l10n_ar.import.sale.pem.product</field>
+        <field name="arch" type="xml">
+            <form string="Editar Producto">
+                <group col="2">
+                    <field name="name" />
+                    <field name="tax_id" />
+                </group>
+            </form>
+        </field>
+    </record>
+
     <record id="view_import_sale_pem_f8011_line" model="ir.ui.view">
         <field name="name">l10n_ar.import.sale.pem.line.form</field>
         <field name="model">l10n_ar.import.sale.pem.line</field>
@@ -111,6 +124,17 @@
                     <field name="f8010_pos" invisible="1" />
 
                     <page string="F8010" attrs="{'invisible': [('f8010_pos', '=', 0)]}">
+                        <h3>Productos</h3>
+                        
+                        <field name="products">
+                            <tree>
+                                <field name="name" />
+                                <field name="tax_id" />
+                            </tree>
+                        </field>
+
+                        <h3>Listado de Items</h3>
+
                         <field name="f8010_invoice_ids" mode="tree" widget="section_and_note_one2many" readonly="1">
                             <tree editable="0">
                                 <field name="number" />

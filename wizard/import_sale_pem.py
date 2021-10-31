@@ -85,6 +85,15 @@ class SaleImportPemF8010Grouped(models.Model):
     pem_id = fields.Many2one(comodel_name="l10n_ar.import.sale.pem", ondelete="cascade", invisible=True)
 
 class SaleImportPemF8010Line(models.Model):
+    _name= "l10n_ar.import.sale.pem.product"
+    _description = "Producto encontrado en Controlador Fiscal PEM F8010"
+
+    name = fields.Char(string="Nombre")
+    tax_id = fields.Many2one(comodel_name="account.tax", string="IVA")
+
+    pem_id = fields.Many2one(comodel_name="l10n_ar.import.sale.pem", ondelete="cascade", invisible=True)
+
+class SaleImportPemF8010Line(models.Model):
     _name = "l10n_ar.import.sale.pem.f8010.line"
     _description = "Linea de comprobante de Controlador Fiscal PEM F8010"
 
@@ -189,6 +198,8 @@ class SaleImportPEM(models.Model):
     f8012_display = fields.Boolean(string="Mostrar F8012")
     f8012_start_date = fields.Date(string="Fecha Desde", readonly=True)
     f8012_end_date = fields.Date(string="Fecha Hasta", readonly=True)
+
+    products = fields.One2many(string="Productos", comodel_name="l10n_ar.import.sale.pem.product", inverse_name="pem_id")
 
     @api.depends('invoice_ids', 'invoice_ids.tax_6')
     def _compute_f8011_total_tax_6(self):
@@ -683,6 +694,14 @@ class SaleImportPEM(models.Model):
                         'total': tot,
                         'pem_id': self.id
                     })
+
+            # Cargar lista de productos
+            products = list(dict.fromkeys(self.f8010_invoice_ids.mapped('description')))
+            for p in products:
+                self.products.create({
+                    'name': p,
+                    'pem_id': self.id
+                })
 
     @api.depends('f8012_file')
     def compute_f8012(self):
