@@ -53,6 +53,7 @@
         # TODO: Mover a un modulo diferente
         'iva/move_view.xml',
         'iva/account_vat_report_view.xml',
+        'iva/iva_2002.xml',
 
         # Security Records
         'security/ir.model.access.csv',
@@ -65,6 +66,7 @@
         'views/account_views.xml',
         'views/account_move_views.xml',
         'views/product_views.xml',
+        'views/report_monotributo.xml',
 
         # Empresas - Importar
         'wizard/import_purchase_excel.xml',
@@ -84,6 +86,7 @@
         # Reports
         'report/basic_report.xml',
         'report/report_iva_f2002.xml',
+        'report/monotributo.xml',
         # 'views/report_iibb.xml', # Asientos contables relacionados con IIBB
 
         # Menu - Mi Estudio
@@ -98,6 +101,7 @@
         'views/account_menuitem.xml',
 
         # Cross-Company Data
+        "data/nano.monotributo.categoria.csv",
         "data/l10n_ar.afip.actividad.csv",
         "data/l10n_ar.afip.cuit.apocrifo.csv",
         "data/l10n_latam.document.type.csv",
@@ -111,7 +115,7 @@
     ],
     'images': [], # 'static/description/banner.png'
     'qweb': [
-        'static/src/xml/base.xml'
+        'static/src/xml/base.xml',
     ],
     'application': True,
     # 'active': True, # This indicates whether this module must install automatically or not.

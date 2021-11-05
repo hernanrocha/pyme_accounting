@@ -2,6 +2,9 @@
 
 from odoo import api, fields, models, _
 import locale
+import logging
+
+_logger = logging.getLogger(__name__)
 
 # Define locale es_AR
 def _temp_localeconv(lc=locale.localeconv()):
@@ -117,6 +120,25 @@ categories = [
 # WARN: para facturas, filtrar state=posted (o draft)
 # WARN: para facturas, usar amount_total_signed para no mezclar facturas y notas de credito (o separarlas)
 
+class ReportMonotributoCategoria(models.Model):
+    _name = 'nano.monotributo.categoria'
+
+    name = fields.Char(string="Letra")
+    maximo_facturacion = fields.Float(string="Máximo de Facturación")
+    pago_servicios = fields.Float(string="Pago (Servicios)")
+    pago_bienes = fields.Float(string="Pago (Bienes)")
+
+class ReportMonotributoMes(models.TransientModel):
+    _name = 'report.nano.monotributo.mes'
+
+    mes = fields.Char(string="Mes")
+    ventas = fields.Float(string="Ventas")
+    compras = fields.Float(string="Compras")
+    resultado = fields.Float(string="Resultado")
+
+    report_id = fields.Many2one(comodel_name="report.nano.monotributo", 
+        ondelete="cascade", readonly=True, invisible=True)
+
 # Valores move_type en account.move:
 #   entry        - Asiento contable
 #   out_invoice  - Factura de cliente
@@ -125,13 +147,124 @@ categories = [
 #   in_refund    - Factura rectificativa de proveedor
 #   out_receipt  - Recibo de ventas
 #   in_receipt   - Recibo de compra
-class ReportMonotributoMensual(models.AbstractModel):
-    _name = 'report.pyme_accounting.report_payslip'
+class ReportMonotributoMensual(models.TransientModel):
+    _name = 'report.nano.monotributo'
+
+    # TODO: agregar boton de descargar en pdf
+    # TODO: no mostrar popup de "form" para la relacion
+
+    include_draft = fields.Boolean(string="Incluir Comprobantes en Borrador")
+
+    # def _compute_categorias_monotributo(self):
+    #     self.category_ids = self.env['nano.monotributo.categoria'].search([])
+
+    @api.depends('include_draft')
+    def _compute_month_line_ids(self):
+        states = ['draft', 'posted'] if self.include_draft else ['posted']
+        
+        moves = self.env['account.move'].read_group(
+            # domain
+            [ 
+                ('company_id', '=', self.env.company.id),
+                ('move_type', 'in', [ 'in_invoice', 'in_refund', 'out_invoice', 'out_refund' ]),
+                ('state', 'in', states)
+            ], 
+            # fields
+            [ 'amount_total:sum' ],
+            # groupby
+            [ 'invoice_date:month', 'move_type' ],
+            # lazy: do all groupbys in one call.
+            lazy=False
+        )
+
+        self.month_line_ids = [(5,0,0)]
+
+        data = {}
+
+        for m in moves:
+            # Cargar por primera vez una linea de mes
+            # TODO: cargar automaticamente los ultimos 12 meses
+            if not m['invoice_date:month'] in data:
+                data[m['invoice_date:month']] = {
+                    'date': m['invoice_date:month'],
+                    'out_invoice': 0,
+                    'in_invoice': 0,
+                    'out_refund': 0,
+                    'in_refund': 0
+                }
+            
+            data[m['invoice_date:month']][m['move_type']] = m['amount_total']
+
+        t_sales = 0
+        # t_purchases = 0
+        # t_balance = 0
+        
+        for d in data.items():
+            ventas = d[1]['out_invoice'] - d[1]['out_refund']
+            compras = d[1]['in_invoice'] - d[1]['in_refund']
+            self.env['report.nano.monotributo.mes'].create({
+                'mes': d[0],
+                'ventas': ventas,
+                'compras': compras,
+                'resultado': ventas - compras,
+                'report_id': self.id
+            })
+
+            # Agregar a totales
+            t_sales += ventas
+            # t_purchases += compras
+            # t_balance += ventas - compras
+
+        # Actualizar Facturacion Total
+        self.facturacion_anual = t_sales
+
+    @api.depends('facturacion_anual')
+    def _compute_categoria(self):
+        # TODO: chequear si se pasa a responsable inscripto
+        # TODO: chequear si matchea con lo cargado en el sistema
+        for c in categories:
+            facturacion_anual = c['max_invoice']
+            
+            # Si está dentro del limite de facturación, seleccionar esa categoria
+            if facturacion_anual > self.facturacion_anual:
+                self.categoria = c['char']
+                self.maximo_facturacion = facturacion_anual
+                self.pago_mensual = c['service_payment']
+                return
+
+    # category_ids = fields.One2many(string="Categorías Monotributo", 
+    #     comodel_name="nano.monotributo.categoria",
+    #     compute=_compute_categorias_monotributo)
+
+    month_line_ids = fields.One2many(string="Reporte Mensual", 
+        comodel_name="report.nano.monotributo.mes", 
+        inverse_name="report_id",
+        compute=_compute_month_line_ids)
+    facturacion_anual = fields.Float(string="Facturación Anual", 
+        compute=_compute_month_line_ids)
+
+    maximo_facturacion = fields.Float(string="Máximo de Facturación",
+        compute=_compute_categoria)
+    pago_mensual = fields.Float(string="Pago Mensual",
+        compute=_compute_categoria)
+    categoria = fields.Char(string="Categoría",
+        compute=_compute_categoria)
+
+    def action_show_categories(self):
+        return {
+            'name': 'Categorías Monotributo',
+            'type': 'ir.actions.act_window',
+            'view_mode': 'tree',
+            'res_model': 'nano.monotributo.categoria',
+            'target': 'new',
+            'context': self._context.copy(),
+        }
+
+    def action_print_report(self):
+        pass
 
     def _get_report_values(self, docids, data=None):
         print("REPORTE", docids, data)
-
-        moves = self.env['account.move'].browse(docids)
 
         # https://www.odoo.com/documentation/14.0/es/developer/reference/orm.html#odoo.models.Model.read_group
         # Devuelve: {

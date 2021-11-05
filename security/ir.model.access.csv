@@ -41,9 +41,15 @@ security_impuestos_deduccion,Listado de Deducciones,model_l10n_ar_impuestos_dedu
 
 security_user_company,Manejo de Compañias,model_res_company,account.group_account_manager,1,1,1,1
 
-security_report_monotributo,Reporte Mensual de Monotributo,model_report_pyme_accounting_report_payslip,account.group_account_manager,1,1,1,1
+security_report_monotributo,Reporte Mensual de Monotributo,model_report_nano_monotributo,account.group_account_manager,1,1,1,1
+security_report_monotributo_mes,Reporte Mensual de Monotributo Mes,model_report_nano_monotributo_mes,account.group_account_manager,1,1,1,1
 security_report_iva_f2002,Reporte de IVA F.2002,model_report_pyme_accounting_report_iva_f2002,account.group_account_manager,1,1,1,1
+security_report_iva_f2002_debito_ventas,Reporte de IVA F.2002 Debito Ventas,model_report_pyme_accounting_report_iva_f2002_debito_ventas,account.group_account_manager,1,1,1,1
+security_report_iva_f2002_debito_nc_rec,Reporte de IVA F.2002 NC Recibidas,model_report_pyme_accounting_report_iva_f2002_debito_nc_rec,account.group_account_manager,1,1,1,1
+security_report_iva_f2002_credito_compras,Reporte de IVA F.2002 Credito Compras,model_report_pyme_accounting_report_iva_f2002_credito_compras,account.group_account_manager,1,1,1,1
+security_report_iva_f2002_credito_nc_emitidas,Reporte de IVA F.2002 NC Emitidas,model_report_pyme_accounting_report_iva_f2002_credito_nc_emitidas,account.group_account_manager,1,1,1,1
 
+security_monotributo_categoria,Categoria Monotributo,model_nano_monotributo_categoria,account.group_account_manager,1,0,0,0
 security_afip_actividad,Actividad AFIP,model_l10n_ar_afip_actividad,account.group_account_manager,1,0,0,0
 security_afip_apocrifos,CUITS Apocrifos,model_l10n_ar_afip_cuit_apocrifo,account.group_account_manager,1,0,0,0
 security_afip_apocrifos_wizard,Wizard CUITS Apocrifos,model_l10n_ar_afip_cuit_apocrifo_wizard,account.group_account_manager,1,1,1,1

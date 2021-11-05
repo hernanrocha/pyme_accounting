@@ -15,10 +15,8 @@ _logger = logging.getLogger(__name__)
 # TODO: separar las ventas por actividad
 class IngresosBrutosArbaWizard(models.Model):
     _name = "l10n_ar.iibb.arba.wizard"
+    _inherit = [ 'report.pyme_accounting.base' ]
     _description = 'Reporte de Ingresos Brutos ARBA'
-
-    iibb_report_date_from = fields.Date(string="Fecha Desde", default=lambda self: self._default_date_from())
-    iibb_report_date_to = fields.Date(string="Fecha Hasta", default=lambda self: self._default_date_to())
 
     # Determinacion del impuesto
     iibb_report_sale_total = fields.Float(string="Total de Ventas")
@@ -48,37 +46,59 @@ class IngresosBrutosArbaWizard(models.Model):
     iibb_devoluciones_bancarias = fields.Many2many(comodel_name="l10n_ar.impuestos.deduccion",
         relation="l10n_ar_iibb_arba_devoluciones_bancarias")
 
+    move_id = fields.Many2one(comodel_name="account.move",
+        string="Asiento Generado", ondelete="cascade")
+    line_ids = fields.One2many('account.move.line', related="move_id.line_ids")
+
     def generate_iibb(self):
         # TODO: Mostrar una seccion con las facturas en borrador
 
         journal_taxes = self.env['account.journal'].search([
             ('name', '=', 'Impuestos')
         ])
+        if not journal_taxes:
+            # TODO: permitir crear diarios
+            journal_taxes = self.env['account.journal'].sudo().create({
+                'company_id': self.company_id.id,
+                'name': 'Impuestos',
+                'type': 'general',
+                'code': 'IMP',
+            })
+        # TODO: buscar por codigo y no por nombre
         account_iibb = self.env['account.account'].search([
             # TODO: hacer dependiente de la compañia
             ('company_id', '=', self.env.company.id),
-            ('name', '=', 'IIBB Prov. Bs. As.')
+            ('name', '=', 'IIBB ARBA')
         ])
         account_percepciones = self.env['account.account'].search([
             # TODO: hacer dependiente de la compañia
             ('company_id', '=', self.env.company.id),
-            ('name', '=', 'Percepción IIBB p. Buenos Aires sufrida')
+            ('name', '=', 'Percepción IIBB Buenos Aires sufrida')
         ])
         account_saldo_a_favor = self.env['account.account'].search([
             # TODO: hacer dependiente de la compañia
             ('company_id', '=', self.env.company.id),
-            ('name', '=', 'Saldo a favor IIBB p. Buenos Aires')
+            ('name', '=', 'Saldo a favor IIBB Buenos Aires')
         ])
+        _logger.info("Cuentas: {} - {} - {}".format(account_iibb, account_percepciones, account_saldo_a_favor))
 
         # TODO: crear asiento a pagar
-        move = self.env['account.move'].create({
-            'ref': 'Devengacion de IIBB',
-            'date': self.iibb_report_date_to,
-            'journal_id': journal_taxes.id
-        })
+        if not self.move_id:
+            self.move_id = self.env['account.move'].create({
+                'state': 'draft',
+                'ref': 'Devengacion de IIBB',
+                'date': self.date_to,
+                'journal_id': journal_taxes.id
+            })
+        else:
+            self.move_id.write({ 
+                'date': self.date_to 
+            })
 
+
+        self.move_id.line_ids = [(5,0,0)]
         if self.iibb_report_tax_total_to_pay > 0:
-            move.write({
+            self.move_id.write({
                 'line_ids': [
                     # Impuesto IIBB
                     (0, 0, { 'account_id': account_iibb.id, 'debit': self.iibb_report_tax_subtotal }),
@@ -97,7 +117,7 @@ class IngresosBrutosArbaWizard(models.Model):
                 ]
             })
         else:
-            move.write({
+            self.move_id.write({
                 'line_ids': [
                     # Impuesto IIBB
                     (0, 0, { 'account_id': account_iibb.id, 'debit': self.iibb_report_tax_subtotal }),
@@ -115,17 +135,6 @@ class IngresosBrutosArbaWizard(models.Model):
                     (0, 0, { 'account_id': account_saldo_a_favor.id, 'credit': -self.iibb_report_tax_prev_saldo }),
                 ]
             })
-
-        return {
-            'context': self.env.context,
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'account.move',
-            'res_id': move.id,
-            'view_id': False,
-            'type': 'ir.actions.act_window',
-            'target': 'main',
-        }
 
     def calculate_iibb(self):
         # TODO: tener en cuenta notas de credito/debito
@@ -155,31 +164,31 @@ class IngresosBrutosArbaWizard(models.Model):
         # Calcular percepciones
         self.iibb_percepciones = self.env['l10n_ar.impuestos.deduccion'].search([
             ('type', '=', 'arba_percepcion'),
-            ('date', '>=', self.iibb_report_date_from),
-            ('date', '<=', self.iibb_report_date_to),
+            ('date', '>=', self.date_from),
+            ('date', '<=', self.date_to),
         ])
 
         # Calcular retenciones
         # TODO: filtrar por compañia y por fecha
         self.iibb_retenciones = self.env['l10n_ar.impuestos.deduccion'].search([
             ('type', '=', 'arba_retencion'),
-            ('date', '>=', self.iibb_report_date_from),
-            ('date', '<=', self.iibb_report_date_to),            
+            ('date', '>=', self.date_from),
+            ('date', '<=', self.date_to),            
         ])
 
         # Calcular retenciones bancarias
         # TODO: filtrar por compañia y por fecha
         self.iibb_retenciones_bancarias = self.env['l10n_ar.impuestos.deduccion'].search([
             ('type', '=', 'arba_retencion_bancaria'),
-            ('date', '>=', self.iibb_report_date_from),
-            ('date', '<=', self.iibb_report_date_to),
+            ('date', '>=', self.date_from),
+            ('date', '<=', self.date_to),
         ])
         
         # Calcular devoluciones bancarias
         self.iibb_devoluciones_bancarias = self.env['l10n_ar.impuestos.deduccion'].search([
             ('type', '=', 'arba_devolucion_bancaria'),
-            ('date', '>=', self.iibb_report_date_from),
-            ('date', '<=', self.iibb_report_date_to),
+            ('date', '>=', self.date_from),
+            ('date', '<=', self.date_to),
         ])
 
         saldo_a_favor = self.env['account.move.line'].read_group([
@@ -192,8 +201,8 @@ class IngresosBrutosArbaWizard(models.Model):
         in_invoices = self.env['account.move'].search([
             ('move_type', '=', 'in_invoice'),
             ('state', '=', 'posted'),
-            ('date', '>=', self.iibb_report_date_from),
-            ('date', '<=', self.iibb_report_date_to)
+            ('date', '>=', self.date_from),
+            ('date', '<=', self.date_to)
         ])
         print(len(in_invoices), in_invoices)
 
@@ -203,8 +212,8 @@ class IngresosBrutosArbaWizard(models.Model):
         out_invoices = self.env['account.move'].search([
             ('move_type', '=', 'out_invoice'),
             ('state', '=', 'posted'),
-            ('date', '>=', self.iibb_report_date_from),
-            ('date', '<=', self.iibb_report_date_to)
+            ('date', '>=', self.date_from),
+            ('date', '<=', self.date_to)
         ])
         print(len(out_invoices), out_invoices)
 
@@ -229,17 +238,7 @@ class IngresosBrutosArbaWizard(models.Model):
 
         # TODO: agregar "intereses al generar el pago"
 
-        # TODO: crear helper para mantenerse en la misma ventana o revisar los recalculate existentes
-        return {
-            'context': self.env.context,
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'l10n_ar.iibb.arba.wizard',
-            'res_id': self.id,
-            'view_id': False,
-            'type': 'ir.actions.act_window',
-            'target': 'new',
-        }
+        self.generate_iibb()
 
     def _compute_iibb_company_tax_percentage(self):
         for p in self:
@@ -297,16 +296,3 @@ class IngresosBrutosArbaWizard(models.Model):
             saldo = p.iibb_report_tax_subtotal + p.iibb_report_tax_prev_saldo + p.iibb_report_deducciones
             if saldo > 0:
                 p.iibb_report_tax_total_to_pay = saldo
-
-    def _default_date_from(self):
-        today = datetime.date.today()
-        first = today.replace(day=1)
-        last_month_end = first - datetime.timedelta(days=1)
-        last_month_start = last_month_end.replace(day=1)
-        return last_month_start
-
-    def _default_date_to(self):
-        today = datetime.date.today()
-        first = today.replace(day=1)
-        last_month_end = first - datetime.timedelta(days=1)
-        return last_month_end

@@ -1,0 +1,36 @@
+<odoo>
+
+    <record id="action_taxes_report_monotributo_anual" model="ir.actions.client">
+       <field name="name">Monotributo Ultimos 12 Meses</field>
+       <field name="tag">report_monotributo_anual</field>
+       <field name="target">main</field>
+    </record>
+
+    <record id="action_taxes_report_monotributo_anual_3" model="ir.actions.act_window">
+        <field name="name">Reporte Monotributo</field>
+        <field name="res_model">report.nano.monotributo</field>
+        <field name="view_mode">form</field>
+        <field name="target">main</field>
+    </record>
+
+    <record model='ir.ui.view' id='view_taxes_monotributo_categorias_tree'>
+        <field name='name'>Categorías Monotributo</field>
+        <field name="model">nano.monotributo.categoria</field>
+        <field name='arch' type='xml'>
+            <tree string="Categorías Monotributo" js_class="list_monotributo">
+                <field name="name" />
+                <field name="maximo_facturacion" />
+                <field name="pago_servicios" />
+                <field name="pago_bienes" />    
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_taxes_monotributo_categorias" model="ir.actions.act_window">
+        <field name="name">Categorías Monotributo</field>
+        <field name="res_model">nano.monotributo.categoria</field>
+        <field name="view_mode">tree</field>
+        <field name="target">main</field>
+    </record>
+    
+</odoo>

@@ -1,0 +1,146 @@
+<odoo>
+
+    <record model='ir.ui.view' id='view_reports_afip_f2002_tree'>
+        <field name='name'>Formulario IVA 2002</field>
+        <field name="model">report.pyme_accounting.report_iva_f2002</field>
+        <field name='arch' type='xml'>
+            <tree string="Formulario IVA 2002">
+                <field name="name"/>
+                <!-- <field name="company_id" groups="base.group_multi_company"/> -->
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="state" />
+            </tree>
+        </field>
+    </record>
+
+    <record model='ir.ui.view' id='view_reports_afip_f2002_form'>
+        <field name='name'>Formulario IVA 2002</field>
+        <field name="model">report.pyme_accounting.report_iva_f2002</field>
+        <field name='arch' type='xml'>
+            <form string="Formulario IVA 2002">
+                <header>
+                    <!-- <button name="action_present" string="Presentar" states="draft" type="object" class="oe_highlight"/>
+                    <button name="action_cancel" string="Cancelar" states="draft,presented" type="object"/>
+                    <button name="action_to_draft" string="Cambiar a Borrador" states="cancel" type="object"/> -->
+                    <field name="state" widget="statusbar" statusbar_visible="draft,presented"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only" />
+                        <h1>
+                            <field name="name" id="name" />
+                        </h1>
+                    </div>
+                    <group>
+                        <field name="company_id" widget="selection" groups="base.group_multi_company" invisible="1" />
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                        <!-- <field name="presented_ledger_name" invisible="1"/> -->
+                        <!-- <field name="presented_ledger" filename="presented_ledger_name"/> -->
+                        <!-- <field name="reference"/> -->
+                    </group>
+                    <button name="button_compute" class="btn btn-primary" type="object" string="Generar Información" states="draft"/>
+                    <notebook>
+                        <page string="Resumen">
+                            <h2>Liquidación</h2>
+                            <group cols="2">
+                                <field name="total_debito" />
+                                <field name="total_credito" />
+                                <field name="saldo_anterior"/>
+                                
+                                <separator />
+                                
+                                <field name="saldo_libre_afip" class="font-weight-bold"
+                                    attrs="{'invisible': [('saldo_libre_afip', '&lt;=', 0)]}" />
+                                <field name="saldo_libre_responsable" class="font-weight-bold"
+                                    attrs="{'invisible': [('saldo_libre_responsable', '&lt;', 0)]}"/>
+
+                                <separator />
+
+                                <field name="ingresos_retenciones" />
+                                <field name="ingresos_percepciones" />
+
+                                <separator />
+
+                                <field name="saldo_total_afip" class="font-weight-bold text-danger"
+                                    attrs="{'invisible': [('saldo_total_afip', '&lt;=', 0)]}" />
+                                <field name="saldo_total_responsable" class="font-weight-bold text-success"
+                                        attrs="{'invisible': [('saldo_total_responsable', '&lt;', 0)]}" />
+                            </group>
+                        </page>
+
+                        <page string="Débito Fiscal">
+                            <h2>Ventas</h2>
+                            <field name="debito_ventas">
+                                <tree>
+                                    <field name="actividad" />
+                                    <field name="operaciones_con" />
+                                    <field name="tasa_iva" />
+                                    <field name="neto" sum="Total" />
+                                    <field name="iva" sum="Total" />
+                                    <field name="total" sum="Total" />
+                                </tree>
+                            </field>
+
+                            <h2>Notas de Crédito Recibidas</h2>
+                            <field name="debito_nc_recibidas">
+                                <tree>
+                                    <field name="categoria" />
+                                    <field name="tasa_iva" />
+                                    <field name="neto" sum="Total" />
+                                    <field name="iva" sum="Total" />
+                                    <field name="total" sum="Total" />
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <page string="Crédito Fiscal">
+                            <h2>Compras</h2>
+                            <field name="credito_compras">
+                                <tree>
+                                    <field name="categoria" />
+                                    <field name="tasa_iva" />
+                                    <field name="neto" sum="Total" />
+                                    <field name="iva" sum="Total" />
+                                    <field name="total" sum="Total" />
+                                </tree>
+                            </field>
+                            
+                            <h2>Notas de Crédito Emitidas</h2>
+                            <field name="credito_nc_emitidas">
+                                <tree>
+                                    <field name="actividad" />
+                                    <field name="operaciones_con" />
+                                    <field name="tasa_iva" />
+                                    <field name="neto" sum="Total" />
+                                    <field name="iva" sum="Total" />
+                                    <field name="total" sum="Total" />
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Retenciones">
+                            <h2>Retenciones</h2>
+                        </page>
+
+                        <page string="Percepciones">
+                            <h2>Percepciones</h2>
+                        </page>
+
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_reports_afip_f2002" model="ir.actions.act_window">
+        <field name="name">Formulario IVA 2002</field>
+        <field name="res_model">report.pyme_accounting.report_iva_f2002</field>
+        <!-- <field name="context">{'default_type':'sale'}</field> -->
+        <field name="domain">[('company_id','=',allowed_company_ids[0])]</field>
+    </record>
+
+
+
+</odoo>

@@ -8,6 +8,7 @@ from ast import literal_eval
 import base64
 import logging
 import re
+import datetime
 
 _logger = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ def format_iva(code):
     }
     return codes[code]
 
-def split_iva_ventas(lines, activity_code, label):
+def split_iva_new(lines, activity_code, label):
     # Filtrar solo las lineas que aplican al IVA
     # No tiene en cuenta percepciones
     t = list(filter(lambda x: x, lines.mapped('tax_ids.l10n_ar_vat_afip_code')))
@@ -63,9 +64,14 @@ def split_iva_ventas(lines, activity_code, label):
         
         # Para evitar problemas de redondeo, primero se calculan los IVAs individuales,
         # y luego se suman los montos para obtener los totales
-        current = list(map(current_tax.compute_all, current_lines.mapped('price_total')))
-        base = sum(map(lambda c: c['taxes'][0]['base'], current))
-        iva = sum(map(lambda c: c['taxes'][0]['amount'], current))
+        # current_total = sum(current_lines.mapped('price_total'))
+        # current_subtotal = sum(current_lines.mapped('price_subtotal'))
+        # current_total = list(map(current_tax.compute_all, current_lines.mapped('price_total')))
+        # price_total incluye las percepciones de IIBB (y con 1 peso, las que estan mal)
+        current_subtotal = list(map(current_tax.compute_all, current_lines.mapped('price_subtotal')))
+        # current = current_total if current_tax.price_include else current_subtotal
+        base = sum(map(lambda c: c['taxes'][0]['base'], current_subtotal))
+        iva = sum(map(lambda c: c['taxes'][0]['amount'], current_subtotal))
 
         lines_2002.append([ 
             activity_code,
@@ -83,6 +89,12 @@ def filter_by_activity(lines, activity_id):
     else:
         return lines.filtered(lambda l: not l.product_id or not l.product_id.afip_activity_id)
 
+def filter_by_category(lines, category):
+    if category:
+        return lines.filtered(lambda l: l.product_id and l.product_id.afip_f2002_category == category)
+    else:
+        return lines.filtered(lambda l: not l.product_id or not l.product_id.afip_f2002_category)
+
 def split_iva(vat_taxes, label):
     # Filtrar solo las lineas que aplican al IVA
     # No tiene en cuenta percepciones
@@ -93,8 +105,6 @@ def split_iva(vat_taxes, label):
     for afip_code in t:
         taxes = vat_taxes.filtered(lambda x: x.tax_group_id.l10n_ar_vat_afip_code == afip_code)
         
-        # TODO: factura en otra moneda
-
         # Factura en pesos
         imp_neto = sum(taxes.mapped('tax_base_amount'))
         imp_liquidado = sum(taxes.mapped('price_subtotal'))
@@ -169,45 +179,229 @@ def taxed_line_new(line):
 #   'total_void': 413.22
 # }
 
+class ReportBase(models.Model):
+    _name = 'report.pyme_accounting.base'
+
+    company_id = fields.Many2one(
+        'res.company',
+        string='Empresa',
+        required=True,
+        readonly=True,
+        default=lambda self: self.env['res.company']._company_default_get('account.vat.ledger')
+    )
+    type = fields.Selection(
+        [('sale', 'Venta'), ('purchase', 'Compra')],
+        "Type",
+        # required=True
+    )
+    date_from = fields.Date(string='Fecha Desde', required=True, readonly=True,
+        default=lambda self: self._default_date_from(),
+        states={'draft': [('readonly', False)]})
+    date_to = fields.Date(string='Fecha Hasta', required=True, readonly=True,
+        default=lambda self: self._default_date_to(),
+        states={'draft': [('readonly', False)]})
+    state = fields.Selection(
+        [('draft', 'Borrador'), ('presented', 'Presentado'), ('cancel', 'Cancelado')],
+        'Estado',
+        required=True,
+        default='draft'
+    )
+    note = fields.Html("Notas")
+    # Computed fields
+    name = fields.Char('Nombre') # compute='_compute_name'
+
+    def _default_date_from(self):
+        today = datetime.date.today()
+        first = today.replace(day=1)
+        last_month_end = first - datetime.timedelta(days=1)
+        last_month_start = last_month_end.replace(day=1)
+        return last_month_start
+
+    def _default_date_to(self):
+        today = datetime.date.today()
+        first = today.replace(day=1)
+        last_month_end = first - datetime.timedelta(days=1)
+        return last_month_end
+
+class ReportIvaF2002DebitoVentas(models.Model):
+    _name = 'report.pyme_accounting.report_iva_f2002.debito_ventas'
+
+    actividad = fields.Char(string="Actividad")
+    operaciones_con = fields.Char(string="Operaciones con...")
+    tasa_iva = fields.Char(string="Tasa IVA")
+    neto = fields.Float(string="Monto Neto")
+    iva = fields.Float(string="Monto IVA")
+    total = fields.Float(string="Monto Total")
+
+    report_id = fields.Many2one(comodel_name="report.pyme_accounting.report_iva_f2002", 
+        ondelete="cascade", invisible=True)
+
+class ReportIvaF2002DebitoNCRecibidas(models.Model):
+    _name = 'report.pyme_accounting.report_iva_f2002.debito_nc_rec'
+
+    categoria = fields.Char(string="Categoría")
+    tasa_iva = fields.Char(string="Tasa IVA")
+    neto = fields.Float(string="Monto Neto")
+    iva = fields.Float(string="Monto IVA")
+    total = fields.Float(string="Monto Total")
+
+    report_id = fields.Many2one(comodel_name="report.pyme_accounting.report_iva_f2002", 
+        ondelete="cascade", invisible=True)
+
+class ReportIvaF2002CreditoCompras(models.Model):
+    _name = 'report.pyme_accounting.report_iva_f2002.credito_compras'
+
+    categoria = fields.Char(string="Categoría")
+    tasa_iva = fields.Char(string="Tasa IVA")
+    neto = fields.Float(string="Monto Neto")
+    iva = fields.Float(string="Monto IVA")
+    total = fields.Float(string="Monto Total")
+
+    report_id = fields.Many2one(comodel_name="report.pyme_accounting.report_iva_f2002", 
+        ondelete="cascade", invisible=True)
+
+class ReportIvaF2002CreditoNCEmitidas(models.Model):
+    _name = 'report.pyme_accounting.report_iva_f2002.credito_nc_emitidas'
+
+    actividad = fields.Char(string="Actividad")
+    operaciones_con = fields.Char(string="Operaciones con...")
+    tasa_iva = fields.Char(string="Tasa IVA")
+    neto = fields.Float(string="Monto Neto")
+    iva = fields.Float(string="Monto IVA")
+    total = fields.Float(string="Monto Total")
+
+    report_id = fields.Many2one(comodel_name="report.pyme_accounting.report_iva_f2002", 
+        ondelete="cascade", invisible=True)
+
 class ReportIvaF2002(models.Model):
     _name = 'report.pyme_accounting.report_iva_f2002'
+    _inherit = [ 'report.pyme_accounting.base' ]
 
-    # TODO: cambiar a form para poder editar los fields
+    afip_activity_ids = fields.Many2many('l10n_ar.afip.actividad', related="company_id.afip_activity_ids")
 
-    # iibb_report_date_from = fields.Date(string="Fecha Desde", default='2021-09-01')
-    # iibb_report_date_to = fields.Date(string="Fecha Hasta", default='2021-09-30')
-    # company_id = fields.Many2one(
-    #     'res.company',
-    #     string='Empresa',
-    #     required=True,
-    #     readonly=True,
-    #     default=lambda self: self.env['res.company']._company_default_get('report.pyme_accounting.report_iva_f2002')
-    # )
+    debito_ventas = fields.One2many(string="Ventas", 
+        comodel_name="report.pyme_accounting.report_iva_f2002.debito_ventas", 
+        inverse_name="report_id")
+    # TODO: debito_ventas_bienes
+    debito_nc_recibidas = fields.One2many(string="Notas de Crédito Recibidas", 
+        comodel_name="report.pyme_accounting.report_iva_f2002.debito_nc_rec", 
+        inverse_name="report_id")
+    credito_compras = fields.One2many(string="Compras", 
+        comodel_name="report.pyme_accounting.report_iva_f2002.credito_compras", 
+        inverse_name="report_id")
+    credito_nc_emitidas = fields.One2many(string="Notas de Crédito Emitidas", 
+        comodel_name="report.pyme_accounting.report_iva_f2002.credito_nc_emitidas", 
+        inverse_name="report_id")
+
+    total_debito = fields.Float(string="Total Débito Fiscal")
+    total_credito = fields.Float(string="Total Crédito Fiscal")
+    saldo_anterior = fields.Float(string="Saldo Técnico Período Anterior")
+    saldo_libre_afip = fields.Float(string="Saldo Libre disponibilidad a favor de AFIP")
+    saldo_libre_responsable = fields.Float(string="Saldo Libre disponibilidad a favor del Responsable")
+
+    ingresos_retenciones = fields.Float(string="Retenciones Sufridas")
+    ingresos_percepciones = fields.Float(string="Percepciones Sufridas")
+    # TODO: 'ingresos_acuenta': [],
+    saldo_total_afip = fields.Float(string="Saldo Total a favor de AFIP")
+    saldo_total_responsable = fields.Float(string="Saldo Total a favor del Responsable")
+
+    def button_compute(self):
+        self.debito_ventas = [(5,0,0)]
+        self.credito_nc_emitidas = [(5,0,0)]
+
+        self.credito_compras = [(5,0,0)]  
+        self.debito_nc_recibidas = [(5,0,0)]
+
+        debito_ventas = self.get_ventas(self.get_digital_invoices('out_invoice'))
+        for i in debito_ventas['lines']:
+            self.env['report.pyme_accounting.report_iva_f2002.debito_ventas'].create({
+                'actividad': i[0],
+                'operaciones_con': i[1],
+                'tasa_iva': i[2],
+                'neto': i[3],
+                'iva': i[4],
+                'total': i[5],
+                'report_id': self.id
+            })
+
+        credito_nc_emitidas = self.get_ventas(self.get_digital_invoices('out_refund'))
+        for i in credito_nc_emitidas['lines']:
+            self.env['report.pyme_accounting.report_iva_f2002.credito_nc_emitidas'].create({
+                'actividad': i[0],
+                'operaciones_con': i[1],
+                'tasa_iva': i[2],
+                'neto': i[3],
+                'iva': i[4],
+                'total': i[5],
+                'report_id': self.id
+            })
+        
+        credito_compras = self.get_compras(self.get_digital_invoices('in_invoice'))        
+        for i in credito_compras['lines']:
+            self.env['report.pyme_accounting.report_iva_f2002.credito_compras'].create({
+                'categoria': i[1],
+                'tasa_iva': i[2],
+                'neto': i[3],
+                'iva': i[4],
+                'total': i[5],
+                'report_id': self.id
+            })
+        
+        debito_nc_recibidas = self.get_compras(self.get_digital_invoices('in_refund'))
+        for i in debito_nc_recibidas['lines']:
+            self.env['report.pyme_accounting.report_iva_f2002.debito_nc_rec'].create({
+                'categoria': i[1],
+                'tasa_iva': i[2],
+                'neto': i[3],
+                'iva': i[4],
+                'total': i[5],
+                'report_id': self.id
+            })
+        
+        self.total_debito = float(debito_ventas['total'][1]) + float(debito_nc_recibidas['total'][1])
+        self.total_credito =  float(credito_compras['total'][1]) + float(credito_nc_emitidas['total'][1])
+
+        self.saldo_anterior = 0 # TODO
+        self.saldo_libre_afip = self.total_debito - self.total_credito
+        self.saldo_libre_responsable = -self.saldo_libre_responsable
+
+        self.ingresos_retenciones = 0 # TODO
+        self.ingresos_percepciones = 0 # TODO
+        self.saldo_total_afip = self.total_debito - self.total_credito - self.ingresos_retenciones - self.ingresos_percepciones
+        self.saldo_total_responsable = -self.saldo_total_afip
 
     def _get_report_values(self, docids, data=None):
-        _logger.info("GETTING INFO F.2002")
 
-        _logger.info("COMPROBANTES DE VENTA EMITIDOS")
         debito_ventas = self.get_ventas(self.get_digital_invoices('out_invoice'))
-        _logger.info("NOTAS DE CREDITO EMITIDAS")
         credito_nc_emitidas = self.get_ventas(self.get_digital_invoices('out_refund'))
 
-        # TODO: separar entre: 
-        #   - Compras de bienes, 
-        #   - Locaciones 
-        #   - Prestaciones de servicios
-        #   - Compras de bienes usados 
-        _logger.info("COMPROBANTES DE COMPRA RECIBIDOS")
         credito_compras = self.get_compras(self.get_digital_invoices('in_invoice'))        
-        _logger.info("NOTAS DE CREDITO RECIBIDAS")
         debito_nc_recibidas = self.get_compras(self.get_digital_invoices('in_refund'))
         
+        # Percepciones/Retenciones IVA
+        perc = sum(self.env['l10n_ar.impuestos.deduccion'].search([
+            ('company_id', '=', self.env.company.id),
+            ('type', '=', 'iva_percepcion'),
+            ('state', '=', 'available'),
+            ('date', '>=', '2021-09-01'),
+            ('date', '<=', '2021-09-30')
+        ]).mapped('amount'))
+
+        ret = sum(self.env['l10n_ar.impuestos.deduccion'].search([
+            ('company_id', '=', self.env.company.id),
+            ('type', '=', 'iva_retencion'),
+            ('state', '=', 'available'),
+            ('date', '>=', '2021-09-01'),
+            ('date', '<=', '2021-09-30')
+        ]).mapped('amount'))
+
         # TODO: agregar contribuciones patronales (Total vs Computable)
         # TODO: agregar impuesto al combustible
         # TODO: Cuales son las que no generan credito fiscal???
+        # TODO: revisar condiciones fiscales de los CUITs cargados
 
-        total_debito = float(debito_ventas['total'][2]) + float(debito_nc_recibidas['total'][2])
-        total_credito =  float(credito_compras['total'][2]) + float(credito_nc_emitidas['total'][2])
+        total_debito = float(debito_ventas['total'][1]) + float(debito_nc_recibidas['total'][1])
+        total_credito =  float(credito_compras['total'][1]) + float(credito_nc_emitidas['total'][1])
 
         company_id = self.env['res.company']._company_default_get('report.pyme_accounting.report_iva_f2002')
 
@@ -224,16 +418,16 @@ class ReportIvaF2002(models.Model):
             'operaciones_no_gravadas': [],
             # TODO
             # 'credito_acuenta': [],
-            # TODO
             # Segundo Parrafo
             'total_debito': format_amount(total_debito),
             'total_credito': format_amount(total_credito),
             'saldo_anterior': format_amount(0.0),
             'saldo_libre_afip': total_debito > total_credito,
             'saldo_libre_disp': format_amount(abs(total_credito - total_debito)),
-            'ingresos_retenciones': [],
-            'ingresos_percepciones': [],
+            'ingresos_retenciones': format_amount(ret),
+            'ingresos_percepciones': format_amount(perc),
             'ingresos_acuenta': [],
+            'saldo_total_afip': format_amount(total_credito - total_debito - ret - perc)
         }
 
     def get_digital_invoices(self, move_type):
@@ -251,14 +445,11 @@ class ReportIvaF2002(models.Model):
             order='invoice_date asc')
 
     def get_ventas(self, invoices):
-        _logger.info("Invoices: {}".format(invoices))
-        _logger.info("Afip Resp: {}".format(invoices.mapped('l10n_ar_afip_responsibility_type_id').mapped('code')))
-        
         lines = []
-
         activity_ids = invoices.mapped('invoice_line_ids.product_id.afip_activity_id')
 
         # Obtener las que no tienen actividad y luego separado por actividad
+        # TODO: revisar que no se repita cuando el producto exista pero no tenga categoria
         lines.extend(self._get_ventas(invoices, False))
         for activity_id in activity_ids:
             lines.extend(self._get_ventas(invoices, activity_id))
@@ -280,15 +471,18 @@ class ReportIvaF2002(models.Model):
         return { 'lines': lines, 'total': total }
 
     def get_compras(self, invoices):
-        _logger.info("Invoices: {}".format(invoices))
-        _logger.info("Afip Resp: {}".format(invoices.mapped('l10n_ar_afip_responsibility_type_id').mapped('code')))
-        
         lines = []
 
-        # Responsables inscriptos
+        categories = invoices.mapped('invoice_line_ids.product_id.afip_f2002_category')
+
+        # TODO: borrar esto
+        # Obtener las que no tienen categoria y luego separado por categoria
         lines_all = invoices.mapped('line_ids').filtered(taxed_line)
-        _logger.info("lines_all: {}".format(lines_all))
         lines.extend(split_iva(lines_all, "Compra de Bienes (excepto Bs de Uso)"))
+
+        lines.extend(self._get_compras(invoices, False))
+        for category in categories:
+            lines.extend(self._get_compras(invoices, category))
         
         # Operaciones Gravadas al 0%
         lines_taxed_0 = invoices.mapped('invoice_line_ids').filtered(taxed_0_line)
@@ -296,7 +490,7 @@ class ReportIvaF2002(models.Model):
         if len(lines_taxed_0):
             amount = sum(lines_taxed_0.mapped('price_total'))
             lines.append([ 
-                '000000',
+                '',
                 "Operaciones Gravadas al 0%",
                 "0%",
                 format_amount(amount),
@@ -310,7 +504,7 @@ class ReportIvaF2002(models.Model):
         if len(lines_untaxed_exempt):
             amount = sum(lines_untaxed_exempt.mapped('price_total'))
             lines.append([ 
-                '000000',
+                '',
                 "Operaciones No Gravadas y Exentas",
                 "-",
                 format_amount(amount),
@@ -369,7 +563,7 @@ class ReportIvaF2002(models.Model):
 
         lines_ri_new = inv_ri.mapped('invoice_line_ids').filtered(taxed_line_new)
         lines_ri_new = filter_by_activity(lines_ri_new, activity_id)
-        lines.extend(split_iva_ventas(lines_ri_new, activity_code, "Responsables Inscriptos"))
+        lines.extend(split_iva_new(lines_ri_new, activity_code, "Responsables Inscriptos"))
 
         # Consumidores Finales, Exentos y No Alcanzados
         inv_cf_ex_na = invoices.filtered(
@@ -377,14 +571,14 @@ class ReportIvaF2002(models.Model):
 
         lines_cf_ex_na_new = inv_cf_ex_na.mapped('invoice_line_ids').filtered(taxed_line_new)
         lines_cf_ex_na_new = filter_by_activity(lines_cf_ex_na_new, activity_id)
-        lines.extend(split_iva_ventas(lines_cf_ex_na_new, activity_code, "Cons. Finales, Exentos y No Alcanzados"))
+        lines.extend(split_iva_new(lines_cf_ex_na_new, activity_code, "Cons. Finales, Exentos y No Alcanzados"))
 
         # Monotributistas
         inv_mt = invoices.filtered(
             lambda i: i.l10n_ar_afip_responsibility_type_id.code == '6')
         lines_mt_new = inv_mt.mapped('invoice_line_ids').filtered(taxed_line_new)
         lines_mt_new = filter_by_activity(lines_mt_new, activity_id)
-        lines.extend(split_iva_ventas(lines_mt_new, activity_code, "Monotributistas"))
+        lines.extend(split_iva_new(lines_mt_new, activity_code, "Monotributistas"))
 
         # Operaciones Gravadas al 0%
         lines_taxed_0 = invoices.mapped('invoice_line_ids').filtered(taxed_0_line)
@@ -413,6 +607,16 @@ class ReportIvaF2002(models.Model):
                 format_amount(0),
                 format_amount(amount),
             ])
+
+        return lines
+
+    def _get_compras(self, invoices, category):
+        lines = []
+
+        # Responsables inscriptos
+        lines_all_new = invoices.mapped('invoice_line_ids').filtered(taxed_line_new)
+        lines_all_new = filter_by_category(lines_all_new, category)
+        lines.extend(split_iva_new(lines_all_new, category, "Responsables Inscriptos"))
 
         return lines
 

@@ -488,8 +488,8 @@
             <menuitem name="RG 3685 (IVA Digital)" sequence="3" 
                 id="menu_import_purchases_rg3685" action="action_import_purchase_rg3685" />
 
-            <!-- <menuitem name="Archivo Excel" sequence="4" 
-                id="menu_import_purchase_excel" action="action_import_purchase_excel" /> -->
+            <menuitem name="Archivo Excel" sequence="4" 
+                id="menu_import_purchase_excel" action="action_import_purchase_excel" />
 
             <!-- TODO: Definir actividad para importar productos (Pto Vta o Producto) -->
 
@@ -572,12 +572,23 @@
         <menuitem id="menu_reports_monotributo" name="Monotributo" sequence="1">
 
             <!-- MENU Facturacion/Informes/Monotributo/Últimos 12 Meses-->
+            <!-- TODO: reporte de resultados + listado de compras, ventas -->
             <!-- <menuitem id="menu_taxes_report_monotributo_mensual" name="Reporte Mensual" 
                 sequence="1" action="report_basic" /> -->
 
             <!-- MENU Facturacion/Informes/Monotributo/Últimos 12 Meses-->
+            <!-- <menuitem id="menu_taxes_report_monotributo_anual" name="Últimos 12 Meses" 
+                sequence="2" action="report_basic" /> -->
+
+            <!-- MENU Facturacion/Informes/Monotributo/Últimos 12 Meses-->
+            <!-- <menuitem id="menu_taxes_report_monotributo_anual_2" name="Últimos 12 Meses 2" 
+                sequence="3" action="action_taxes_report_monotributo_anual" /> -->
+
             <menuitem id="menu_taxes_report_monotributo_anual" name="Últimos 12 Meses" 
-                sequence="2" action="report_basic" />
+                sequence="4" action="action_taxes_report_monotributo_anual_3" />
+
+            <!-- <menuitem id="menu_taxes_monotributo_categorias" name="Categorías Monotributo" 
+                sequence="5" action="action_taxes_monotributo_categorias" /> -->
 
         </menuitem>      
         
@@ -615,6 +626,9 @@
             <!-- TODO: MENU: Facturacion/Informes/AFIP/DD. JJ. IVA -->
             <menuitem id="menu_reports_afip_f2002" name="IVA Por Actividad (F. 2002)" 
                 sequence="2" action="qweb_report_iva_f2002" />
+
+            <menuitem id="menu_reports_afip_f2002_new" name="Formulario IVA 2002" 
+                sequence="3" action="action_reports_afip_f2002" />
 
             <!-- TODO: Filtrar por compañia -->
             <!-- TODO: Seleccionar rangos de fecha por mes -->

@@ -13,9 +13,6 @@ _logger = logging.getLogger(__name__)
 
 # https://discuss.tryton.org/t/account-ar-argentine-localization/3261/4
 
-# TODO: cantidad de alicuotas sigue vieja
-# TODO: todos los grupos de IVA tienen que tener especificado el tipo "vat"
-
 # TODO: Mover esto a computed en account.move
 def untaxed_exempt_line(line):
     codes = line.mapped('tax_ids').mapped('tax_group_id').mapped('l10n_ar_vat_afip_code')
