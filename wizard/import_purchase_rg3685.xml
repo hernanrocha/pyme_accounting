@@ -19,11 +19,25 @@
                     </div>
                 </div>
 
-                <group string="Archivo" col="2">
+                <group string="Archivos" col="2">
 
                     <field name="file_cbtes" />
                     <field name="file_alicuotas" />
                 
+                </group>
+
+                <separator string="Periodo Fiscal" />
+
+                <div>
+                    <p>Si especificas un periodo fiscal, a los comprobantes con fecha anterior al periodo se 
+                    les establecerá como fecha contable el primer dia del periodo. </p>
+                    <p>Ej: siendo el periodo 01/03 al 31/03, un comprobante con fecha 25/02 
+                    sera contabilizado con fecha 01/03</p>
+                </div>    
+                
+                <group col="4">
+                    <field name="period_start" />
+                    <field name="period_end" />
                 </group>
 
                 <!-- <separator string="Datos Cargados" />

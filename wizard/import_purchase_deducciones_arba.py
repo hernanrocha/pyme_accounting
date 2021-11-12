@@ -14,6 +14,7 @@ ns = {'ss': 'urn:schemas-microsoft-com:office:spreadsheet'}
 def translate_invoice_type(tipo, letra, numero):
     t = ''
     # TODO: las que tienen espacio en blanco son percepciones bancarias
+    # TODO: agregar "Recibos"
     if tipo == 'F':
         t = 'FA'
     elif tipo == 'C':

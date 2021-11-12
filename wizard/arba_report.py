@@ -18,6 +18,18 @@ class IngresosBrutosArbaWizard(models.Model):
     _inherit = [ 'report.pyme_accounting.base' ]
     _description = 'Reporte de Ingresos Brutos ARBA'
 
+    @api.depends('date_from', 'date_to')
+    def _compute_name(self):
+        for r in self:
+            if r.date_from and r.date_to:
+                r.name = 'Liquidación IIBB {} al {}'.format(
+                    r.date_from.strftime('%d/%m/%Y'), 
+                    r.date_to.strftime('%d/%m/%Y'))
+            else:
+                r.name = 'Liquidación IIBB'
+
+    name = fields.Char(compute=_compute_name)
+
     # Determinacion del impuesto
     iibb_report_sale_total = fields.Float(string="Total de Ventas")
     iibb_company_tax_percentage = fields.Float(string="Alicuota", compute="_compute_iibb_company_tax_percentage")

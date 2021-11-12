@@ -19,20 +19,26 @@ def helper_convert_invoice_type(afip_invoice_type):
         return "ND-A"
     if afip_invoice_type == '3 - Nota de Crédito A':
         return "NC-A"
+    if afip_invoice_type == '4 - Recibo A':
+        return "RE-A"
     if afip_invoice_type == '6 - Factura B':
         return "FA-B"
     if afip_invoice_type == '7 - Nota de Débito B':
         return "ND-B"
     if afip_invoice_type == '8 - Nota de Crédito B':
         return "NC-B"
+    if afip_invoice_type == '9 - Recibo B':
+        return "RE-B"
     if afip_invoice_type == '11 - Factura C':
         return 'FA-C'
     if afip_invoice_type == '12 - Nota de Débito C':
         return 'ND-C'
     if afip_invoice_type == '13 - Nota de Crédito C':
         return 'NC-C'
+    if afip_invoice_type == '15 - Recibo C':
+        return 'RE-C'
     
-    raise UserError('Tipo de Comprobante invalido: %s'.format(afip_invoice_type))
+    raise UserError('Tipo de Comprobante invalido: {}'.format(afip_invoice_type))
 
 # TODO: aplicar algo similar a los imports de facturas emitidas
 def get_move_type(invoice_type):

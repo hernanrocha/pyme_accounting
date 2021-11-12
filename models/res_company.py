@@ -40,7 +40,7 @@ class Company(models.Model):
 
     # IIBB
     iibb_tax_percentage = fields.Float(string="Alícuota (%)", default=1.50)
-    iibb_min_amount = fields.Float(string="Impuesto Mínimo", default=615)
+    iibb_min_amount = fields.Float(string="Impuesto Mínimo", default=0)
 
     def _default_country_id(self):
         country_ar = self.env['res.country'].search([('code', '=', 'AR')])

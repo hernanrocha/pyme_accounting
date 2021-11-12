@@ -7,9 +7,23 @@
         - No permitir que se borre la empresa principal
     -->
 
+    <record model="ir.rule" id="rule_account_account_multicompany">
+        <field name="name">Account multi-company</field>
+        <field name="model_id" ref="account.model_account_account"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
     <record model="ir.rule" id="rule_l10n_ar_impuestos_deduccion_multicompany">
         <field name="name">Impuestos Deduccion multi-company</field>
         <field name="model_id" ref="model_l10n_ar_impuestos_deduccion"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record model="ir.rule" id="rule_l10n_ar_iibb_arba_wizard_multicompany">
+        <field name="name">Liquidación IIBB multi-company</field>
+        <field name="model_id" ref="model_l10n_ar_iibb_arba_wizard"/>
         <field name="global" eval="True"/>
         <field name="domain_force">[('company_id', 'in', company_ids)]</field>
     </record>

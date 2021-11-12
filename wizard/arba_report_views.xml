@@ -99,6 +99,7 @@
                             <group string="Reporte Generado" col="2">
                                 <field name="iibb_report_sale_total" readonly="1" />
                                 <field name="iibb_company_tax_percentage" readonly="1" />
+                                <!-- TODO: boton para actualizar el impuesto minimo /alicuota en el cliente -->
                                 <field name="iibb_company_min_amount" readonly="1" />
                                 <field name="iibb_report_tax_subtotal" decoration-bf="1" />
                                 <separator />
@@ -111,7 +112,7 @@
                                 <field name="iibb_report_tax_prev_saldo" readonly="1" />
                                 <field name="iibb_report_tax_total_saldo"
                                     decoration-bf="1" decoration-success="1"
-                                    attrs="{'invisible': [('iibb_report_tax_total_saldo', '&gt;', 0)]}" />
+                                    attrs="{'invisible': [('iibb_report_tax_total_to_pay', '&gt;', 0)]}" />
                                 <field name="iibb_report_tax_total_to_pay" 
                                     decoration-bf="1" decoration-danger="1"
                                     attrs="{'invisible': [('iibb_report_tax_total_to_pay', '&lt;=', 0)]}" />
@@ -179,6 +180,7 @@
                         <!-- TODO: not ready yet -->
                         <!-- <button name="generate_iibb" string="Generar" type="object" class="btn-primary" /> -->
                     </footer>
+
                 </sheet>
             </form>
         </field>

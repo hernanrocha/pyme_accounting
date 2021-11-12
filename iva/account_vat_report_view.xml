@@ -31,7 +31,7 @@
                     <sheet>
                         <group>
                             <group>
-                                <field name="company_id" widget="selection" groups="base.group_multi_company"/>
+                                <field name="company_id" widget="selection" groups="base.group_multi_company" invisible="1" />
                                 <field name="date_from"/>
                                 <field name="date_to"/>
                                 <!-- <field name="presented_ledger_name" invisible="1"/> -->

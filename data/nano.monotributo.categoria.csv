@@ -1,0 +1,12 @@
+"id","name","maximo_facturacion","pago_servicios","pago_bienes"
+"monotributo_a","A",370000.00,2646.22,2646.22
+"monotributo_b","B",550000.00,2958.95,2958.95
+"monotributo_c","C",770000.00,3382.62,3325.44
+"monotributo_d","D",1060000.00,3988.85,3894.71
+"monotributo_e","E",1400000.00,5239.44,4711.54
+"monotributo_f","F",1750000.00,6271.46,5417.38
+"monotributo_g","G",2100000.00,7314.87,6168.24
+"monotributo_h","H",2600000.00,12789.38,10671.08
+"monotributo_i","I",2910000.00,0,15339.68
+"monotributo_j","J",3335000.00,0,17617.10
+"monotributo_k","K",3700000.00,0,19912.74

@@ -36,6 +36,8 @@ class ImportPurchaseRg3685(models.TransientModel):
     file_cbtes = fields.Binary(string="Archivo Compras Cbtes (*.txt)")
     file_alicuotas = fields.Binary(string="Archivo Compras Alicuotas (*.txt)")
 
+    period_start = fields.Date(string="Periodo Desde")
+    period_end = fields.Date(string="Periodo Hasta")
     # invoice_ids = fields.One2many(string="Retenciones", comodel_name="l10n_ar.import.afip.retenciones.line", inverse_name="import_id")
     
     def compute(self):
@@ -54,7 +56,7 @@ class ImportPurchaseRg3685(models.TransientModel):
         lines_cbtes = []
         lines_alicuotas = []
 
-        # Ventas Comprobantes
+        # Compras Comprobantes
         for x in file_cbtes_content:
             _logger.info(x)
             compra = { 
@@ -84,7 +86,7 @@ class ImportPurchaseRg3685(models.TransientModel):
 
             lines_cbtes.append(compra)
 
-        # Ventas Alicuotas
+        # Compras Alicuotas
         for x in file_alicuotas_content:
             a = { 
                 "tipo_comprobante": int(x[:3]),
@@ -193,12 +195,16 @@ class ImportPurchaseRg3685(models.TransientModel):
             # se debe colocar "IVA No Corresponde"
             no_iva = doc_type.purchase_aliquots == 'zero'
 
+            invoice_date = datetime.strptime(cbte["fecha"], '%Y%m%d').date()
+            account_date = invoice_date if self.period_start and invoice_date > self.period_start else \
+                self.period_start
+
             move_data = {
                 'move_type': get_move_type(cbte["tipo_comprobante"]),
                 'partner_id': partner.id,
                 'journal_id': journal.id,
-                'date': datetime.strptime(cbte["fecha"], '%Y%m%d'),
-                'invoice_date': datetime.strptime(cbte["fecha"], '%Y%m%d'),
+                'date': account_date,
+                'invoice_date': invoice_date,
                 'l10n_latam_document_type_id': doc_type.id,
                 'l10n_latam_document_number': '{}-{}'.format(cbte["punto_de_venta"], cbte["numero_comprobante_desde"]),
             }

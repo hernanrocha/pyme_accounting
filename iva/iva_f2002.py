@@ -194,6 +194,8 @@ class ReportBase(models.Model):
         "Type",
         # required=True
     )
+
+    name = fields.Char('Nombre') 
     date_from = fields.Date(string='Fecha Desde', required=True, readonly=True,
         default=lambda self: self._default_date_from(),
         states={'draft': [('readonly', False)]})
@@ -207,8 +209,6 @@ class ReportBase(models.Model):
         default='draft'
     )
     note = fields.Html("Notas")
-    # Computed fields
-    name = fields.Char('Nombre') # compute='_compute_name'
 
     def _default_date_from(self):
         today = datetime.date.today()
@@ -276,6 +276,18 @@ class ReportIvaF2002CreditoNCEmitidas(models.Model):
 class ReportIvaF2002(models.Model):
     _name = 'report.pyme_accounting.report_iva_f2002'
     _inherit = [ 'report.pyme_accounting.base' ]
+
+    @api.depends('date_from', 'date_to')
+    def _compute_name(self):
+        for r in self:
+            if r.date_from and r.date_to:
+                r.name = 'Liquidación IVA {} al {}'.format(
+                    r.date_from.strftime('%d/%m/%Y'), 
+                    r.date_to.strftime('%d/%m/%Y'))
+            else:
+                r.name = 'Liquidación IVA'
+
+    name = fields.Char(compute=_compute_name)
 
     afip_activity_ids = fields.Many2many('l10n_ar.afip.actividad', related="company_id.afip_activity_ids")
 
@@ -439,8 +451,8 @@ class ReportIvaF2002(models.Model):
                 ('company_id', '=', self.env.company.id),
                 ('state', '=', 'posted'),
                 ('move_type', '=', move_type),
-                ('date', '>=', '2021-09-01'),
-                ('date', '<=', '2021-09-30')
+                ('date', '>=', self.date_from),
+                ('date', '<=', self.date_to)
             ], 
             order='invoice_date asc')
 
@@ -477,8 +489,8 @@ class ReportIvaF2002(models.Model):
 
         # TODO: borrar esto
         # Obtener las que no tienen categoria y luego separado por categoria
-        lines_all = invoices.mapped('line_ids').filtered(taxed_line)
-        lines.extend(split_iva(lines_all, "Compra de Bienes (excepto Bs de Uso)"))
+        # lines_all = invoices.mapped('line_ids').filtered(taxed_line)
+        # lines.extend(split_iva(lines_all, "Compra de Bienes (excepto Bs de Uso)"))
 
         lines.extend(self._get_compras(invoices, False))
         for category in categories:
@@ -616,7 +628,7 @@ class ReportIvaF2002(models.Model):
         # Responsables inscriptos
         lines_all_new = invoices.mapped('invoice_line_ids').filtered(taxed_line_new)
         lines_all_new = filter_by_category(lines_all_new, category)
-        lines.extend(split_iva_new(lines_all_new, category, "Responsables Inscriptos"))
+        lines.extend(split_iva_new(lines_all_new, category, category or '-'))
 
         return lines
 

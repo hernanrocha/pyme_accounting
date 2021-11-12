@@ -26,14 +26,14 @@
                     <field name="state" widget="statusbar" statusbar_visible="draft,presented"/>
                 </header>
                 <sheet>
-                    <div class="oe_title">
+                    <!-- <div class="oe_title">
                         <label for="name" class="oe_edit_only" />
                         <h1>
                             <field name="name" id="name" />
                         </h1>
-                    </div>
+                    </div> -->
+                    <field name="company_id" widget="selection" groups="base.group_multi_company" invisible="1" />
                     <group>
-                        <field name="company_id" widget="selection" groups="base.group_multi_company" invisible="1" />
                         <field name="date_from"/>
                         <field name="date_to"/>
                         <!-- <field name="presented_ledger_name" invisible="1"/> -->
@@ -45,27 +45,27 @@
                         <page string="Resumen">
                             <h2>Liquidación</h2>
                             <group cols="2">
-                                <field name="total_debito" />
-                                <field name="total_credito" />
-                                <field name="saldo_anterior"/>
+                                <field name="total_debito" readonly="1" />
+                                <field name="total_credito" readonly="1" />
+                                <field name="saldo_anterior" readonly="1" />
                                 
                                 <separator />
                                 
-                                <field name="saldo_libre_afip" class="font-weight-bold"
+                                <field name="saldo_libre_afip" class="font-weight-bold" readonly="1"
                                     attrs="{'invisible': [('saldo_libre_afip', '&lt;=', 0)]}" />
-                                <field name="saldo_libre_responsable" class="font-weight-bold"
-                                    attrs="{'invisible': [('saldo_libre_responsable', '&lt;', 0)]}"/>
+                                <field name="saldo_libre_responsable" class="font-weight-bold" readonly="1"
+                                    attrs="{'invisible': [('saldo_libre_afip', '&gt;', 0)]}"/>
 
                                 <separator />
 
-                                <field name="ingresos_retenciones" />
-                                <field name="ingresos_percepciones" />
+                                <field name="ingresos_retenciones" readonly="1" />
+                                <field name="ingresos_percepciones" readonly="1" />
 
                                 <separator />
 
-                                <field name="saldo_total_afip" class="font-weight-bold text-danger"
+                                <field name="saldo_total_afip" class="font-weight-bold text-danger" readonly="1"
                                     attrs="{'invisible': [('saldo_total_afip', '&lt;=', 0)]}" />
-                                <field name="saldo_total_responsable" class="font-weight-bold text-success"
+                                <field name="saldo_total_responsable" class="font-weight-bold text-success" readonly="1"
                                         attrs="{'invisible': [('saldo_total_responsable', '&lt;', 0)]}" />
                             </group>
                         </page>
