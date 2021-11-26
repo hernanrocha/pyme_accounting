@@ -26,10 +26,15 @@ def translate_invoice_type(tipo, letra, numero):
     else:
         raise UserError("Tipo de comprobante invalido: {}".format(tipo))
 
-    if letra not in ['A', 'B', 'C']:
-        raise UserError("Letra de comprobante invalido: {}".format(letra))
+    l = letra
+    if letra == ' ':
+        l = 'A'
 
-    return '{}-{} {}'.format(t, letra, numero)
+    if l not in ['A', 'B', 'C', ' ']:
+        raise UserError("Letra de comprobante invalido: {}".format(l))
+
+
+    return '{}-{} {}'.format(t, l, numero)
 
 def cell_data(cells, index):
     return cells[index].find('ss:Data', ns).findtext('.')

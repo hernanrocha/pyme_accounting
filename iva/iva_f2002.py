@@ -203,12 +203,26 @@ class ReportBase(models.Model):
         default=lambda self: self._default_date_to(),
         states={'draft': [('readonly', False)]})
     state = fields.Selection(
-        [('draft', 'Borrador'), ('presented', 'Presentado'), ('cancel', 'Cancelado')],
+        [
+            ('draft', 'Borrador'), 
+            ('presented', 'Presentado'), 
+            ('paid', 'Pagado'),
+            ('cancel', 'Cancelado'),
+        ],
         'Estado',
         required=True,
         default='draft'
     )
     note = fields.Html("Notas")
+
+    def button_present(self):
+        self.state = 'presented'
+
+    def button_pay(self):
+        self.state = 'paid'
+
+    def button_cancel(self):
+        self.state = 'cancel'
 
     def _default_date_from(self):
         today = datetime.date.today()

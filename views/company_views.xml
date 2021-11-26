@@ -77,7 +77,23 @@
                     <group string="Monotributo" col="4" attrs="{'invisible': [('l10n_ar_afip_responsibility_type_id', '!=', 6)]}" >
                         <field name="monotributo_category" string="Categoria" />
                         <field name="monotributo_type" string="Tipo" />
+                        
+                        <field name="monotributo_social" />
+                        <separator />
+
+                        <field name="monotributo_paga_impositivo" />                        
+                        <separator />
+
+                        <field name="monotributo_paga_sipa" />
+                        <separator />
+
+                        <field name="monotributo_paga_obra_social" />
+                        <field name="monotributo_adherentes" />
                     </group>
+
+                    <div>
+                        <p><b>Pago Mensual: </b>$<field name="monotributo_pago" /></p>
+                    </div>
 
                     <group string="Ingresos Brutos" col="4">
 

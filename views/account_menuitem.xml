@@ -34,7 +34,7 @@
 
     <!-- Ocultar menu "Facturación" -->
     <record model="ir.ui.menu" id="account.menu_finance">
-        <field name="active" eval="False"/>
+        <field name="active" eval="True"/>
     </record>
 
     <!-- TODO: Mostrar Facturacion solo en ERP Manager -->
@@ -369,8 +369,21 @@
     <!-- MENU Facturacion/Contabilidad  -->
     <menuitem id="menu_accountancy" name="Contabilidad" parent="menu_finance" sequence="4">
 
+        <!-- MENU Facturacion/Contabilidad/Asientos -->
+        <menuitem id="menu_accountancy_asientos" name="Asientos" sequence="1">
+
+            <!-- MENU Facturacion/Contabilidad/Asientos/IIBB -->
+            <menuitem id="menu_accountancy_asientos_tree" name="Ver Asientos" 
+                sequence="1" action="action_accountancy_asientos_tree" />
+
+            <!-- MENU Facturacion/Contabilidad/Asientos/IIBB -->
+            <menuitem id="menu_accountancy_asientos_iibb" name="Nuevo Asiento" 
+                sequence="2" action="action_accountancy_asientos_iibb" />
+
+        </menuitem>
+
         <!-- MENU Facturacion/Contabilidad/Subdiarios-->
-        <menuitem id="menu_accountancy_journals" name="Subdiarios" sequence="1">
+        <menuitem id="menu_accountancy_journals" name="Subdiarios" sequence="2">
                 
             <!-- MENU Facturacion/Contabilidad/Subdiarios/Compras -->
             <menuitem id="menu_accountancy_journals_purchases" name="Compras" 
@@ -395,7 +408,7 @@
         </menuitem>
 
         <!-- MENU: Empresas/Contabilidad/Libros -->
-        <menuitem id="menu_accountancy_ledger" name="Libros" sequence="2">
+        <menuitem id="menu_accountancy_ledger" name="Libros" sequence="3">
 
             <!-- MENU: Empresas/Contabilidad/Libros/Libro Mayor -->
             <menuitem name="Libro Mayor" 
@@ -421,7 +434,7 @@
         </menuitem>
 
         <!-- MENU: Empresas/Contabilidad/Banco y Caja -->
-        <menuitem id="menu_accountancy_bank" name="Banco y caja" sequence="3">
+        <menuitem id="menu_accountancy_bank" name="Banco y caja" sequence="4">
                 <!-- <menuitem 
                     id="menu_action_account_bank_journal_form" 
                     action="account.action_new_bank_setting" 

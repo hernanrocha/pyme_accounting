@@ -33,8 +33,51 @@ class Company(models.Model):
         ('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D'), ('E', 'E'), 
         ('F', 'F'), ('G', 'G'), ('H', 'H'), ('I', 'I'), ('J', 'J'), ('K', 'K')
     ], string="Categoria")
-    monotributo_type = fields.Selection([('good', 'Bienes'), ('service', 'Servicios')])    
-    
+    monotributo_type = fields.Selection([('good', 'Bienes'), ('service', 'Servicios')])
+    monotributo_social = fields.Boolean(string="Monotributo Social", default=False)
+    monotributo_paga_impositivo = fields.Boolean(string="Paga Componente Impositivo", default=True)
+    monotributo_paga_sipa = fields.Boolean(string="Paga SIPA", default=True)
+    monotributo_paga_obra_social = fields.Boolean(string="Paga Obra Social", default=True)
+    monotributo_adherentes = fields.Integer(string="Cantidad Adherentes")
+
+    @api.depends(
+        'monotributo_category',
+        'monotributo_type',
+        'monotributo_social', 
+        'monotributo_paga_obra_social',
+        'monotributo_paga_impositivo', 
+        'monotributo_paga_sipa', 
+        'monotributo_adherentes')
+    def _compute_monotributo_pago(self):
+        # https://monotributo.afip.gob.ar/public/ayuda/Alta/Paso1.aspx
+        # Social: obra_social / 2
+        # Servicios: servicios + sipa + obra_social
+        # Muebles: muebles + sipa + obra_social
+        for c in self:
+            if c.monotributo_social:
+                cat = self.env["nano.monotributo.categoria"].search([
+                    ('name', '=', c.monotributo_category)
+                ])
+                c.monotributo_pago = cat.monto_obra_social / 2
+                continue
+
+            cat = self.env["nano.monotributo.categoria"].search([
+                ('name', '=', c.monotributo_category)
+            ])
+
+            pago = 0
+            if c.monotributo_paga_impositivo:
+                pago += cat.monto_servicios if c.monotributo_type else cat.monto_bienes
+            if c.monotributo_paga_sipa:
+                pago += cat.monto_sipa
+            if c.monotributo_paga_obra_social:
+                pago += cat.monto_obra_social
+            if c.monotributo_adherentes:
+                pago += c.monotributo_adherentes * cat.monto_obra_social
+            c.monotributo_pago = pago
+
+    monotributo_pago = fields.Float(string="Pago", compute=_compute_monotributo_pago)
+
     # AFIP
     afip_activity_ids = fields.Many2many('l10n_ar.afip.actividad', string='Actividades', help="La primera actividad de la lista debe ser la actividad principal")
 

@@ -81,7 +81,10 @@
         <field name="arch" type="xml">
             <form string="DD.JJ. Mensual de Ingresos Brutos ARBA">
                 <header>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,presented"/>
+                    <button name="button_present" string="Presentar" states="draft" type="object" class="btn-primary" />
+                    <button name="button_pay" string="Pagar" states="presented" type="object" class="btn-primary" />
+                    <button name="button_cancel" string="Cancelar" states="draft,presented,paid" type="object" />
+                    <field name="state" widget="statusbar" statusbar_visible="draft,presented,paid"/>
                 </header>
 
                 <sheet>
@@ -91,7 +94,9 @@
                         <field name="date_to" />
                     </group>
 
-                    <button name="calculate_iibb" string="Calcular" type="object" class="btn-primary" />
+                    <button name="calculate_iibb" string="Calcular" 
+                        attrs="{'invisible': [('state', '!=', 'draft')]}"
+                        type="object" class="btn-primary" />
 
                     <!-- TODO: habilitar esto luego de haber presionado el boton "Calcular" -->
                     <notebook>
@@ -161,18 +166,40 @@
                                 </field>
                             </group>
                         </page>
-                        <page string="Asiento Contable">
+                        <page string="Contabilidad">
                             <!-- TODO: permitir editar el asiento -->
+                            <separator string="IIBB A Pagar" />
+                            <p>Estado: <field name="move_id_state" 
+                                widget="badge" 
+                                decoration-info="move_id_state == 'draft'"
+                                decoration-success="move_id_state == 'posted'" /></p>
                             <field name="line_ids">
                                 <tree>
                                     <field name="date" />
                                     <field name="account_id" />
-                                    <field name="partner_id" />
-                                    <field name="name" />
-                                    <field name="debit" />
-                                    <field name="credit" />
+                                    <field name="partner_id" invisible="1" />
+                                    <field name="name" string="Descripción" />
+                                    <field name="debit" sum="Total" />
+                                    <field name="credit" sum="Total" />
                                 </tree>
                             </field>
+
+                            <separator string="Pago de IIBB" />
+                            <p>Estado: <field name="payment_move_id_state" 
+                                widget="badge" 
+                                decoration-info="payment_move_id_state == 'draft'"
+                                decoration-success="payment_move_id_state == 'posted'" /></p>
+                            <field name="payment_line_ids">
+                                <tree>
+                                    <field name="date" />
+                                    <field name="account_id" />
+                                    <field name="partner_id" invisible="1" />
+                                    <field name="name" string="Descripción" />
+                                    <field name="debit" sum="Total" />
+                                    <field name="credit" sum="Total" />
+                                </tree>
+                            </field>
+
                         </page>
                     </notebook>
 
@@ -195,7 +222,10 @@
                 <field name="name" />
                 <field name="date_from" />
                 <field name="date_to" />
-                <field name="state" />
+                <field name="state" widget="badge"
+                    decoration-info="state == 'draft'"
+                    decoration-primary="state == 'presented'"
+                    decoration-success="state == 'paid'" />
             </tree>
         </field>
     </record>

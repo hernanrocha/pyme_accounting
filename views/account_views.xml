@@ -162,6 +162,122 @@
         <field name="target">main</field>
     </record>
 
+    <!-- Nuevo Asiento - FORM WIZARD VIEW -->
+    <record id="view_account_move_entry_form" model="ir.ui.view">
+        <field name="name">account.move.entry.form</field>
+        <field name="model">account.move</field>
+        <field name="arch" type="xml">
+            <form string="Account Entry">
+                <field name="move_type" invisible="1" />
+                <field name="show_name_warning" invisible="1" />
+                <field name="state" invisible="1" />
+                <field name="suitable_journal_ids" invisible="1" />
+
+                <!-- <header> -->
+                    <!-- Post -->
+                    <!-- <button name="action_post" string="Post" class="oe_highlight" type="object" groups="account.group_account_invoice" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('move_type', '!=', 'entry')]}"/> -->
+                    <!-- Cancel -->
+                    <!-- <button name="button_cancel" string="Cancel Entry" type="object" groups="account.group_account_invoice" attrs="{'invisible' : ['|', ('id', '=', False), ('state', '!=', 'draft')]}"/> -->
+                    <!-- <button name="button_draft" string="Reset to Draft" type="object" groups="account.group_account_invoice" /> -->
+                    <!-- <field name="state" widget="statusbar" statusbar_visible="draft,posted"/> -->
+                <!-- </header> -->
+
+                <div class="oe_title">
+                    <!-- Invoice draft header -->
+                    <span class="o_form_label"><field name="move_type" attrs="{'invisible': [('move_type', '=', 'entry')]}" readonly="1" nolabel="1"/></span>
+                    <h1>
+                        <span attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('name', '!=', '/')]}">Draft</span>
+                    </h1>
+
+                    <!-- Number -->
+                    <span class="text-warning" attrs="{'invisible': [('show_name_warning', '=', False)]}">The current highest number is <field name="highest_name"/>. You might want to put a higher number here.</span>
+                    <h1 class="mt0" attrs="{'invisible':[('name', '=', '/')]}">
+                        <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}" placeholder="FEB/2016/00001"/>
+                    </h1>
+
+                </div>
+
+                <group>
+                    <group id="header_left_group">
+                        <field name="ref" string="Descripción" />
+                    </group>
+                    <group id="header_right_group">
+                        <field name="date" string="Fecha Contable" />
+                        <field name="journal_id" string="Diario Contable" />
+                    </group>
+                </group>
+
+                <notebook>
+                    <page id="lines_tab" string="Asiento">
+                        <field name="line_ids" context="{'default_move_type': 'entry', 'journal_id': journal_id }">
+                            <tree editable="0">
+                                <field name="company_id" invisible="1" />
+
+                                <field name="account_id"
+                                    options="{'no_create': True, 'no_create_edit': True}"
+                                    domain="[('company_id', '=', company_id)]" />
+                                <field name="name" />
+                                <field name="credit" sum="Total" />
+                                <field name="debit" sum="Total" />
+                            </tree>
+                        </field>
+                    </page>
+                </notebook>
+
+                <footer>
+                    <button name="action_post" string="Confirmar" 
+                        class="oe_highlight" type="object" 
+                        groups="account.group_account_invoice" 
+                        attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('move_type', '!=', 'entry')]}"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+
+            </form>
+        </field>
+    </record>
+
+    <!-- Listado de Asientos - TREE VIEW -->
+    <record id="view_account_move_entry_tree" model="ir.ui.view">
+        <field name="name">account.move.entry.tree</field>
+        <field name="model">account.move</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="move_type" invisible="1" />
+                <field name="date" />
+                <field name="journal_id" />
+                <field name="name" />
+                <field name="ref" />
+                <field name="state" widget="badge"
+                    decoration-success="state == 'posted'" 
+                    decoration-info="state == 'draft'" />
+            </tree>
+        </field>
+    </record>
+
+    <!-- Nuevo Asiento - ACTION WINDOW -->
+    <record id="action_accountancy_asientos_iibb" model="ir.actions.act_window">
+        <field name="name">Nuevo Asiento</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_account_move_entry_form" />
+        <field name="context">
+        {
+            'default_move_type': 'entry'
+        }
+        </field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Listado de Asientos - ACTION WINDOW -->
+    <record id="action_accountancy_asientos_tree" model="ir.actions.act_window">
+        <field name="name">Lista de Asientos</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_account_move_entry_tree" />
+        <field name="domain">[('move_type','=','entry')]</field>
+        <field name="target">main</field>
+    </record>
+
     <!-- TODO: Mover a un archivo propio -->
     <!-- Subdiario Compras - WINDOW -->
     <record id="action_accountancy_journals_purchases" model="ir.actions.act_window">

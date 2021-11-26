@@ -125,6 +125,12 @@ class ReportMonotributoCategoria(models.Model):
 
     name = fields.Char(string="Letra")
     maximo_facturacion = fields.Float(string="Máximo de Facturación")
+
+    monto_servicios = fields.Float(string="Servicios")
+    monto_bienes = fields.Float(string="Bienes")
+    monto_sipa = fields.Float(string="SIPA")
+    monto_obra_social = fields.Float(string="Obra Social")
+    
     pago_servicios = fields.Float(string="Pago (Servicios)")
     pago_bienes = fields.Float(string="Pago (Bienes)")
 

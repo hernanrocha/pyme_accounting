@@ -20,6 +20,10 @@
             <tree string="Categorías Monotributo" js_class="list_monotributo">
                 <field name="name" />
                 <field name="maximo_facturacion" />
+                <field name="monto_servicios" />
+                <field name="monto_bienes" />
+                <field name="monto_sipa" />
+                <field name="monto_obra_social" />
                 <field name="pago_servicios" />
                 <field name="pago_bienes" />    
             </tree>
