@@ -386,10 +386,7 @@ class AccountVatLedger(models.Model):
                 ' ',
 
                 # VENTAS Campo 21: Otros Tributos
-                self.format_amount(
-                    sum(inv.move_tax_ids.filtered(
-                        lambda r: r.tax_id.tax_group_id.l10n_ar_tribute_afip_code == '99'
-                    ).mapped('tax_amount')), invoice=inv),
+                self.format_amount(self._get_venta_otros_tributos(inv), invoice=inv),
 
                 # VENTAS Campo 22: vencimiento comprobante
                 # Segun aplicativo, solo es obligatorio para algunos casos especiales
@@ -647,9 +644,14 @@ class AccountVatLedger(models.Model):
     def _get_compra_iva(self, inv):
         iibb = inv.line_ids.filtered(lambda r: (
             r.tax_group_id and r.tax_group_id.l10n_ar_tribute_afip_code == '06'))
-        _logger.info("Filtered: {}".format(iibb))
         
         return sum(iibb.mapped('price_total'))
+
+    def _get_venta_otros_tributos(self, inv):
+        otros = inv.line_ids.filtered(lambda r: (
+            r.tax_group_id and r.tax_group_id.l10n_ar_tribute_afip_code == '99'))
+        
+        return sum(otros.mapped('price_total'))
 
     def _get_compra_iibb(self, inv):
         # TODO Percepciones en moneda extranjera

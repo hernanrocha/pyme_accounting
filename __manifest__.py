@@ -106,6 +106,8 @@
         "data/l10n_ar.afip.cuit.apocrifo.csv",
         "data/l10n_latam.document.type.csv",
         "data/account.tax.template.csv",
+        "data/account.account.template.csv",
+        "data/account_tax_template_data.xml",
 
         # Company Dependent Data
         # TODO: si es necesario, se debe hacer por empresa, o crear primero los impuestos.
