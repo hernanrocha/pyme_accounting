@@ -41,79 +41,79 @@
     ],
     'assets': {
         'web._assets_primary_variables': [
-            'pyme_accounting/static/src/scss/primary_variables.scss'
+            # 'pyme_accounting/static/src/scss/primary_variables.scss'
         ]
     },
     'data': [
-        # https://github.com/odoo/odoo/blob/bbc338438518bbb7d0e9ad1a313e872f95a36870/addons/web/static/src/js/views/list/list_renderer.js
-        # Web
-        'views/web.xml',
+        # # https://github.com/odoo/odoo/blob/bbc338438518bbb7d0e9ad1a313e872f95a36870/addons/web/static/src/js/views/list/list_renderer.js
+        # # Web
+        # 'views/web.xml',
 
-        # CTMIL Odoo-Argentina. Modulos account_move_tax, vat_ledger, iva_digital
-        # TODO: Mover a un modulo diferente
-        'iva/move_view.xml',
-        'iva/account_vat_report_view.xml',
-        'iva/iva_2002.xml',
+        # # CTMIL Odoo-Argentina. Modulos account_move_tax, vat_ledger, iva_digital
+        # # TODO: Mover a un modulo diferente
+        # 'iva/move_view.xml',
+        # 'iva/account_vat_report_view.xml',
+        # 'iva/iva_2002.xml',
 
-        # Security Records
-        'security/ir.model.access.csv',
-        'security/record_rules.xml',
+        # # Security Records
+        # 'security/ir.model.access.csv',
+        # 'security/record_rules.xml',
 
-        'wizard/arba_afip_views.xml',
-        'wizard/arba_report_views.xml',
+        # 'wizard/arba_afip_views.xml',
+        # 'wizard/arba_report_views.xml',
         
-        # Empresas - Contabilidad
-        'views/account_views.xml',
-        'views/account_move_views.xml',
-        'views/product_views.xml',
-        'views/report_monotributo.xml',
+        # # Empresas - Contabilidad
+        # 'views/account_views.xml',
+        # 'views/account_move_views.xml',
+        # 'views/product_views.xml',
+        # 'views/report_monotributo.xml',
 
-        # Empresas - Importar
-        'wizard/import_purchase_excel.xml',
-        'wizard/import_purchase_deducciones_arba.xml',
-        'wizard/import_purchase_comprecibidos.xml',
-        'wizard/import_purchase_rg3685.xml',
-        'wizard/import_sale_compemitidos.xml',
-        'wizard/import_sale_compenlinea.xml',
-        'wizard/import_sale_pem.xml',
-        'wizard/import_sale_excel.xml',
-        'wizard/import_sale_rg3685.xml',
-        'wizard/import_afip_retenciones.xml',
-        'wizard/import_bank_bapro.xml',
+        # # Empresas - Importar
+        # 'wizard/import_purchase_excel.xml',
+        # 'wizard/import_purchase_deducciones_arba.xml',
+        # 'wizard/import_purchase_comprecibidos.xml',
+        # 'wizard/import_purchase_rg3685.xml',
+        # 'wizard/import_sale_compemitidos.xml',
+        # 'wizard/import_sale_compenlinea.xml',
+        # 'wizard/import_sale_pem.xml',
+        # 'wizard/import_sale_excel.xml',
+        # 'wizard/import_sale_rg3685.xml',
+        # 'wizard/import_afip_retenciones.xml',
+        # 'wizard/import_bank_bapro.xml',
 
-        'templates/basic.xml',
+        # 'templates/basic.xml',
 
-        # Reports
-        'report/basic_report.xml',
-        'report/report_iva_f2002.xml',
-        'report/monotributo.xml',
-        # 'views/report_iibb.xml', # Asientos contables relacionados con IIBB
+        # # Reports
+        # 'report/basic_report.xml',
+        # 'report/report_iva_f2002.xml',
+        # 'report/monotributo.xml',
+        # # 'views/report_iibb.xml', # Asientos contables relacionados con IIBB
 
-        # Menu - Mi Estudio
-        'views/company_views.xml',
-        'views/import_views.xml',
-        'views/firm_views.xml',
-        'views/sales_views.xml',
-        'views/afip_activities.xml',
-        'views/afip_apocrifos.xml',
+        # # Menu - Mi Estudio
+        # 'views/company_views.xml',
+        # 'views/import_views.xml',
+        # 'views/firm_views.xml',
+        # 'views/sales_views.xml',
+        # 'views/afip_activities.xml',
+        # 'views/afip_apocrifos.xml',
 
-        # Menu
-        'views/account_menuitem.xml',
+        # # Menu
+        # 'views/account_menuitem.xml',
 
-        # Cross-Company Data
-        "data/nano.monotributo.categoria.csv",
-        "data/l10n_ar.afip.actividad.csv",
-        "data/l10n_ar.afip.cuit.apocrifo.csv",
-        "data/l10n_latam.document.type.csv",
-        "data/account.tax.template.csv",
-        "data/account.account.template.csv",
-        "data/account_tax_template_data.xml",
+        # # Cross-Company Data
+        # "data/nano.monotributo.categoria.csv",
+        # "data/l10n_ar.afip.actividad.csv",
+        # "data/l10n_ar.afip.cuit.apocrifo.csv",
+        # "data/l10n_latam.document.type.csv",
+        # "data/account.tax.template.csv",
+        # "data/account.account.template.csv",
+        # "data/account_tax_template_data.xml",
 
-        # Company Dependent Data
-        # TODO: si es necesario, se debe hacer por empresa, o crear primero los impuestos.
-        # El producto no tiene company_id, pero los impuestos no estan creados aun
-        # "data/product.template.csv",
-        # "data/product_template.xml"
+        # # Company Dependent Data
+        # # TODO: si es necesario, se debe hacer por empresa, o crear primero los impuestos.
+        # # El producto no tiene company_id, pero los impuestos no estan creados aun
+        # # "data/product.template.csv",
+        # # "data/product_template.xml"
     ],
     'images': [], # 'static/description/banner.png'
     'qweb': [

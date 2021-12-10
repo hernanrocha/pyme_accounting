@@ -23,8 +23,47 @@ def exempt_line(line):
     codes = line.mapped('tax_ids').mapped('tax_group_id').mapped('l10n_ar_vat_afip_code')
     return '2' in codes
 
+class AccountTaxGroup(models.Model):
+    _inherit = 'account.tax.group'
+
+    # values from http://www.afip.gob.ar/fe/documentos/otros_Tributos.xlsx
+    l10n_ar_tribute_afip_code = fields.Selection([
+        ('01', '01 - National Taxes'),
+        ('02', '02 - Provincial Taxes'),
+        ('03', '03 - Municipal Taxes'),
+        ('04', '04 - Internal Taxes'),
+        ('06', '06 - VAT perception'),
+        ('07', '07 - IIBB perception'),
+        ('08', '08 - Municipal Taxes Perceptions'),
+        ('09', '09 - Other Perceptions'),
+        ('99', '99 - Others'),
+    ], string='Tribute AFIP Code', index=True, readonly=True)
+
+    # values from http://www.afip.gob.ar/fe/documentos/OperacionCondicionIVA.xls
+    l10n_ar_vat_afip_code = fields.Selection([
+        ('0', 'Not Applicable'),
+        ('1', 'Untaxed'),
+        ('2', 'Exempt'),
+        ('3', '0%'),
+        ('4', '10.5%'),
+        ('5', '21%'),
+        ('6', '27%'),
+        ('8', '5%'),
+        ('9', '2,5%'),
+    ], string='VAT AFIP Code', index=True, readonly=True)
+
+# ODOO 11 - https://github.com/odoo/odoo/blob/14.0/addons/l10n_ar/models/account_tax_group.py
 class AccountMove(models.Model):
-    _inherit = "account.move"
+    _inherit = 'account.move'
+
+    # ODOO 11 - commercial_partner_id
+    @api.depends('partner_id')
+    def _compute_commercial_partner_id(self):
+        for move in self:
+            move.commercial_partner_id = move.partner_id.commercial_partner_id
+
+    commercial_partner_id = fields.Many2one('res.partner', string='Commercial Entity', store=True, readonly=True,
+        compute='_compute_commercial_partner_id')
     
     z_desde = fields.Integer(string="Z Cbte Desde")
     z_hasta = fields.Integer(string="Z Cbte Hasta")

@@ -124,7 +124,7 @@ class ImportAfipMisRetenciones(models.TransientModel):
             
             # 0000561800014834 => FA-A 05618-00014834
             if len(r.numero_comprobante) == 16:
-                cbte = f'{r.numero_comprobante[3:8]}-{r.numero_comprobante[8:]}'
+                cbte = '{}-{}'.format(r.numero_comprobante[3:8], r.numero_comprobante[8:])
             # Formato desconocido. No se busca el comprobante asociado
             else:
                 continue
