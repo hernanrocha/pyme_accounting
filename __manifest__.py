@@ -55,8 +55,8 @@
         # 'iva/account_vat_report_view.xml',
         # 'iva/iva_2002.xml',
 
-        # # Security Records
-        # 'security/ir.model.access.csv',
+        # Security Records
+        'security/ir.model.access.csv',
         # 'security/record_rules.xml',
 
         # 'wizard/arba_afip_views.xml',
@@ -114,6 +114,17 @@
         # # El producto no tiene company_id, pero los impuestos no estan creados aun
         # # "data/product.template.csv",
         # # "data/product_template.xml"
+
+        # ODOO 11
+        'odoo11/table_views.xml',
+        'odoo11/account_menuitem.xml',
+
+        # ODOO 11: Data de otros modulos
+        'odoo11/data/account_account_tag.xml',
+        'odoo11/data/afip_responsability_type.xml',
+        'odoo11/data/res_partner_id_category_data.xml',
+        'odoo11/data/account_document_letter.xml',
+        'odoo11/data/account.document.type.csv',
     ],
     'images': [], # 'static/description/banner.png'
     'qweb': [

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record model='ir.ui.view' id='account_tag_tree'>
+        <field name='name'>Cuentas Analíticas</field>
+        <field name="model">account.account.tag</field>
+        <field name='arch' type='xml'>
+            <tree>
+                <field name="name" />
+                <field name="applicability" />
+            </tree>
+        </field>
+    </record>
+
+    <record model='ir.ui.view' id='account_document_type_tree'>
+        <field name='name'>Tipos de Comprobante</field>
+        <field name="model">account.document.type</field>
+        <field name='arch' type='xml'>
+            <tree>
+                <field name="code" />
+                <field name="name" />
+                <field name="document_letter_id" />
+                <field name="internal_type" />
+                <field name="doc_code_prefix" />
+                <field name="localization" />
+                <field name="validator_id" />
+                <field name="purchase_cuit_required" />
+                <field name="purchase_alicuots" />
+            </tree>
+        </field>
+    </record>
+
+    <record model='ir.ui.view' id='afip_responsability_type_tree'>
+        <field name='name'>Tipos de Responsabilidad AFIP</field>
+        <field name="model">afip.responsability.type</field>
+        <field name='arch' type='xml'>
+            <tree>
+                <field name="code" />
+                <field name="name" />
+                <field name="company_requires_vat" />
+                <field name="active" />
+            </tree>
+        </field>
+    </record>
+
+    <record model='ir.ui.view' id='partner_id_category_tree'>
+        <field name='name'>Tipos de Documento</field>
+        <field name="model">res.partner.id_category</field>
+        <field name='arch' type='xml'>
+            <tree>
+                <field name="code" />
+                <field name="name" />
+                <field name="afip_code" />
+            </tree>
+        </field>
+    </record>
+
+</odoo>
