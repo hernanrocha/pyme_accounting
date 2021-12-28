@@ -97,15 +97,15 @@ class IngresosBrutosArbaWizard(models.Model):
         # tax_account = self.env['account.account'].search([
         #     ('code', '=', '231000')
         # ])
-        
+
         # TODO: cambiar por referencia a percepcion ARBA aplicada
         iibb_account = self.env['account.account'].search([
             # ('code', '=', '231000'),
             ('code', '=', '2.1.03.01.024')
         ])
 
-        if not tax_account:
-            raise ValidationError('Cuenta de IVA no encontrada')
+        # if not tax_account:
+        #     raise ValidationError('Cuenta de IVA no encontrada')
 
         if not iibb_account:
             raise ValidationError('Cuenta de percepcion ARBA aplicada no encontrada')
