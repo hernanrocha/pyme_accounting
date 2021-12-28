@@ -7,15 +7,15 @@ import base64
 _logger = logging.getLogger(__name__)
 
 def format_amount(amount, padding=15, decimals=2, sep=""):
-        if amount < 0:
-            template = "-{:0>%dd}" % (padding - 1 - len(sep))
-        else:
-            template = "{:0>%dd}" % (padding - len(sep))
-        res = template.format(
-            int(round(abs(amount) * 10**decimals, decimals)))
-        if sep:
-            res = "{0}{1}{2}".format(res[:-decimals], sep, res[-decimals:])
-        return res
+    if amount < 0:
+        template = "-{:0>%dd}" % (padding - 1 - len(sep))
+    else:
+        template = "{:0>%dd}" % (padding - len(sep))
+    res = template.format(
+        int(round(abs(amount) * 10**decimals, decimals)))
+    if sep:
+        res = "{0}{1}{2}".format(res[:-decimals], sep, res[-decimals:])
+    return res
 
 class IngresosBrutosAgipWizard(models.Model):
     _name = "l10n_ar.agente.agip.wizard"
@@ -168,6 +168,8 @@ class IngresosBrutosAgipWizard(models.Model):
 # Siendo multilateral, se presenta SIFERE + DDDJJ en cada provincia?
 # account.move vs account.invoice ???
 # Revisar que no afecte la moneda extranjera. Como se calcula perc/ret?
+# NOTA: las notas de credito se cargan luego de los comprobantes. Los montos
+#    deben coincidir exactamente con los originales del comprobante
 
 # Campos:
 # - account.move:

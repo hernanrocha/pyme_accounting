@@ -224,3 +224,4 @@ class AccountMove(models.Model):
         # states={'posted': [('readonly', True)]},
         index=True,
     )
+    document_number = fields.Char(string="Numero de Cbte")

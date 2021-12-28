@@ -13,5 +13,6 @@
     <!-- view account.move -->
     <!-- before sheet -->
         <field name="document_type_id" />
+        <field name="document_number" />
 
 </odoo>

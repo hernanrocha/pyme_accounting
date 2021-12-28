@@ -55,4 +55,19 @@
         </field>
     </record>
 
+    <record model='ir.ui.view' id='account_account_tree'>
+        <field name='name'>Plan de Cuentas</field>
+        <field name="model">account.account</field>
+        <field name='arch' type='xml'>
+            <tree>
+                <field name="code" />
+                <field name="name" />
+                <field name="user_type_id" />
+                <field name="tax_ids" />
+                <field name="tag_ids" />
+                <field name="reconcile" />
+            </tree>
+        </field>
+    </record>
+
 </odoo>

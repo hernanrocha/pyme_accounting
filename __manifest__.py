@@ -116,19 +116,20 @@
         # # "data/product_template.xml"
 
         # ODOO 11
+        'odoo11/iibb_views.xml',
         'odoo11/table_views.xml',
         'odoo11/account_menuitem.xml',
 
         # ODOO 11: Data de otros modulos
-        'odoo11/data/account_account_tag.xml',
-        'odoo11/data/afip_responsability_type.xml',
-        'odoo11/data/res_partner_id_category_data.xml',
-        'odoo11/data/account_document_letter.xml',
-        'odoo11/data/account.document.type.csv',
+        # 'odoo11/data/account_account_tag.xml',
+        # 'odoo11/data/afip_responsability_type.xml',
+        # 'odoo11/data/res_partner_id_category_data.xml',
+        # 'odoo11/data/account_document_letter.xml',
+        # 'odoo11/data/account.document.type.csv',
     ],
     'images': [], # 'static/description/banner.png'
     'qweb': [
-        'static/src/xml/base.xml',
+        # 'static/src/xml/base.xml',
     ],
     'application': True,
     # 'active': True, # This indicates whether this module must install automatically or not.
