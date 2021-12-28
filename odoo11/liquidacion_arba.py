@@ -87,6 +87,9 @@ class IngresosBrutosArbaWizard(models.Model):
         return s[1][-8:].zfill(8)
 
     def generate(self):
+        if not self.date_from or not self.date_to:
+            return
+
         self.generate_percepciones()
         self.generate_retenciones()
 
@@ -120,42 +123,45 @@ class IngresosBrutosArbaWizard(models.Model):
         self.invoice_ids = self.perc_line_ids.mapped('move_id')
 
         for line in self.perc_line_ids:
-            move = line.move_id
-            partner_id = move.partner_id
-            # tax_line = move.line_ids.filtered(lambda l: l.account_id == tax_account)
+            try:
+                move = line.move_id
+                partner_id = move.partner_id
+                # tax_line = move.line_ids.filtered(lambda l: l.account_id == tax_account)
 
-            # Percepcion
-            record = [
-                # CUIT [13] (30-71125458-3)
-                self._format_cuit(partner_id),
-                # Fecha [10] (03/11/2021)
-                self._format_date(line.date),
-                # Tipo Comprobante [1] 
-                #   F - Factura
-                #   C - Nota de Credito
-                #   R - Recibo
-                #   D - Nota Debito
-                #   V - Nota de Venta
-                #   E - Factura de Crédito Electrónica
-                #   H - Nota de Crédito Electrónica
-                #   I - Nota de Débito Electrónica
-                self._format_tipo_cbte(move),
-                # Letra Comprobante [1] (A, B, C, <blanco>)
-                self._format_letra_cbte(move), 
-                # Punto de Venta [4] (0003)
-                self._format_pto_venta(move),
-                # Numero de Comprobante [8] (00000109)
-                self._format_numero_cbte(move),
-                # Monto Imponible [12] (000293674,28 o -00293674,28 para NC)
-                format_amount(line.invoice_id.amount_untaxed_signed, 12, 2, ","),
-                # Monto Percepcion [11] (00293674,28 o -0293674,28 para NC)
-                format_amount(-line.balance, 11, 2, ","),
-                # Tipo Operacion [1] (A alta - B baja - M modificacion)
-                'A',
-            ]
+                # Percepcion
+                record = [
+                    # CUIT [13] (30-71125458-3)
+                    self._format_cuit(partner_id),
+                    # Fecha [10] (03/11/2021)
+                    self._format_date(line.date),
+                    # Tipo Comprobante [1] 
+                    #   F - Factura
+                    #   C - Nota de Credito
+                    #   R - Recibo
+                    #   D - Nota Debito
+                    #   V - Nota de Venta
+                    #   E - Factura de Crédito Electrónica
+                    #   H - Nota de Crédito Electrónica
+                    #   I - Nota de Débito Electrónica
+                    self._format_tipo_cbte(move),
+                    # Letra Comprobante [1] (A, B, C, <blanco>)
+                    self._format_letra_cbte(move), 
+                    # Punto de Venta [4] (0003)
+                    self._format_pto_venta(move),
+                    # Numero de Comprobante [8] (00000109)
+                    self._format_numero_cbte(move),
+                    # Monto Imponible [12] (000293674,28 o -00293674,28 para NC)
+                    format_amount(line.invoice_id.amount_untaxed_signed, 12, 2, ","),
+                    # Monto Percepcion [11] (00293674,28 o -0293674,28 para NC)
+                    format_amount(-line.balance, 11, 2, ","),
+                    # Tipo Operacion [1] (A alta - B baja - M modificacion)
+                    'A',
+                ]
 
-            _logger.info(record)
-            records_perc.append(''.join(record))
+                _logger.info(record)
+                records_perc.append(''.join(record))
+            except:
+                _logger.error("Error procesando percepcion. Asiento {}".format(line.move_id.name))
 
         period = fields.Date.from_string(self.date_to).strftime('%Y-%m-%d')
 
@@ -187,27 +193,30 @@ class IngresosBrutosArbaWizard(models.Model):
         self.payment_ids = self.ret_line_ids.mapped('move_id')
 
         for line in self.ret_line_ids:
-            move = line.move_id
-            partner_id = move.partner_id
+            try:
+                move = line.move_id
+                partner_id = move.partner_id
 
-            # Retencion
-            record = [
-                # CUIT [13] (30-70862198-2)
-                self._format_cuit(partner_id),
-                # Fecha [10] (03/11/2021)
-                self._format_date(line.date),
-                # Numero Sucursal [4] (0001)
-                self._format_pto_venta(move),
-                # Numero Emision [8] (00001867)
-                self._format_numero_cbte(move),
-                # Monto Percepcion [11] (00293674,28 o -0293674,28 para NC) - tax_line_ids.amount_total
-                format_amount(-line.balance, 11, 2, ","),
-                # Tipo Operacion [1] (A alta - B baja - M modificacion)
-                'A'
-            ]
+                # Retencion
+                record = [
+                    # CUIT [13] (30-70862198-2)
+                    self._format_cuit(partner_id),
+                    # Fecha [10] (03/11/2021)
+                    self._format_date(line.date),
+                    # Numero Sucursal [4] (0001)
+                    self._format_pto_venta(move),
+                    # Numero Emision [8] (00001867)
+                    self._format_numero_cbte(move),
+                    # Monto Percepcion [11] (00293674,28 o -0293674,28 para NC) - tax_line_ids.amount_total
+                    format_amount(-line.balance, 11, 2, ","),
+                    # Tipo Operacion [1] (A alta - B baja - M modificacion)
+                    'A'
+                ]
 
-            _logger.info(record)
-            records_ret.append(''.join(record))
+                _logger.info(record)
+                records_ret.append(''.join(record))
+            except:
+                _logger.error("Error procesando retencion. Asiento {}".format(line.move_id.name))
 
         period = fields.Date.from_string(self.date_to).strftime('%Y-%m-%d')
 
