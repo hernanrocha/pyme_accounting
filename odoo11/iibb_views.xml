@@ -120,7 +120,7 @@
                                     <field name="partner_id" />
                                     <field name="document_type_id" />
                                     <field name="document_number" />
-                                    <field name="payment_id" />
+                                    <!-- <field name="payment_id" /> -->
                                     <field name="state" />
                                 </tree>
                             </field>
