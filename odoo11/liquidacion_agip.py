@@ -77,22 +77,27 @@ class IngresosBrutosAgipWizard(models.Model):
 
     # depends('gross_income_type')
     def _format_situacion_iibb(self, partner_id):
-        if not partner_id.gross_income_type:
-            raise ValidationError(_(
-                'Debe establecer el tipo de inscripción de IIBB del partner '
-                '"%s" (id: %s)') % (partner_id.name, partner_id.id))
+        # if not partner_id.gross_income_type:
+        #     raise ValidationError(_(
+        #         'Debe establecer el tipo de inscripción de IIBB del partner '
+        #         '"%s" (id: %s)') % (partner_id.name, partner_id.id))
 
-        # ahora se reportaria para cualquier inscripto el numero de cuit
-        # gross_income_mapping = { 'multilateral': '2', 'exempt': '4', 'local': '5' }
-        gross_income_mapping = { 'multilateral': '2', 'no_liquida': '4', 'local': '5' }
-        return gross_income_mapping[partner_id.gross_income_type]
+        # # ahora se reportaria para cualquier inscripto el numero de cuit
+        # # gross_income_mapping = { 'multilateral': '2', 'exempt': '4', 'local': '5' }
+        # gross_income_mapping = { 'multilateral': '2', 'no_liquida': '4', 'local': '5' }
+        # return gross_income_mapping[partner_id.gross_income_type]
+        
+        # Para evitar saber la situacion de cada cliente,
+        # se puede simplemente declarar local y poner el numero de CUIT
+        return '5'
 
     # depends('gross_income_type', 'gross_income_number')
     def _format_numero_iibb(self, partner_id):
-        if partner_id.gross_income_type == 'no_liquida':
-            return '00000000000' 
+        # if partner_id.gross_income_type == 'no_liquida':
+        #     return '00000000000' 
     
-        return partner_id.gross_income_number
+        # return partner_id.gross_income_number
+        return partner_id.main_id_number
 
     # depends('afip_responsability_type_id.code')
     def _format_situacion_iva(self, partner_id):
@@ -169,10 +174,10 @@ class IngresosBrutosAgipWizard(models.Model):
         records = []
         records_nc = []
 
-        # TODO: cambiar por referencia a percepcion ARBA aplicada
+        # TODO: cambiar por referencia a percepcion AGIP aplicada
         iibb_account = self.env['account.account'].search([
             # ('code', '=', '231000'),
-            ('code', '=', '2.1.03.01.024')
+            ('code', '=', '2.1.03.01.012')
         ])
 
         if not iibb_account:
@@ -272,8 +277,10 @@ class IngresosBrutosAgipWizard(models.Model):
                         # Campo 13 - Numero de inscripcion IIBB
                         self._format_numero_iibb(partner_id),
                         # Campo 14 - Situacion frente al IVA
+                        # 1 Resp. Inscripto - 3 Exento - 4 Monotributo
                         self._format_situacion_iva(partner_id),
                         # Campo 15 - Razon Social
+                        # TODO: tal vez reemplazar guiones bajo
                         '{:30.30}'.format(partner_id.name),
                         # Campo 16 - Importe Otros Conceptos
                         format_amount(monto_otros, 16, 2, ','),
@@ -301,7 +308,7 @@ class IngresosBrutosAgipWizard(models.Model):
         # TODO: cambiar por referencia a retencion AGIP aplicada
         iibb_account = self.env['account.account'].search([
             # ('code', '=', '231000'),
-            ('code', '=', '2.1.03.01.024')
+            ('code', '=', '2.1.03.01.011')
         ])
 
         if not iibb_account:
@@ -363,6 +370,7 @@ class IngresosBrutosAgipWizard(models.Model):
                     # Campo 14 - Situacion frente al IVA
                     self._format_situacion_iva(partner_id),
                     # Campo 15 - Razon Social
+                    # TODO: tal vez reemplazar guiones bajo
                     '{:30.30}'.format(partner_id.name),
                     # Campo 16 - Importe Otros Conceptos
                     format_amount(0, 16, 2, ','),
