@@ -39,7 +39,7 @@ class IngresosBrutosArbaWizard(models.Model):
     # TODO: include_journal_ids = fields.Many2many('account.journal', string="Incluir Diarios Contables")
 
     def _format_cuit(self, partner):
-        cuit = partner.vat
+        cuit = partner.main_id_number
         return '{}-{}-{}'.format(cuit[0:2], cuit[2:10], cuit[10])
 
     def _format_date(self, date):
@@ -158,7 +158,6 @@ class IngresosBrutosArbaWizard(models.Model):
                     'A',
                 ]
 
-                _logger.info(record)
                 records_perc.append(''.join(record))
             except:
                 _logger.error("Error procesando percepcion. Asiento {}".format(line.move_id.name))
@@ -213,7 +212,6 @@ class IngresosBrutosArbaWizard(models.Model):
                     'A'
                 ]
 
-                _logger.info(record)
                 records_ret.append(''.join(record))
             except:
                 _logger.error("Error procesando retencion. Asiento {}".format(line.move_id.name))

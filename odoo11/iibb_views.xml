@@ -29,17 +29,61 @@
                                 <field name="agip_cbtes_filename" invisible="1"/>
                                 <group>
                                     <field name="agip_cbtes_file" filename="agip_cbtes_filename"/>
+                                    <field name="agip_nc_file" filename="agip_nc_filename"/>
                                     <field name="AGIP_CBTES" />
+                                    <field name="AGIP_NC" />
                                 </group>
                             </group>
                         </page>
                         <page string="Comprobantes" name="invoices">
                             <field name="invoice_ids">
-                                <tree default_order="date_invoice">
-                                    <field name="state" invisible="1"/>
+                                <tree default_order="date">
                                     <field name="date"/>
                                     <field name="name"/>
                                     <field name="partner_id" />
+                                    <field name="document_type_id" />
+                                    <field name="document_number" />
+                                    <field name="state" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Percepciones" name="percepciones">
+                            <field name="perc_line_ids">
+                                <tree default_order="date">
+                                    <field name="date" />
+                                    <field name="move_id" />
+                                    <field name="journal_id" />
+                                    <field name="account_id" />
+                                    <field name="debit" sum="Total" />
+                                    <field name="credit" sum="Total" />
+                                    <field name="balance" sum="Total" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Pagos" name="payments">
+                            <field name="payment_ids">
+                                <tree default_order="date">
+                                    <field name="date"/>
+                                    <field name="name"/>
+                                    <field name="partner_id" />
+                                    <field name="document_type_id" />
+                                    <field name="document_number" />
+                                    <!-- <field name="payment_id" /> -->
+                                    <field name="state" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Retenciones" name="retenciones">
+                            <field name="ret_line_ids">
+                                <tree default_order="date">
+                                    <field name="date" />
+                                    <field name="move_id" />
+                                    <field name="journal_id" />
+                                    <field name="account_id" />
+                                    <field name="payment_id" />
+                                    <field name="debit" sum="Total" />
+                                    <field name="credit" sum="Total" />
+                                    <field name="balance" sum="Total" />
                                 </tree>
                             </field>
                         </page>
