@@ -10,14 +10,6 @@ from datetime import datetime
 
 _logger = logging.getLogger(__name__)
 
-# TODO: aplicar algo similar a los imports de facturas emitidas
-def get_move_type(invoice_type):
-    # Nota de Credito A, Nota de Credito B, Nota de Credito C
-    if invoice_type in [3, 8, 13]:
-        return 'in_refund'
-
-    return 'in_invoice'
-
 def es_comprobante_c(invoice_code):
     # Factura C, Nota de Debito C, Nota de Credito C, Recibo C
     return invoice_code in [11, 12, 13, 15]
@@ -200,7 +192,7 @@ class ImportPurchaseRg3685(models.TransientModel):
                 self.period_start
 
             move_data = {
-                'move_type': get_move_type(cbte["tipo_comprobante"]),
+                'move_type': 'in_refund' if doc_type.internal_type == 'credit_note' else 'in_invoice',
                 'partner_id': partner.id,
                 'journal_id': journal.id,
                 'date': account_date,

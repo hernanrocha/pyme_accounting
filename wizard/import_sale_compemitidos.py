@@ -250,7 +250,7 @@ class ImportSalesAfip(models.TransientModel):
             
             # Create Invoice
             move_data = {
-                'move_type': 'out_invoice',
+                'move_type': 'out_refund' if doc_type.internal_type == 'credit_note' else 'out_invoice',
                 'partner_id': partner.id,
                 'journal_id': journal_id,
                 'date': invoice.date,
