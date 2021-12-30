@@ -122,8 +122,10 @@ class IngresosBrutosAgipWizard(models.Model):
         tag_id = self.env['account.account.tag'].search([
             ('name', '=', 'Jur: 901 - Capital Federal')
         ])
+        # Primero chequear que esten seteados from_date y to_date. 
+        # Luego validar que el rango y la jurisdiccion coincidan 
         alicuota = partner_id.arba_alicuot_ids.filtered(
-            lambda a: a.from_date <= date and a.to_date >= date and a.tag_id == tag_id)
+            lambda a: a.from_date and a.to_date and a.from_date <= date and a.to_date >= date and a.tag_id == tag_id)
         if len(alicuota) != 1:
             err = 'Alicuota AGIP no encontrada para partner {} - fecha {}'.format(partner_id, date)
             _logger.error(err)
@@ -182,15 +184,25 @@ class IngresosBrutosAgipWizard(models.Model):
 
         if not iibb_account:
             raise ValidationError('Cuenta de percepcion AGIP aplicada no encontrada')
+        
+        # IVA Debito Fiscal
+        # TODO: sacar de una referencia o permitir cargar por el usuario
+        tax_account = self.env['account.account'].search([
+            # ('code', '=', '231000')
+            ('code', '=', '2.1.03.01.001')
+        ])
+
+        if not tax_account:
+            raise ValidationError('Cuenta de IVA Debito no encontrada')
 
         self.perc_line_ids = self.env['account.move.line'].search([
             ('account_id', '=', iibb_account.id),
             ('date', '>=', self.date_from),
             ('date', '<=', self.date_to),
             ('move_id.state', '=', 'posted'),
-            # TODO: move_id.document_type_id NOT NULL
+            ('move_id.document_type_id', '!=', False),
             # TODO: order_by date asc, document_number asc
-        ])
+        ], order='date asc')
         self.invoice_ids = self.perc_line_ids.mapped('move_id')
 
         for line in self.perc_line_ids:
@@ -201,13 +213,14 @@ class IngresosBrutosAgipWizard(models.Model):
 
                 monto_total = line.invoice_id.amount_total             # 53074,79
                 monto_base = line.invoice_id.amount_untaxed            # 42122,85
-                monto_iva = 0 # TODO 8845.80  tax_line_ids.filtered(name = 'IVA Ventas 21%').amount_total
-                monto_perc = abs(line.balance) # TODO 1053,07
+                tax_lines = move.line_ids.filtered(lambda l: l.account_id == tax_account)
+                monto_iva = abs(sum(tax_lines.mapped('balance')))
+                monto_perc = abs(line.balance) # 1053,07
                 monto_otros = monto_total - monto_base - monto_iva # 2106.14
 
                 if internal_type == 'credit_note':
                     origin_move = self.env['account.move'].search([
-                        ('document_number', '=', move.origin)
+                        ('document_number', '=', line.invoice_id.origin)
                     ])
                     if len(origin_move) != 1:
                         raise ValidationError('El numero de documento para {} debe ser unico'.format(move.origin))
@@ -220,8 +233,8 @@ class IngresosBrutosAgipWizard(models.Model):
                         self._format_nc_numero_cbte(move),
                         # Campo 3 - Fecha de Nota de Credito [10]
                         fields.Date.from_string(move.date).strftime('%d/%m/%Y'),
-                        # Campo 4 - Monto de Nota de Credito [16]
-                        format_amount(monto_total, 16, 2, ','),
+                        # Campo 4 - Monto Base de Nota de Credito [16]
+                        format_amount(monto_base, 16, 2, ','),
                         # Campo 5 - Numero de certificado [16]
                         ''.rjust(16, ' '),
                         # Campo 6 - Tipo de Comprobante Origen [2]
@@ -239,7 +252,7 @@ class IngresosBrutosAgipWizard(models.Model):
                         # Campo 12 - Monto a deducir [16]
                         format_amount(monto_perc, 16, 2, ','),
                         # Campo 13 - Alicuota [5]
-                        format_amount(self._get_alicuota(partner_id, origin_move.date).alicuota_percepcion, 4, 2, ","),
+                        format_amount(self._get_alicuota(partner_id, origin_move.date).alicuota_percepcion, 5, 2, ","),
                     ]
 
                     records_nc.append(''.join(record))
@@ -306,6 +319,7 @@ class IngresosBrutosAgipWizard(models.Model):
         records = []
 
         # TODO: cambiar por referencia a retencion AGIP aplicada
+        # usar grupo de impuestos o dejar que lo configure el usuario
         iibb_account = self.env['account.account'].search([
             # ('code', '=', '231000'),
             ('code', '=', '2.1.03.01.011')
@@ -319,7 +333,8 @@ class IngresosBrutosAgipWizard(models.Model):
             ('date', '>=', self.date_from),
             ('date', '<=', self.date_to),
             ('move_id.state', '=', 'posted'),
-            # TODO: order_by document_number
+            ('move_id.document_type_id', '!=', False),
+            # TODO: order_by date, document_number
         ])
         self.payment_ids = self.ret_line_ids.mapped('move_id')
 
@@ -329,8 +344,9 @@ class IngresosBrutosAgipWizard(models.Model):
                 internal_type = move.document_type_id.internal_type
                 partner_id = move.partner_id
 
-                monto_total = line.invoice_id.amount_total   # 53074,79
-                monto_ret = abs(line.balance)                #  1053,07
+                # Base Imponible (restando el minimo no imponible)
+                monto_base = line.payment_id.withholding_base_amount
+                monto_ret = abs(line.balance)
 
                 # TODO: chequear que no aparezca una devolucion de pago
 
@@ -351,10 +367,10 @@ class IngresosBrutosAgipWizard(models.Model):
                     self._format_numero_cbte(move),
                     # Campo 7 - Fecha Comprobante
                     fields.Date.from_string(move.date).strftime('%d/%m/%Y'),
-                    # Campo 8 - Monto Total (amount_total) (53074.79 => 0000000053074,79)
-                    format_amount(monto_total, 16, 2, ','),
+                    # Campo 8 - Monto Base (53074.79 => 0000000053074,79)
+                    format_amount(monto_base, 16, 2, ','),
                     # Campo 9 - Numero de certificado.
-                    line.description.rjust(16, ' '),
+                    line.name.rjust(16, ' '),
                     # line.payment_id.withholding_number.rjust(16, ' '),
                     # Campo 10 - Tipo de documento cliente (partner_id.afip_type)
                     # 1 CDI, 2 CUIL, 3 CUIT
@@ -377,9 +393,9 @@ class IngresosBrutosAgipWizard(models.Model):
                     # Campo 17 - Importe IVA
                     format_amount(0, 16, 2, ','),
                     # Campo 18 - Base Imponible (Total - IVA - Otros)  
-                    format_amount(monto_total, 16, 2, ','),
+                    format_amount(monto_base, 16, 2, ','),
                     # Campo 19 - Alicuota (sacado de padron AGIP, por CUIT+fecha)
-                    format_amount(self._get_alicuota(partner_id, move.date).alicuota_retencion, 4, 2, ","),
+                    format_amount(self._get_alicuota(partner_id, move.date).alicuota_retencion, 5, 2, ","),
                     # Campo 20 - Impuesto aplicado (Base * Alicuota / 100)  
                     format_amount(monto_ret, 16, 2, ','),
                     # Campo 21 - Impuesto aplicado  
@@ -445,3 +461,11 @@ class IngresosBrutosAgipWizard(models.Model):
 # 1.1.01.05.019 - Retención IIBB CABA sufrida
 # 2.1.03.01.011 - Retención IIBB CABA aplicada
 # 2.1.03.01.012 - Percepción IIBB CABA aplicada
+
+# En las notas de credito:
+# - Ordenar por fecha
+# - El monto del comprobante (columna 4) es total o base imponible?
+# En percepciones:
+# - Ordenar por fecha
+# - Cambiar por guion bajo los espacios en la razon social?
+# - Hay diferencia en centavos en el monto imponible. Revisar si pasan bien
