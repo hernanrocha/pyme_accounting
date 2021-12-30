@@ -209,7 +209,7 @@ class ImportSaleRg3685(models.TransientModel):
             doc_type = self.env['l10n_latam.document.type'].search([('code', '=', cbte["tipo_comprobante"])])
 
             move_data = {
-                'move_type': 'out_invoice',
+                'move_type': 'out_refund' if doc_type.internal_type == 'credit_note' else 'out_invoice',
                 'partner_id': partner.id,
                 'journal_id': journal_id,
                 'date': datetime.strptime(cbte["fecha"], '%Y%m%d'),
