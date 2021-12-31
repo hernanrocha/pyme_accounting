@@ -1,0 +1,2 @@
+id,chart_template_id/id,code,user_type_id/id,name,reconcile
+pyme_accounting.base_otros_tributos,l10n_ar.l10nar_base_chart_template,1.1.4.02.740,account.data_account_type_current_assets,Otros Tributos,False

@@ -103,8 +103,12 @@ class SaleImportPemF8010Line(models.Model):
     number = fields.Integer(string="Comprobante")
     description = fields.Char(string="Descripción")
     # TODO: generar un mixin con estos campos
-    taxed_21 = fields.Float(string="Gravado")
+    taxed_21 = fields.Float(string="Gravado 21%")
     tax_21 = fields.Float(string="IVA 21%")
+    taxed_105 = fields.Float(string="Gravado 10.5%")
+    tax_105 = fields.Float(string="IVA 10.5%")
+    taxed_27 = fields.Float(string="Gravado 27%")
+    tax_27 = fields.Float(string="IVA 27%")
     # TODO: borrar este campo
     taxed_6 = fields.Float(string="Gravado 6%")
     tax_6 = fields.Float(string="IVA 6%")
@@ -131,12 +135,16 @@ class SaleImportPEMLine(models.Model):
     range_from = fields.Integer(string="Comprobante Desde")
     range_to = fields.Integer(string="Comprobante Hasta")
     # TODO: generar un mixin con estos campos
+    # TODO: split taxed por tipo de IVA
     taxed = fields.Float(string="Gravado")
     untaxed = fields.Float(string="No Gravado")
     exempt = fields.Float(string="Exento")
+    otros_tributos = fields.Float(string="Otros Tributos")
     total = fields.Float(string="Total")
     tax_21 = fields.Float(string="IVA 21%")
     tax_6 = fields.Float(string="IVA 6%")
+    tax_105 = fields.Float(string="IVA 10.5%")
+    tax_27 = fields.Float(string="IVA 27%")
 
     pem_id = fields.Many2one(comodel_name="l10n_ar.import.sale.pem", ondelete="cascade", invisible=True)
 
@@ -170,9 +178,10 @@ class SaleImportPEM(models.Model):
     f8012_file = fields.Binary(string="Archivo F8012 (*.pem)")
     f8012_filename = fields.Char(string="Archivo F8010")
 
-    # TODO: Permitir guardarse y acceder los XML
-    f8010_xml_file = fields.Binary(string="F8010 archivo XML", readonly=True)
-    f8011_xml_file = fields.Binary(string="F8011 archivo XML", readonly=True)
+    f8010_xml_file = fields.Binary(string="Archivo XML F8010", readonly=True)
+    f8011_xml_file = fields.Binary(string="Archivo XML F8011", readonly=True)
+    f8012_xml_file = fields.Binary(string="Archivo XML F8012", readonly=True)
+    # f8012_xml_filename = fields.Char(string="Nombre de archivo XML F8012", compute)
 
     # TODO: soportar comprobante f8010
     # pem_type = fields.Select(string="Tipo", options=['f8010', 'f8011'])
@@ -208,6 +217,8 @@ class SaleImportPEM(models.Model):
 
     # Referencias
     tax_21 = fields.Many2one(comodel_name="account.tax", ondelete="cascade")
+    tax_105 = fields.Many2one(comodel_name="account.tax", ondelete="cascade")
+    tax_27 = fields.Many2one(comodel_name="account.tax", ondelete="cascade")
     tax_untaxed = fields.Many2one(comodel_name="account.tax", ondelete="cascade")
     tax_exempt = fields.Many2one(comodel_name="account.tax", ondelete="cascade")
     account_sale = fields.Many2one(comodel_name="account.account", ondelete="cascade")
@@ -219,6 +230,14 @@ class SaleImportPEM(models.Model):
         self.tax_21 = self.env['account.tax'].search([
             ('type_tax_use', '=', 'sale'),
             ('name', '=', 'IVA 21%'),
+        ])
+        self.tax_105 = self.env['account.tax'].search([
+            ('type_tax_use', '=', 'sale'),
+            ('name', '=', 'IVA 10.5%'),
+        ])
+        self.tax_27 = self.env['account.tax'].search([
+            ('type_tax_use', '=', 'sale'),
+            ('name', '=', 'IVA 27%'),
         ])
         self.tax_untaxed = self.env['account.tax'].search([
             ('type_tax_use', '=', 'sale'),
@@ -263,9 +282,16 @@ class SaleImportPEM(models.Model):
         # Parsear archivo XML
         tree = ET.parse('/tmp/odoo/{}.xml'.format(xmlfile))
 
-        # TODO: Borrar archivos temporales despues de usarlos o attachearlo a Odoo
+        raw_xml = ''
+        with open('/tmp/odoo/{}.xml'.format(xmlfile), 'r') as reader:
+            raw_xml = base64.encodestring(
+                reader.read().encode('ISO-8859-1')) 
 
-        return tree.getroot()
+        # Borrar archivos PEM y XML temporales
+        os.remove(fullpath)
+        os.remove('/tmp/odoo/{}.xml'.format(xmlfile))
+
+        return tree.getroot(), raw_xml
 
     @api.depends('f8010_file', 'f8011_file')
     def compute(self):
@@ -331,7 +357,10 @@ class SaleImportPEM(models.Model):
             return
 
         # Convertir PEM a XML
-        root = self._parse_pem(data['f8010_file'])
+        root, raw_xml = self._parse_pem(data['f8010_file'])
+
+        # Guardar raw XML
+        self.f8010_xml_file = raw_xml
               
         text_cuit = root.findtext('cuitEmisor')
         text_pdv = root.findtext('numeroPuntoVenta')
@@ -585,7 +614,10 @@ class SaleImportPEM(models.Model):
         # TODO: Chequear siguiente comprobante con el metodo _get_last_sequence()
 
         # Convertir PEM a XML
-        root = self._parse_pem(data['f8011_file'])
+        root, raw_xml = self._parse_pem(data['f8011_file'])
+
+        # Guardar raw XML
+        self.f8011_xml_file = raw_xml
 
         # text_date = root.findtext('fechaHoraEmisionAuditoria')
         emisor = root.find('emisor')
@@ -639,7 +671,10 @@ class SaleImportPEM(models.Model):
                     'total': float(text_z_total),
                     'pem_id': self.id,
                     'tax_21': 0,
-                    'tax_6': 0
+                    'tax_6': 0,
+                    'tax_105': 0,
+                    'tax_27': 0,
+                    'otros_tributos': 0,
                 }
 
                 # A veces la lista de comprobantes esta vacia
@@ -663,8 +698,16 @@ class SaleImportPEM(models.Model):
                         invoice_data['tax_21'] = float(text_vat_subtotal)
                     elif text_vat_percentage == '6.00':
                         invoice_data['tax_6'] = float(text_vat_subtotal)
+                    elif text_vat_percentage == '10.50':
+                        invoice_data['tax_105'] = float(text_vat_subtotal)
+                    elif text_vat_percentage == '27.00':
+                        invoice_data['tax_27'] = float(text_vat_subtotal)
                     else:
                         raise UserError("IVA desconocido {}".format(text_vat_percentage))
+
+                # Otros Tributos
+                otros_tributos = cierreZ.find('arrayOtrosTributos').findall('otroTributo')
+                invoice_data['otros_tributos'] = sum(map(lambda t: float(t.findtext('importe')), otros_tributos))
 
                 self.env["l10n_ar.import.sale.pem.line"].create(invoice_data)
 
@@ -713,7 +756,10 @@ class SaleImportPEM(models.Model):
             return
 
         # Convertir PEM a XML
-        root = self._parse_pem(data['f8012_file'])
+        root, raw_xml = self._parse_pem(data['f8012_file'])
+
+        # Guardar raw XML
+        self.f8012_xml_file = raw_xml
 
         self.f8012_display = True
         self.f8012_start_date = root.findtext('fechaDesde')
@@ -792,6 +838,23 @@ class SaleImportPEM(models.Model):
                 })
                 line.tax_ids += self.tax_21
 
+            # IVA 10.5%
+            if (invoice.tax_105 > 0):
+                # El monto gravado puede estar mezclado con otros, por lo que se
+                # determina el valor especifico para este IVA,
+                # y se descuenta del valor original
+                t = invoice.tax_105 / 0.105
+                taxed_not_used -= t
+
+                line = move.line_ids.create({
+                    'move_id': move.id,
+                    'name': 'Monto Gravado al 10.5%',
+                    'account_id': self.account_sale.id,
+                    'quantity': 1,
+                    'price_unit': t + (invoice.tax_105 if self.tax_105.price_include else 0),
+                })
+                line.tax_ids += self.tax_105
+
             # IVA No Gravado
             if invoice.untaxed > 0:
                 line = move.line_ids.create({
@@ -845,7 +908,43 @@ class SaleImportPEM(models.Model):
             move._recompute_payment_terms_lines()
             move._compute_amount()
 
-        self.state = "done"
+            # Otros tributos. 
+            # NOTA: se agregan luego de ejecutar recompute para evitar volver al valor 1.00
+            if invoice.otros_tributos > 0:
+                otros_t = self.env['account.tax'].search([
+                    ('type_tax_use', '=', 'sale'),
+                    ('name', '=', "Otros Tributos")
+                ])
+
+                line = move.line_ids.create({
+                    'move_id': move.id,
+                    'name': 'Impuestos',
+                    'account_id': self.account_sale.id,
+                    'quantity': 1,
+                    'price_unit': 0,
+                })
+                line.tax_ids += self.tax_21
+                line.tax_ids += otros_t
+
+                # Actualizar factura
+                move._recompute_dynamic_lines(recompute_all_taxes=True, recompute_tax_base_amount=True)
+                move._recompute_payment_terms_lines()
+                move._compute_amount()
+                
+                # Obtener linea de Otros Tributos
+                iibb_line = move.line_ids.filtered(lambda line: line.tax_line_id.id == otros_t.id)
+
+                am = invoice.otros_tributos
+                move.write({'line_ids': [(1, iibb_line.id, { 
+                    'debit': 0, 
+                    'credit': am, 
+                    'amount_currency': am,
+                })]})
+
+                # Actualizar valor de los pagos para agregar IIBB 
+                move._recompute_payment_terms_lines()
+
+        # self.state = "done"
 
         # TODO: retornar vista de los tiques creados. Asi retorna una lista generica
         return {

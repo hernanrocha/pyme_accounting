@@ -95,6 +95,11 @@
                     <field name="f8011_end_date" />
                     <field name="f8011_end_number" />
                     <!-- TODO: la fecha de fin no coincide con el ultimo comprobante -->
+                    
+                    <!-- TODO: establecer el nombre del archivo -->
+                    <field name="f8010_xml_file" />
+                    <field name="f8011_xml_file" />
+                    <field name="f8012_xml_file" />
                 </group>
 
                 <notebook>
@@ -113,7 +118,10 @@
                                 <field name="untaxed" sum="Total" />
                                 <field name="exempt" sum="Total" />
                                 <field name="tax_21" sum="Total" />
+                                <field name="tax_105" sum="Total" />
+                                <field name="tax_27" sum="Total" />
                                 <field name="tax_6" sum="Total" attrs="{'column_invisible':[('parent.f8011_total_tax_6', '=', False)]}" />
+                                <field name="otros_tributos" sum="Total" />
                                 <field name="total" sum="Total" />
 
                                 <control><div></div></control>
