@@ -366,3 +366,8 @@ class ResPartnerArbaAlicuot(models.Model):
         api_articulo_inciso_calculo_selection,
         string='Artículo/Inciso para el cálculo retención',
     )
+
+class AccountPayment(models.Model):
+    _inherit = 'account.payment'
+
+    withholding_base_amount = fields.Float(string="Monto Imponible")

@@ -2,3 +2,4 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 
 security_nano_agip,AGIP,model_l10n_ar_agente_agip_wizard,account.group_account_manager,1,1,1,1
 security_nano_arba,ARBA,model_l10n_ar_agente_arba_wizard,account.group_account_manager,1,1,1,1
+security_nano_SICORE,SICORE,model_l10n_ar_agente_sicore_wizard,account.group_account_manager,1,1,1,1

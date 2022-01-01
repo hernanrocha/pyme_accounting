@@ -6,10 +6,12 @@
         id="menu_nano"
         web_icon="account,static/description/icon.png"
         sequence="45">
-    </menuitem>    
+    </menuitem>
 
-    <!-- Menu Ingresos Brutos -->
-    <menuitem name="Ingresos Brutos" sequence="1" parent="menu_nano" id="menu_nano_iibb" />
+    <!-- TODO: Menu Contribuyente -->
+
+    <!-- Menu Agentes -->
+    <menuitem name="Agentes" sequence="1" parent="menu_nano" id="menu_nano_iibb" />
 
     <record id="action_nano_iibb_agip" model="ir.actions.act_window">
         <field name="name">AGIP</field>
@@ -31,6 +33,16 @@
     <menuitem name="ARBA" sequence="2" parent="menu_nano_iibb"
         id="menu_nano_iibb_arba" action="action_nano_iibb_arba" />
 
+    <record id="action_nano_agente_sicore" model="ir.actions.act_window">
+        <field name="name">SICORE</field>
+        <field name="res_model">l10n_ar.agente.sicore.wizard</field>
+        <field name="view_mode">list,form</field>
+        <field name="target">main</field>
+    </record>
+
+    <menuitem name="SICORE" sequence="3" parent="menu_nano_iibb"
+        id="menu_nano_agente_sicore" action="action_nano_agente_sicore" />
+
     <!-- Menu Tablas -->
     <menuitem name="Tablas" sequence="100" parent="menu_nano" id="menu_nano_tables" />
 
@@ -46,7 +58,7 @@
         id="menu_nano_tables_account_tags" action="action_nano_tables_account_tags" />
 
     <record id="action_nano_tables_document_type" model="ir.actions.act_window">
-        <field name="name">Cuentas Analíticas</field>
+        <field name="name">Tipos de Comprobante</field>
         <field name="res_model">account.document.type</field>
         <field name="view_mode">list,form</field>
         <field name="view_id" ref="account_document_type_tree" />

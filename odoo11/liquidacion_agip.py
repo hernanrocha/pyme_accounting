@@ -73,7 +73,7 @@ class IngresosBrutosAgipWizard(models.Model):
             # raise ValidationError('Numero de comprobante invalido: {}'.format(move.document_number))
             return '0000000000000000'
 
-        return '{}{}'.format(s[0][-4:].zfill(4), s[1][-8:].zfill(12))
+        return '{}{}'.format(s[0][-4:].zfill(4), s[1][-12:].zfill(12))
 
     # depends('gross_income_type')
     def _format_situacion_iibb(self, partner_id):
@@ -146,7 +146,6 @@ class IngresosBrutosAgipWizard(models.Model):
             return
 
         records = []
-        # TODO: generar notas de credito
         records_nc = []
         
         # Percepciones
@@ -269,7 +268,7 @@ class IngresosBrutosAgipWizard(models.Model):
                         self._format_tipo_cbte(internal_type),
                         # Campo 5 - Letra del Comprobante
                         self._format_letra_cbte(move),
-                        # TODO: Campo 6 - Pto. de Venta + Comprobante (0003000000066478)
+                        # Campo 6 - Pto. de Venta + Comprobante (0003000000066478)
                         # 4 punto de venta, 12 numero de comprobante
                         self._format_numero_cbte(move),
                         # Campo 7 - Fecha Comprobante
@@ -462,10 +461,13 @@ class IngresosBrutosAgipWizard(models.Model):
 # 2.1.03.01.011 - Retención IIBB CABA aplicada
 # 2.1.03.01.012 - Percepción IIBB CABA aplicada
 
+# TODO
 # En las notas de credito:
-# - Ordenar por fecha
-# - El monto del comprobante (columna 4) es total o base imponible?
+# - Ordenar por fecha, numero cbte
 # En percepciones:
-# - Ordenar por fecha
+# - Ordenar por fecha, numero cbte
 # - Cambiar por guion bajo los espacios en la razon social?
 # - Hay diferencia en centavos en el monto imponible. Revisar si pasan bien
+# - Los que no sean por el monto completo, no agregarlos al TXT
+
+# - Separar NC en la vista
