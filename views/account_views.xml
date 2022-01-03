@@ -166,6 +166,7 @@
     <record id="view_account_move_entry_form" model="ir.ui.view">
         <field name="name">account.move.entry.form</field>
         <field name="model">account.move</field>
+        <field name="priority">1000</field>
         <field name="arch" type="xml">
             <form string="Account Entry">
                 <field name="move_type" invisible="1" />
@@ -240,6 +241,7 @@
     <record id="view_account_move_entry_tree" model="ir.ui.view">
         <field name="name">account.move.entry.tree</field>
         <field name="model">account.move</field>
+        <field name="priority">1000</field>
         <field name="arch" type="xml">
             <tree>
                 <field name="move_type" invisible="1" />

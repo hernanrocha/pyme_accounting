@@ -14,29 +14,29 @@ _logger = logging.getLogger(__name__)
 # from odoo.addons.custom_addon_name.models.py_file_name import IMPORT_LIST
 # TODO: No repetir este codigo
 def helper_convert_invoice_type(afip_invoice_type):
-    if afip_invoice_type == '1 - Factura A':
+    if afip_invoice_type in ['1 - Factura A', '1']:
         return "FA-A"
-    if afip_invoice_type == '2 - Nota de Débito A':
+    if afip_invoice_type in ['2 - Nota de Débito A', '2']:
         return "ND-A"
-    if afip_invoice_type == '3 - Nota de Crédito A':
+    if afip_invoice_type in ['3 - Nota de Crédito A', '3']:
         return "NC-A"
-    if afip_invoice_type == '4 - Recibo A':
+    if afip_invoice_type in ['4 - Recibo A', '4']:
         return "RE-A"
-    if afip_invoice_type == '6 - Factura B':
+    if afip_invoice_type in ['6 - Factura B', '6']:
         return "FA-B"
-    if afip_invoice_type == '7 - Nota de Débito B':
+    if afip_invoice_type in ['7 - Nota de Débito B', '7']:
         return "ND-B"
-    if afip_invoice_type == '8 - Nota de Crédito B':
+    if afip_invoice_type in ['8 - Nota de Crédito B', '8']:
         return "NC-B"
-    if afip_invoice_type == '9 - Recibo B':
+    if afip_invoice_type in ['9 - Recibo B', '9']:
         return "RE-B"
-    if afip_invoice_type == '11 - Factura C':
+    if afip_invoice_type in ['11 - Factura C', '11']:
         return 'FA-C'
-    if afip_invoice_type == '12 - Nota de Débito C':
+    if afip_invoice_type in ['12 - Nota de Débito C', '12']:
         return 'ND-C'
-    if afip_invoice_type == '13 - Nota de Crédito C':
+    if afip_invoice_type in ['13 - Nota de Crédito C', '13']:
         return 'NC-C'
-    if afip_invoice_type == '15 - Recibo C':
+    if afip_invoice_type in ['15 - Recibo C', '15']:
         return 'RE-C'
     
     raise UserError('Tipo de Comprobante invalido: {}'.format(afip_invoice_type))
