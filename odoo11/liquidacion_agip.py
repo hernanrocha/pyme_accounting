@@ -354,8 +354,10 @@ class IngresosBrutosAgipWizard(models.Model):
                 partner_id = move.partner_id
 
                 # Base Imponible (restando el minimo no imponible)
-                monto_base = line.payment_id.withholding_base_amount
+                # monto_base = line.payment_id.withholding_base_amount
                 monto_ret = abs(line.balance)
+                monto_alicuota = self._get_alicuota(partner_id, move.date).alicuota_retencion
+                monto_base = monto_ret / monto_alicuota
 
                 # TODO: chequear que no aparezca una devolucion de pago
 
@@ -404,7 +406,7 @@ class IngresosBrutosAgipWizard(models.Model):
                     # Campo 18 - Base Imponible (Total - IVA - Otros)  
                     format_amount(monto_base, 16, 2, ','),
                     # Campo 19 - Alicuota (sacado de padron AGIP, por CUIT+fecha)
-                    format_amount(self._get_alicuota(partner_id, move.date).alicuota_retencion, 5, 2, ","),
+                    format_amount(monto_alicuota, 5, 2, ","),
                     # Campo 20 - Impuesto aplicado (Base * Alicuota / 100)  
                     format_amount(monto_ret, 16, 2, ','),
                     # Campo 21 - Impuesto aplicado  
