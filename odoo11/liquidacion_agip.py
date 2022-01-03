@@ -171,6 +171,9 @@ class IngresosBrutosAgipWizard(models.Model):
         self.agip_nc_file = base64.encodestring(
             self.AGIP_NC.encode('ISO-8859-1'))
 
+    # Dependencies:
+    # - invoice_id.amount_total_company_signed
+    # - invoice_id.amount_untaxed_signed
     def generate_percepciones(self):
         records = []
         records_nc = []
@@ -210,12 +213,11 @@ class IngresosBrutosAgipWizard(models.Model):
                 internal_type = move.document_type_id.internal_type
                 partner_id = move.partner_id
 
-                monto_total = line.invoice_id.amount_total             # 53074,79
-                monto_base = line.invoice_id.amount_untaxed            # 42122,85
+                # Revisar bien cuando las facturas sean en USD, que los campos sean en Pesos
+                monto_total = abs(line.invoice_id.amount_total_company_signed) # 53074,79
                 tax_lines = move.line_ids.filtered(lambda l: l.account_id == tax_account)
                 monto_iva = abs(sum(tax_lines.mapped('balance')))
                 monto_perc = abs(line.balance) # 1053,07
-                monto_otros = monto_total - monto_base - monto_iva # 2106.14
 
                 if internal_type == 'credit_note':
                     origin_move = self.env['account.move'].search([
@@ -224,6 +226,10 @@ class IngresosBrutosAgipWizard(models.Model):
                     if len(origin_move) != 1:
                         raise ValidationError('El numero de documento para {} debe ser unico'.format(move.origin))
                     
+                    monto_alicuota = self._get_alicuota(partner_id, origin_move.date).alicuota_percepcion
+                    monto_base = monto_perc / monto_alicuota
+                    monto_otros = monto_total - monto_base - monto_iva # 2106.14
+
                     record = [
                         # Campo 1 - Tipo de Operacion [1]. Percepcion (2)
                         '2',
@@ -251,11 +257,15 @@ class IngresosBrutosAgipWizard(models.Model):
                         # Campo 12 - Monto a deducir [16]
                         format_amount(monto_perc, 16, 2, ','),
                         # Campo 13 - Alicuota [5]
-                        format_amount(self._get_alicuota(partner_id, origin_move.date).alicuota_percepcion, 5, 2, ","),
+                        format_amount(monto_alicuota, 5, 2, ","),
                     ]
 
                     records_nc.append(''.join(record))
                 else:
+                    monto_alicuota = self._get_alicuota(partner_id, move.date).alicuota_percepcion
+                    monto_base = monto_perc / monto_alicuota
+                    monto_otros = monto_total - monto_base - monto_iva # 2106.14
+
                     record = [
                         # Campo 1 - Percepcion (2)
                         '2',
@@ -301,7 +311,7 @@ class IngresosBrutosAgipWizard(models.Model):
                         # Campo 18 - Base Imponible (Total - IVA - Otros)  
                         format_amount(monto_base, 16, 2, ','),
                         # Campo 19 - Alicuota (sacado de padron AGIP, por CUIT+fecha)
-                        format_amount(self._get_alicuota(partner_id, move.date).alicuota_percepcion, 5, 2, ","),
+                        format_amount(monto_alicuota, 5, 2, ","),
                         # Campo 20 - Impuesto aplicado (Base * Alicuota / 100)  
                         format_amount(monto_perc, 16, 2, ','),
                         # Campo 21 - Impuesto aplicado  
