@@ -227,7 +227,7 @@ class IngresosBrutosAgipWizard(models.Model):
                         raise ValidationError('El numero de documento para {} debe ser unico'.format(move.origin))
                     
                     monto_alicuota = self._get_alicuota(partner_id, origin_move.date).alicuota_percepcion
-                    monto_base = monto_perc / monto_alicuota
+                    monto_base = monto_perc * 100.0 / monto_alicuota
                     monto_otros = monto_total - monto_base - monto_iva # 2106.14
 
                     record = [
@@ -263,7 +263,7 @@ class IngresosBrutosAgipWizard(models.Model):
                     records_nc.append(''.join(record))
                 else:
                     monto_alicuota = self._get_alicuota(partner_id, move.date).alicuota_percepcion
-                    monto_base = monto_perc / monto_alicuota
+                    monto_base = monto_perc * 100.0 / monto_alicuota
                     monto_otros = monto_total - monto_base - monto_iva # 2106.14
 
                     record = [
@@ -357,7 +357,7 @@ class IngresosBrutosAgipWizard(models.Model):
                 # monto_base = line.payment_id.withholding_base_amount
                 monto_ret = abs(line.balance)
                 monto_alicuota = self._get_alicuota(partner_id, move.date).alicuota_retencion
-                monto_base = monto_ret / monto_alicuota
+                monto_base = monto_ret * 100.0 / monto_alicuota
 
                 # TODO: chequear que no aparezca una devolucion de pago
 
