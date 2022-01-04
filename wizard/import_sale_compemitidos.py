@@ -245,9 +245,9 @@ class ImportSalesAfip(models.TransientModel):
             
             _logger.info("Partner: {}".format(partner))
 
-            # TODO: mejorar esta query
-            doc_type = self.env['l10n_latam.document.type'].search([('doc_code_prefix', '=', invoice.invoice_type)])
-            
+            # Obtener tipo de comprobante
+            doc_type = self.env['l10n_latam.document.type'].get_by_prefix(invoice.invoice_type)
+
             # Create Invoice
             move_data = {
                 'move_type': 'out_refund' if doc_type.internal_type == 'credit_note' else 'out_invoice',

@@ -181,7 +181,7 @@ class ImportPurchaseRg3685(models.TransientModel):
                 partner = partner[0]
 
             # Create Invoice
-            doc_type = self.env['l10n_latam.document.type'].search([('code', '=', cbte["tipo_comprobante"])])
+            doc_type = self.env['l10n_latam.document.type'].get_by_prefix(cbte["tipo_comprobante"])
 
             # Cuando es comprobante C, generado por monotributo/exento,
             # se debe colocar "IVA No Corresponde"

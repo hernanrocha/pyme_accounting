@@ -205,9 +205,10 @@ class ImportSaleRg3685(models.TransientModel):
                 lambda x: x["num_comprobante"] == cbte["numero_comprobante_desde"],
                 lines_alicuotas)
 
-            # Create Invoice
-            doc_type = self.env['l10n_latam.document.type'].search([('code', '=', cbte["tipo_comprobante"])])
+            # Obtener tipo de comprobante
+            doc_type = self.env['l10n_latam.document.type'].get_by_prefix(cbte["tipo_comprobante"])
 
+            # Create Invoice
             move_data = {
                 'move_type': 'out_refund' if doc_type.internal_type == 'credit_note' else 'out_invoice',
                 'partner_id': partner.id,

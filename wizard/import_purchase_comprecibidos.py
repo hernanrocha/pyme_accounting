@@ -305,18 +305,14 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
                 # Actualizar datos del proveedor
                 partner = partner[0]
                 partner.write(partner_data)
-            
-            print("Partner", partner)
-            
-            # TODO: Revisar tambien montos gravados y exentos 
-
-            # Create Invoice
-            # TODO: mejorar esta query
-            doc_type = self.env['l10n_latam.document.type'].search([('doc_code_prefix', '=', invoice.invoice_type)])
+                        
+            # Obtener tipo de comprobante
+            doc_type = self.env['l10n_latam.document.type'].get_by_prefix(invoice.invoice_type)
 
             # El IVA No Corresponde se utiliza en los comprobantes C
             no_iva = doc_type.purchase_aliquots == 'zero'
 
+            # Create Invoice
             move_data = {
                 'move_type': get_move_type(invoice.invoice_type),
                 'partner_id': partner.id,

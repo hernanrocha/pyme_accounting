@@ -528,7 +528,7 @@ NOTA: Existen {} percepciones que no tienen factura correspondiente.""".format(c
             purchase.invoice_ids._recompute_payment_terms_lines()
 
             # Establecer tipo de comprobante
-            doc_type = self.env['l10n_latam.document.type'].search([('doc_code_prefix', '=', invoice.invoice_type)])
+            doc_type = self.env['l10n_latam.document.type'].get_by_prefix(invoice.invoice_type)
             purchase.invoice_ids.l10n_latam_document_type_id = doc_type
 
             # Establecer numero de comprobante 
