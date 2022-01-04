@@ -227,8 +227,13 @@ class IngresosBrutosAgipWizard(models.Model):
                         raise ValidationError('El numero de documento para {} debe ser unico'.format(move.origin))
                     
                     monto_alicuota = self._get_alicuota(partner_id, origin_move.date).alicuota_percepcion
-                    monto_base = monto_perc * 100.0 / monto_alicuota
-                    monto_otros = monto_total - monto_base - monto_iva # 2106.14
+                    # Se calcula asi el monto base, porque en AGIP debe coincidir exactamente
+                    # el calculo de alicuota, con precision de decimales
+                    monto_base = round(monto_perc * 100.0 / monto_alicuota, 2)
+                    # Al calcular el monto base con una alicuota muy chica, 
+                    # el monto de otros puede quedar negativo
+                    monto_otros = max(monto_total - monto_base - monto_iva, monto_alicuota) # 2106.14
+                    monto_total = monto_base + monto_iva + monto_otros
 
                     record = [
                         # Campo 1 - Tipo de Operacion [1]. Percepcion (2)
@@ -263,8 +268,13 @@ class IngresosBrutosAgipWizard(models.Model):
                     records_nc.append(''.join(record))
                 else:
                     monto_alicuota = self._get_alicuota(partner_id, move.date).alicuota_percepcion
-                    monto_base = monto_perc * 100.0 / monto_alicuota
-                    monto_otros = monto_total - monto_base - monto_iva # 2106.14
+                    # Se calcula asi el monto base, porque en AGIP debe coincidir exactamente
+                    # el calculo de alicuota, con precision de decimales
+                    monto_base = round(monto_perc * 100.0 / monto_alicuota, 2)
+                    # Al calcular el monto base con una alicuota muy chica, 
+                    # el monto de otros puede quedar negativo
+                    monto_otros = max(monto_total - monto_base - monto_iva, monto_alicuota) # 2106.14
+                    monto_total = monto_base + monto_iva + monto_otros
 
                     record = [
                         # Campo 1 - Percepcion (2)
@@ -357,7 +367,7 @@ class IngresosBrutosAgipWizard(models.Model):
                 # monto_base = line.payment_id.withholding_base_amount
                 monto_ret = abs(line.balance)
                 monto_alicuota = self._get_alicuota(partner_id, move.date).alicuota_retencion
-                monto_base = monto_ret * 100.0 / monto_alicuota
+                monto_base = round(monto_ret * 100.0 / monto_alicuota, 2)
 
                 # TODO: chequear que no aparezca una devolucion de pago
 
