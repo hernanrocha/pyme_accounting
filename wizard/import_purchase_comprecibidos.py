@@ -358,7 +358,7 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
                     'name': 'Monto Gravado 21%',
                     'account_id': account_purchase.id,
                     'quantity': 1,
-                    'price_unit': invoice.taxed_amount + (invoice.iva if tax_21.price_include else 0),
+                    'price_unit': invoice.taxed_amount + (invoice.iva if (tax_21.price_include or no_iva) else 0),
                 })
                 line.tax_ids += tax_no_corresponde if no_iva else tax_21
             
@@ -369,7 +369,7 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
                     'name': 'Monto Gravado 10.5%',
                     'account_id': account_purchase.id,
                     'quantity': 1,
-                    'price_unit': invoice.taxed_amount + (invoice.iva if tax_105.price_include else 0),
+                    'price_unit': invoice.taxed_amount + (invoice.iva if (tax_105.price_include or no_iva) else 0),
                 })
                 line.tax_ids += tax_no_corresponde if no_iva else tax_105
 
@@ -380,7 +380,7 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
                     'name': 'Monto Gravado 27%',
                     'account_id': account_purchase.id,
                     'quantity': 1,
-                    'price_unit': invoice.taxed_amount + (invoice.iva if tax_27.price_include else 0),
+                    'price_unit': invoice.taxed_amount + (invoice.iva if (tax_27.price_include or no_iva) else 0),
                 })
                 line.tax_ids += tax_no_corresponde if no_iva else tax_27
 
