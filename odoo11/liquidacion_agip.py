@@ -3,6 +3,8 @@ from odoo.exceptions import UserError, ValidationError
 
 import logging
 import base64
+import unicodedata
+from datetime import datetime
 
 _logger = logging.getLogger(__name__)
 
@@ -156,7 +158,15 @@ class IngresosBrutosAgipWizard(models.Model):
         # Retenciones
         records.extend(self.generate_retenciones())
 
-        # TODO: ordenar por fecha de comprobante, tipo, numero
+        # Ordenar por fecha de comprobante, tipo, numero
+        records.sort(key=lambda l: '{}-{}-{}'.format(
+            datetime.strptime(l[4:14], '%d/%m/%Y').strftime('%Y-%m-%d'), 
+            l[0],
+            l[17:33]))
+        records_nc.sort(key=lambda l: '{}-{}-{}'.format(
+            datetime.strptime(l[13:23], '%d/%m/%Y').strftime('%Y-%m-%d'), 
+            l[0],
+            l[1:13]))
 
         period = fields.Date.from_string(self.date_to).strftime('%Y-%m-%d')
 
@@ -164,12 +174,16 @@ class IngresosBrutosAgipWizard(models.Model):
         self.AGIP_CBTES = '\r\n'.join(records)
         self.agip_cbtes_filename = 'AGIP-{}-cbtes.txt'.format(period)
         self.agip_cbtes_file = base64.encodestring(
-            self.AGIP_CBTES.encode('ISO-8859-1'))
+            # Primero se debe normalizar para evitar caracteres especiales
+            # que alteran la longitud de la linea
+            unicodedata.normalize('NFD', self.AGIP_CBTES).encode('ISO-8859-1', 'ignore'))
 
         self.AGIP_NC = '\r\n'.join(records_nc)
         self.agip_nc_filename = 'AGIP-{}-nc.txt'.format(period)
         self.agip_nc_file = base64.encodestring(
-            self.AGIP_NC.encode('ISO-8859-1'))
+            # Primero se debe normalizar para evitar caracteres especiales
+            # que alteran la longitud de la linea
+            unicodedata.normalize('NFD', self.AGIP_NC).encode('ISO-8859-1', 'ignore'))
 
     # Dependencies:
     # - invoice_id.amount_total_company_signed
