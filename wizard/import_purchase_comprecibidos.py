@@ -50,6 +50,23 @@ def get_move_type(invoice_type):
 def es_comprobante_c(invoice_type):
     return invoice_type in ['FA-C', 'ND-C', 'NC-C']
 
+# Se permite una diferencia de 1 centavo
+def monetary_equal(amount1, amount2):
+    return abs(amount1 - amount2) < 0.02
+
+def get_iva_type(taxed_amount, iva):
+    if monetary_equal(round(taxed_amount * 0.21, 2), iva):
+        return 'iva_21'
+    if monetary_equal(round(taxed_amount * 0.105, 2), iva):
+        return 'iva_105'
+    if monetary_equal(round(taxed_amount * 0.27, 2), iva):
+        return 'iva_27'
+    if monetary_equal(round(taxed_amount * 0.05, 2), iva):
+        return 'iva_5'
+    if monetary_equal(round(taxed_amount * 0.025, 2), iva):
+        return 'iva_25'
+    return False
+
 class CbteAsociadoMixin(models.AbstractModel):
     _name = 'mixin.pyme_accounting.cbte_asociado'
     _description = 'Mixin para todas las lineas de comprobante con cbte asociado'
@@ -148,7 +165,6 @@ class ImportPurchaseCompRecibidosLine(models.TransientModel):
             line.iva_type = 0
             if line.taxed_amount > 0:
                 line.iva_type = line.iva * 100 / line.taxed_amount
-
 
 class ImportPurchaseCompRecibidos(models.TransientModel):
     _name = "l10n_ar.import.purchase.comprecibidos"
@@ -267,6 +283,14 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
             ('type_tax_use', '=', 'purchase'),
             ('name', '=', 'IVA 21%'),
         ])
+        tax_105 = self.env['account.tax'].search([
+            ('type_tax_use', '=', 'purchase'),
+            ('name', '=', 'IVA 10.5%'),
+        ])
+        tax_27 = self.env['account.tax'].search([
+            ('type_tax_use', '=', 'purchase'),
+            ('name', '=', 'IVA 27%'),
+        ])
 
         tax_exempt = self.env['account.tax'].search([
             ('type_tax_use', '=', 'purchase'),
@@ -277,7 +301,6 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
             ('type_tax_use', '=', 'purchase'),
             ('name', '=', 'IVA No Corresponde'),
         ])
-        print(tax_untaxed, tax_21, tax_exempt, tax_no_corresponde)
 
         for invoice in self.invoice_ids:
             # No procesar nuevamente los comprobantes ya existentes
@@ -325,22 +348,44 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
             }
             move = self.env['account.move'].create(move_data)
 
-            # TODO: determinar el tipo de IVA (21%, 10.5%, etc)
+            # Determinar el tipo de IVA (21%, 10.5%, etc)
+            iva_type = get_iva_type(invoice.taxed_amount, invoice.iva)
 
             # IVA 21% o Factura con valor $0.00
-            if invoice.taxed_amount > 0 or invoice.total == 0:
-                # TODO: chequear que siempre sea 21%
-                # if 
-
+            if (invoice.taxed_amount > 0 and iva_type == 'iva_21') or invoice.total == 0:
                 line = move.line_ids.create({
                     'move_id': move.id,
-                    'name': 'Monto Gravado',
+                    'name': 'Monto Gravado 21%',
                     'account_id': account_purchase.id,
                     'quantity': 1,
                     'price_unit': invoice.taxed_amount + (invoice.iva if tax_21.price_include else 0),
                 })
                 line.tax_ids += tax_no_corresponde if no_iva else tax_21
-                print("Taxed Line", line)
+            
+            # IVA 10.5%
+            if (invoice.taxed_amount > 0 and iva_type == 'iva_105') or invoice.total == 0:
+                line = move.line_ids.create({
+                    'move_id': move.id,
+                    'name': 'Monto Gravado 10.5%',
+                    'account_id': account_purchase.id,
+                    'quantity': 1,
+                    'price_unit': invoice.taxed_amount + (invoice.iva if tax_105.price_include else 0),
+                })
+                line.tax_ids += tax_no_corresponde if no_iva else tax_105
+
+            # IVA 27%
+            if (invoice.taxed_amount > 0 and iva_type == 'iva_27') or invoice.total == 0:
+                line = move.line_ids.create({
+                    'move_id': move.id,
+                    'name': 'Monto Gravado 27%',
+                    'account_id': account_purchase.id,
+                    'quantity': 1,
+                    'price_unit': invoice.taxed_amount + (invoice.iva if tax_27.price_include else 0),
+                })
+                line.tax_ids += tax_no_corresponde if no_iva else tax_27
+
+            # TODO: contemplar IVA 2.5%, 5% e IVA desconocido
+            # Mostrar en la UI para permitir previsualizar el calculo
 
             # IVA No Gravado
             if invoice.untaxed_amount > 0:
