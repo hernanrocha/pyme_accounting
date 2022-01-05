@@ -77,15 +77,10 @@ class IngresosBrutosArbaWizard(models.Model):
         # - Saldo a Favor
 
         # Buscar percepciones
-        account_percepciones = self.env['account.account'].search([
-            # TODO: hacer dependiente de la compañia
-            ('company_id', '=', self.env.company.id),
-            ('name', '=', 'Percepción IIBB p. Buenos Aires sufrida')
-        ])
         account_saldo_anterior = self.env['account.account'].search([
             # TODO: hacer dependiente de la compañia
             ('company_id', '=', self.env.company.id),
-            ('name', '=', 'Saldo a favor IIBB p. Buenos Aires')
+            ('name', '=', 'Saldo a favor IIBB Buenos Aires')
         ])
 
         # Calcular percepciones
