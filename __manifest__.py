@@ -58,6 +58,7 @@
         # Security Records
         'security/ir.model.access.csv',
         'security/record_rules.xml',
+        'security/user_groups.xml',
 
         'wizard/arba_afip_views.xml',
         'wizard/arba_report_views.xml',

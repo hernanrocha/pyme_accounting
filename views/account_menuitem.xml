@@ -34,7 +34,7 @@
 
     <!-- Ocultar menu "Facturación" -->
     <record model="ir.ui.menu" id="account.menu_finance">
-        <field name="active" eval="True"/>
+        <field name="active" eval="False"/>
     </record>
 
     <!-- TODO: Mostrar Facturacion solo en ERP Manager -->
@@ -62,7 +62,7 @@
     <!-- MENU Mi Estudio/Mi Estudio  -->
     <menuitem id="menu_miestudio"
         name="Mi Estudio"
-        groups="account.group_account_readonly,account.group_account_invoice"
+        groups="pyme_accounting.group_nano_account_manager"
         web_icon="account,static/description/icon.png"
         sequence="43">
 

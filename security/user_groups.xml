@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<odoo>
+    <data>
+
+        <record model="res.groups" id="group_nano_account_manager">
+            <field name="name">Administrador del Estudio</field>
+        </record>
+
+    </data>
+</odoo>
