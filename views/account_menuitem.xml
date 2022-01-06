@@ -68,22 +68,27 @@
 
         <!-- MENU Facturacion/Mi Estudio/Clientes  -->
         <menuitem name="Clientes" sequence="1" 
+            groups="pyme_accounting.group_nano_account_manager"
             id="menu_firm_clients" action="action_firm_clients" />
 
         <!-- MENU Facturacion/Mi Estudio/Actividades  -->
         <menuitem name="Actividades" sequence="2" 
+            groups="pyme_accounting.group_nano_account_manager"
             id="menu_firm_activities" action="action_firm_activities" />
 
         <!-- TODO: MENU Facturacion/Mi Estudio/Actividades  -->
         <menuitem name="Calendario" sequence="3" 
+            groups="pyme_accounting.group_nano_account_manager"
             id="menu_firm_calendar" action="action_firm_calendar" />
             
         <!-- MENU Facturacion/Mi Estudio/Mis Datos  -->
         <menuitem name="Mis Datos" sequence="4" 
+            groups="pyme_accounting.group_nano_account_manager"
             id="menu_firm_company" action="action_firm_company" />
         
         <!-- TODO: MENU Facturacion/Mi Estudio/Emails  -->
         <!-- <menuitem name="Emails Enviados" sequence="5" 
+            groups="pyme_accounting.group_nano_account_manager"
             id="menu_firm_email_sent" action="action_firm_email_sent" /> -->
 
         <!-- TODO: Agregar Calendario (y cumpleaños) -->
