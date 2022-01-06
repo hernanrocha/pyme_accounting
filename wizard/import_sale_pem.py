@@ -148,15 +148,18 @@ class SaleImportPEMLine(models.Model):
 
     @api.depends('tax_21')
     def _compute_taxed_21(self):
-        self.taxed_21 = self.tax_21 / 0.21
+        for line in self:
+            line.taxed_21 = line.tax_21 / 0.21
 
     @api.depends('tax_105')
     def _compute_taxed_105(self):
-        self.taxed_105 = self.tax_105 / 0.105
+        for line in self:
+            line.taxed_105 = line.tax_105 / 0.105
 
     @api.depends('tax_27')
     def _compute_taxed_27(self):
-        self.taxed_27 = self.tax_27 / 0.27
+        for line in self:
+            line.taxed_27 = line.tax_27 / 0.27
 
     taxed_21 = fields.Float(string="Gravado 21%", compute=_compute_taxed_21)
     taxed_105 = fields.Float(string="Gravado 10.5%", compute=_compute_taxed_105)
