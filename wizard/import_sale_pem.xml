@@ -114,11 +114,14 @@
                                 <field name="number" />
                                 <field name="range" />
                                 <field name="date" />
-                                <field name="taxed" sum="Total" />
+                                <field name="taxed" sum="Total" optional="show" />
                                 <field name="untaxed" sum="Total" />
                                 <field name="exempt" sum="Total" />
+                                <field name="taxed_21" sum="Total" optional="show" />
                                 <field name="tax_21" sum="Total" />
+                                <field name="taxed_105" sum="Total" optional="show" />
                                 <field name="tax_105" sum="Total" />
+                                <field name="taxed_27" sum="Total" optional="show" />
                                 <field name="tax_27" sum="Total" />
                                 <field name="tax_6" sum="Total" attrs="{'column_invisible':[('parent.f8011_total_tax_6', '=', False)]}" />
                                 <field name="otros_tributos" sum="Total" />

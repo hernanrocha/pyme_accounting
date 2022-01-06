@@ -113,12 +113,6 @@ class IngresosBrutosArbaWizard(models.Model):
             ('date', '<=', self.date_to),
         ])
 
-        saldo_a_favor = self.env['account.move.line'].read_group([
-            ('parent_state', '=', 'posted'),
-            ('account_id', '=', account_saldo_anterior.id),
-        ], ['balance:sum'], ['account_id'])
-        saldo_anterior = saldo_a_favor[0]['balance'] if len(saldo_a_favor) > 1 else 0
-
         # Buscar Facturas de Compras
         in_invoices = self.env['account.move'].search([
             ('move_type', '=', 'in_invoice'),
@@ -152,7 +146,10 @@ class IngresosBrutosArbaWizard(models.Model):
         self.iibb_report_deducciones = -deducciones
 
         # TODO: calcular saldo del periodo anterior
-        self.iibb_report_tax_prev_saldo = -saldo_anterior
+        self.iibb_report_tax_prev_saldo = sum(self.env['account.move.line'].search([
+            ('parent_state', '=', 'posted'),
+            ('account_id', '=', account_saldo_anterior.id),
+        ]).mapped('balance'))
 
         # TODO: obtener deducciones no tomadas del periodo anterior
 

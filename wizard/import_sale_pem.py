@@ -146,6 +146,22 @@ class SaleImportPEMLine(models.Model):
     tax_105 = fields.Float(string="IVA 10.5%")
     tax_27 = fields.Float(string="IVA 27%")
 
+    @api.depends('tax_21')
+    def _compute_taxed_21(self):
+        self.taxed_21 = self.tax_21 / 0.21
+
+    @api.depends('tax_105')
+    def _compute_taxed_105(self):
+        self.taxed_105 = self.tax_105 / 0.105
+
+    @api.depends('tax_27')
+    def _compute_taxed_27(self):
+        self.taxed_27 = self.tax_27 / 0.27
+
+    taxed_21 = fields.Float(string="Gravado 21%", compute=_compute_taxed_21)
+    taxed_105 = fields.Float(string="Gravado 10.5%", compute=_compute_taxed_105)
+    taxed_27 = fields.Float(string="Gravado 27%", compute=_compute_taxed_27)
+
     pem_id = fields.Many2one(comodel_name="l10n_ar.import.sale.pem", ondelete="cascade", invisible=True)
 
     range = fields.Char(string="Rango", compute="_compute_range")
