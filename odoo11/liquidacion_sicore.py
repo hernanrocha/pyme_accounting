@@ -54,6 +54,9 @@ class LiquidacionSicoreWizard(models.Model):
 
         records = self.generate_retenciones()
 
+        # La ultima linea debe estar vacia
+        records.append('')
+
         period = fields.Date.from_string(self.date_to).strftime('%Y-%m-%d')
 
         # Generar archivos
@@ -99,8 +102,8 @@ class LiquidacionSicoreWizard(models.Model):
                 # monto_otros = monto_total - monto_base - monto_iva # 2106.14
 
                 record = [
-                    # Campo 1 - Tipo de Comprobante (06 - Factura B)
-                    move.document_type_id.code.zfill(2),
+                    # Campo 1 - Tipo de Comprobante (06 - Orden de Pago)
+                    '06',
                     # Campo 2 - Fecha Comprobante (19/11/2021)
                     fields.Date.from_string(move.date).strftime('%d/%m/%Y'),
                     # Campo 3 - Pto. de Venta + Comprobante (000300066478)
@@ -151,3 +154,6 @@ class LiquidacionSicoreWizard(models.Model):
 # - 2.1.03.01.007 Percepción ganancias aplicada
 # - 2.1.03.01.008 Retención IVA aplicada
 # - 2.1.03.01.009 Percepción IVA aplicada
+
+# TODO: separar en tipo (percepcion/retencion)
+# Las presentaciones son mensual para percepciones y quincenal para retenciones
