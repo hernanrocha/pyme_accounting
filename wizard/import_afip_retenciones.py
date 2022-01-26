@@ -27,6 +27,7 @@ class ImportAfipMisRetencionesLine(models.TransientModel):
     ], string="Impuesto")
     regimen = fields.Selection([
         # SICORE
+        ('15', '15 - Retención IVA Pago Electrónico excepto Tarjetas de Crédito'),
         ('493', '493 - Percepción IVA de Proveedores'),
         # SIRE
         ('17', '17 - Pagos con Tarjetas de Crédito')
