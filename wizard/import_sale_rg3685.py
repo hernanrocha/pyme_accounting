@@ -206,7 +206,7 @@ class ImportSaleRg3685(models.TransientModel):
                 lines_alicuotas)
 
             # Obtener tipo de comprobante
-            doc_type = self.env['l10n_latam.document.type'].get_by_prefix(cbte["tipo_comprobante"])
+            doc_type = self.env['l10n_latam.document.type'].get_by_afip_code(cbte["tipo_comprobante"])
 
             # Create Invoice
             move_data = {
