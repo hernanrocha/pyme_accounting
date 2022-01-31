@@ -19,6 +19,7 @@ def format_amount(amount, padding=15, decimals=2, sep=""):
         res = "{0}{1}{2}".format(res[:-decimals], sep, res[-decimals:])
     return res
 
+# Liquidacion Mensual de AGIP
 class IngresosBrutosAgipWizard(models.Model):
     _name = "l10n_ar.agente.agip.wizard"
     _inherit = [ 'report.pyme_accounting.base' ]
@@ -27,10 +28,14 @@ class IngresosBrutosAgipWizard(models.Model):
     AGIP_CBTES = fields.Text('AGIP Comprobantes', readonly=True)
     agip_cbtes_file = fields.Binary(string="AGIP Comprobantes Archivo", readonly=True)
     agip_cbtes_filename = fields.Char(string="AGIP Comprobantes Nombre de Archivo", readonly=True)
+    agip_cbtes_csv_file = fields.Binary(string="AGIP Comprobantes CSV Archivo", readonly=True)
+    agip_cbtes_csv_filename = fields.Char(string="AGIP Comprobantes CSV Nombre de Archivo", readonly=True)
 
     AGIP_NC = fields.Text('AGIP Notas de Credito', readonly=True)
     agip_nc_file = fields.Binary(string="AGIP Notas de Credito Archivo", readonly=True)
     agip_nc_filename = fields.Char(string="AGIP Notas de Credito Nombre de Archivo", readonly=True)
+    agip_nc_csv_file = fields.Binary(string="AGIP Notas de Credito Archivo", readonly=True)
+    agip_nc_csv_filename = fields.Char(string="AGIP Notas de Credito Nombre de Archivo", readonly=True)
 
     invoice_ids = fields.Many2many('account.move', string="Facturas", compute="generate")
     payment_ids = fields.Many2many('account.move', string="Pagos", compute="generate")
@@ -149,14 +154,20 @@ class IngresosBrutosAgipWizard(models.Model):
 
         records = []
         records_nc = []
+        records_csv = []
+        records_nc_csv = []
         
         # Percepciones
-        f, nc = self.generate_percepciones()
+        f, nc, f_csv, nc_csv = self.generate_percepciones()
         records.extend(f)
         records_nc.extend(nc)
+        records_csv.extend(f_csv)
+        records_nc_csv.extend(nc_csv)
 
         # Retenciones
-        records.extend(self.generate_retenciones())
+        f, f_csv = self.generate_retenciones()
+        records.extend(f)
+        records_csv.extend(f_csv)
 
         # Ordenar por fecha de comprobante, tipo, numero
         records.sort(key=lambda l: '{}-{}-{}'.format(
@@ -169,6 +180,25 @@ class IngresosBrutosAgipWizard(models.Model):
             l[1:13]))
 
         period = fields.Date.from_string(self.date_to).strftime('%Y-%m-%d')
+
+        # Generar archivos CSV
+        AGIP_CBTES_CSV = '\r\n'.join(records_csv)
+        self.agip_cbtes_csv_filename = 'AGIP-{}-cbtes.csv'.format(period)
+        self.agip_cbtes_csv_file = base64.encodestring(
+            # Primero se debe normalizar para evitar caracteres especiales
+            # que alteran la longitud de la linea
+            unicodedata.normalize('NFD', AGIP_CBTES_CSV).encode('ISO-8859-1', 'ignore'))
+
+        AGIP_NC_CSV = '\r\n'.join(records_nc_csv)
+        self.agip_nc_csv_filename = 'AGIP-{}-nc.csv'.format(period)
+        self.agip_nc_csv_file = base64.encodestring(
+            # Primero se debe normalizar para evitar caracteres especiales
+            # que alteran la longitud de la linea
+            unicodedata.normalize('NFD', AGIP_NC_CSV).encode('ISO-8859-1', 'ignore'))
+
+        # La ultima linea debe estar vacia
+        records.append('')
+        records_nc.append('')
 
         # Generar archivos
         self.AGIP_CBTES = '\r\n'.join(records)
@@ -191,6 +221,8 @@ class IngresosBrutosAgipWizard(models.Model):
     def generate_percepciones(self):
         records = []
         records_nc = []
+        records_csv = []
+        records_nc_csv = []
 
         # TODO: cambiar por referencia a percepcion AGIP aplicada
         iibb_account = self.env['account.account'].search([
@@ -280,6 +312,7 @@ class IngresosBrutosAgipWizard(models.Model):
                     ]
 
                     records_nc.append(''.join(record))
+                    records_nc_csv.append(','.join(map(lambda r: '"{}"'.format(r), record)))
                 else:
                     monto_alicuota = self._get_alicuota(partner_id, move.date).alicuota_percepcion
                     # Se calcula asi el monto base, porque en AGIP debe coincidir exactamente
@@ -343,13 +376,15 @@ class IngresosBrutosAgipWizard(models.Model):
                     ]
 
                     records.append(''.join(record))
+                    records_csv.append(','.join(map(lambda r: '"{}"'.format(r), record)))
             except:
                 _logger.error("Error procesando percepcion. Asiento {}".format(line.move_id.name))
 
-        return records, records_nc
+        return records, records_nc, records_csv, records_nc_csv
 
     def generate_retenciones(self):
         records = []
+        records_csv = []
 
         # TODO: cambiar por referencia a retencion AGIP aplicada
         # usar grupo de impuestos o dejar que lo configure el usuario
@@ -438,10 +473,11 @@ class IngresosBrutosAgipWizard(models.Model):
                 ]
 
                 records.append(''.join(record))
+                records_csv.append(','.join(map(lambda r: '"{}"'.format(r), record)))
             except:
                 _logger.error("Error procesando retencion. Asiento {}".format(line.move_id.name))
 
-        return records
+        return records, records_csv
 
 # Siempre es simplificado? De donde sacan los valores esos?
 # Siendo multilateral, se presenta SIFERE + DDDJJ en cada provincia?
@@ -498,12 +534,7 @@ class IngresosBrutosAgipWizard(models.Model):
 # 2.1.03.01.012 - Percepción IIBB CABA aplicada
 
 # TODO
-# En las notas de credito:
-# - Ordenar por fecha, numero cbte
 # En percepciones:
-# - Ordenar por fecha, numero cbte
-# - Cambiar por guion bajo los espacios en la razon social?
-# - Hay diferencia en centavos en el monto imponible. Revisar si pasan bien
-# - Los que no sean por el monto completo, no agregarlos al TXT
+# - Las NC que no sean por el monto completo o de un periodo anterior, no agregarlos al TXT
 
 # - Separar NC en la vista
