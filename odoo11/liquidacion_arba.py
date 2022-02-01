@@ -22,6 +22,12 @@ class IngresosBrutosArbaWizard(models.Model):
     _inherit = [ 'report.pyme_accounting.base' ]
     _description = 'Reporte de Agente Ingresos Brutos ARBA'
 
+    tipo = fields.Selection(
+        selection=[
+            ('retenciones','Retenciones'),
+            ('percepciones','Percepciones')
+        ], default='retenciones', string='Tipo de Liquidación')
+
     ARBA_PERC = fields.Text('ARBA Percepciones', readonly=True)
     arba_perc_file = fields.Binary(string="ARBA Percepciones Archivo", readonly=True)
     arba_perc_filename = fields.Char(string="ARBA Percepciones Nombre de Archivo", readonly=True)

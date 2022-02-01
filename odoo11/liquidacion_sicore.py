@@ -23,6 +23,12 @@ class LiquidacionSicoreWizard(models.Model):
     _inherit = [ 'report.pyme_accounting.base' ]
     _description = 'Reporte de SICORE Agentes'
 
+    tipo = fields.Selection(
+        selection=[
+            ('retenciones','Retenciones'),
+            # ('percepciones','Percepciones')
+        ], default='retenciones', string='Tipo de Liquidación')
+
     SICORE = fields.Text('SICORE', readonly=True)
     sicore_file = fields.Binary(string="SICORE Archivo", readonly=True)
     sicore_filename = fields.Char(string="SICORE Nombre de Archivo", readonly=True)
