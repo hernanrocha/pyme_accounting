@@ -67,7 +67,7 @@ class OdooJsonFormatter(JsonFormatter):
                         log_record.update(extra_vals)
         return res
 
-if is_true(os.environ.get('ODOO_LOGGING_JSON')):
+if is_true(os.environ.get('ODOO_LOGGING_JSON', 'true')):
     format = ('%(asctime)s %(pid)s %(levelname)s'
               '%(dbname)s %(name)s: %(message)s')
     formatter = OdooJsonFormatter(format)
