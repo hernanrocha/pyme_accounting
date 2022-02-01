@@ -118,7 +118,11 @@
         # ODOO 11
         'odoo11/iibb_views.xml',
         'odoo11/table_views.xml',
+        'odoo11/ajuste_inflacion_contable.xml',
         'odoo11/account_menuitem.xml',
+
+        # ODOO 11: Data
+        'odoo11/data/inflation_adjustment_index.xml',
 
         # ODOO 11: Data de otros modulos
         # 'odoo11/data/account_account_tag.xml',
