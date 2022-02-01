@@ -130,6 +130,7 @@
         # 'odoo11/data/res_partner_id_category_data.xml',
         # 'odoo11/data/account_document_letter.xml',
         # 'odoo11/data/account.document.type.csv',
+        # 'odoo11/data/res_partner_arba_alicuot.xml',
     ],
     'images': [], # 'static/description/banner.png'
     'qweb': [
