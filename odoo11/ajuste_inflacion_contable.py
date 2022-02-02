@@ -11,6 +11,9 @@ _logger = logging.getLogger(__name__)
 
 # TODO: Agregar categoria en el asiento para poder luego filtrar
 # por valor historico y por el valor ajustado
+# TODO: Tener en cuenta el año/periodo fiscal actual
+# TODO: reutilizar el mismo asiento, y permitir confirmarlo
+# TODO: para tipo anual, agrupar ajuste por cuenta
 
 class Account(models.Model):
     _inherit = "account.account"
@@ -114,26 +117,27 @@ class InflationAdjustment(models.Model):
     _name = 'inflation.adjustment'
     _description = 'Inflation adjustment'
 
+    name = fields.Char(string="Nombre")
     state = fields.Selection(
         selection=[('draft', 'Borrador'), ('presented', 'Confirmado'), ('cancel', 'Cancelado')],
         string="Estado", required=True, default='draft')
     date_from = fields.Date(string="Fecha Desde", required=True)
     date_to = fields.Date(string="Fecha Hasta", required=True)
+    tipo = fields.Selection(
+        selection=[('mensual', 'Mensual'), ('anual', 'Anual')],
+        string="Tipo de Ajuste", required=True, default="anual")
     journal_id = fields.Many2one(
         'account.journal',
         string="Diario",
-        # domain=[('type', '=', 'general')],
+        domain=[('type', '=', 'general')],
         required=True
     )
-    company_id = fields.Many2one(
-        'res.company',
-        required=True,
-        string="Compañia"
-    )
+    company_id = fields.Many2one('res.company', required=True, readonly=True, string="Empresa",
+        default=lambda self: self.env['res.company']._company_default_get('inflation.adjustment'))
     account_id = fields.Many2one(
         'account.account',
         string="Cuenta RECPAM",
-        # domain=[('deprecated', '=', False)],
+        domain=[('deprecated', '=', False)],
         required=True,
     )
     analytic_account_id = fields.Many2one(
@@ -152,21 +156,8 @@ class InflationAdjustment(models.Model):
     )
     closure_move_id = fields.Many2one('account.move', string="Asiento de cierre")
     open_move_id = fields.Many2one('account.move', string="Asiento de apertura")
-    adjust_move_id = fields.Many2one('account.move', string="Asiento de ajuste")
-    adjust_line_ids = fields.One2many('account.move.line', related="adjust_move_id.line_ids")
-
-    # @api.model
-    # def default_get(self, field_list):
-    #     res = super(InflationAdjustment, self).default_get(field_list)
-    #     today = fields.Datetime.now()
-    #     company = self.env.company
-    #     res['company_id'] = company.id
-    #     company_fiscalyear_dates = company.compute_fiscalyear_dates(
-    #         (today - relativedelta(year=today.year-1)))
-    #     for key, value in company_fiscalyear_dates.items():
-    #         company_fiscalyear_dates[key] = value
-    #     res.update(company_fiscalyear_dates)
-    #     return res
+    adjust_move_id = fields.Many2one('account.move', readonly=True, string="Asiento de ajuste")
+    adjust_line_ids = fields.One2many('account.move.line', readonly=True, related="adjust_move_id.line_ids")
 
     @api.depends('date_from', 'date_to')
     def _compute_index(self):
@@ -246,15 +237,19 @@ class InflationAdjustment(models.Model):
             res += [('move_id', '!=', self.closure_move_id.id)]
         return res
 
+    def get_recpam_adjustment(self, adj_diff, name):
+        return {
+            'account_id': self.account_id.id,
+            'name': name,
+            'debit' if adj_diff < 0 else 'credit': abs(adj_diff),
+            'date_maturity': self.date_to,
+            'analytic_account_id': self.analytic_account_id.id,
+        }
+
     def confirm(self):
         """ Search all the related account.move.line and will create the
         related inflation adjustment journal entry for the specification.
         """
-        # def FormatAmount(amount):
-        #     return formatLang(
-        #         self.env, amount, currency_obj=self.company_id.currency_id)
-
-        # self.ensure_one()
         account_move_line = self.env['account.move.line']
         adjustment_total = {'debit': 0.0, 'credit': 0.0}
         lines = []
@@ -276,6 +271,10 @@ class InflationAdjustment(models.Model):
         periods = self.env['inflation.adjustment'].get_periods(before_date_from, self.date_from)
 
         initial_factor = (self.end_index / before_index.value) - 1.0
+
+        # TODO: Revisar que esto este funcionando bien.
+        # Se utiliza solo para cuentas que corresponden al balance inicial (Ganancias, etc)
+        # https://github.com/odoo/odoo/blob/11.0/addons/account/data/data_account_type.xml
         for line in init_data:
             adjustment = line.get('balance') * initial_factor
             if self.company_id.currency_id.is_zero(adjustment):
@@ -297,33 +296,52 @@ class InflationAdjustment(models.Model):
         # Get period month list
         periods = self.get_periods()
 
+        # Recorrer cada mes para realizar el ajuste correspondiente
         for period in periods:
-            # search account.move.lines
+            # Buscar account.move.lines durante ese mes
             domain = self.get_move_line_domain()
             domain += [('date', '>=', period.get('date_from')),
                        ('date', '<=', period.get('date_to'))]
             data = account_move_line.read_group(
                 domain, ['account_id', 'balance'], ['account_id', 'date'])
             date_from = period.get('date_from')
+            
+            # Realizar el ajuste para cada cuenta
             for line in data:
                 adjustment = line.get('balance') * period.get('factor')
                 if self.company_id.currency_id.is_zero(adjustment):
                     continue
-                else:
-                    adjustment = self.company_id.currency_id.round(adjustment)
+                
+                adjustment = self.company_id.currency_id.round(adjustment)
                 lines.append({
                     'account_id': line.get('account_id')[0],
-                    'name': _('Ajuste por inflación %s '
-                    '(%s * %.2f%%)') % (
-                        date_from,
+                    'name': 'Ajuste por inflación {} ({} * {}%)'.format(
+                        fields.Date.from_string(date_from).strftime('%m-%Y'),
                         line.get('balance'),
-                        period.get('factor') * 100.0),
+                        self.company_id.currency_id.round(period.get('factor') * 100.0)),
                     'date_maturity': period.get('date_from'),
                     'debit' if adjustment > 0 else 'credit': abs(adjustment),
                     'analytic_account_id': self.analytic_account_id.id,
                 })
                 adjustment_total[
                     'debit' if adjustment > 0 else 'credit'] += abs(adjustment)
+
+            # Si aplica, realizar el ajuste RECPAM mensual
+            # TODO: separar en varios asientos
+            if self.tipo == 'mensual':
+                adj_diff = adjustment_total.get('debit', 0.0) - adjustment_total.get(
+                    'credit', 0.0)
+
+                # No generar ajuste en meses que no es necesario
+                if self.company_id.currency_id.is_zero(adj_diff):
+                    continue
+
+                mes = fields.Date.from_string(period.get('date_from')).strftime('%m-%Y')
+                lines.append(self.get_recpam_adjustment(adj_diff, 
+                    'Ajuste por inflación Mensual {}'.format(mes)))
+                
+                adjustment_total['credit'] = 0
+                adjustment_total['debit'] = 0
 
         if not lines:
             raise UserError(_(
@@ -332,22 +350,25 @@ class InflationAdjustment(models.Model):
             ))
 
         # Generate total amount adjustment line
-        adj_diff = adjustment_total.get('debit', 0.0) - adjustment_total.get(
-            'credit', 0.0)
-        lines.append({
-            'account_id': self.account_id.id,
-            'name': _('Ajuste por inflación Global [%s] / [%s]') % (
-                self.date_from, self.date_to),
-            'debit' if adj_diff < 0 else 'credit': abs(adj_diff),
-            'date_maturity': self.date_to,
-            'analytic_account_id': self.analytic_account_id.id,
-        })
+        if self.tipo == 'anual':
+            adj_diff = adjustment_total.get('debit', 0.0) - adjustment_total.get(
+                'credit', 0.0)
 
+            lines.append(self.get_recpam_adjustment(adj_diff, 
+                'Ajuste por inflación Global {} / {}'.format(
+                    fields.Date.from_string(self.date_from).strftime('%m-%Y'),
+                    fields.Date.from_string(self.date_to).strftime('%m-%Y')
+                )))
+            
+        # TODO: Borrar asiento anterior
+        # TODO: Solo generar aca para anual
         # Generate account.move
         self.adjust_move_id = self.env['account.move'].create({
             'journal_id': self.journal_id.id,
             'date': self.date_to,
-            'ref': _('Ajuste por inflación %s') % (self.date_to), # TODO: .year
+            'ref': 'Ajuste por inflación {} / {}'.format(
+                fields.Date.from_string(self.date_from).strftime('%m-%Y'),
+                fields.Date.from_string(self.date_to).strftime('%m-%Y')
+            ),
             'line_ids': [(0, 0, line_data) for line_data in lines],
         })
-        # return move.get_access_action()

@@ -59,14 +59,14 @@
         <field name='name'>account.account.tree</field>
         <field name="model">account.account</field>
         <field name='arch' type='xml'>
-            <tree>
+            <tree editable="top">
                 <field name="code" />
                 <field name="name" />
                 <field name="user_type_id" />
                 <field name="tax_ids" />
                 <field name="tag_ids" />
                 <field name="reconcile" />
-                <field name="partida_monetaria" widget="boolean_toggle" />
+                <field name="partida_monetaria" widget="boolean_switch" />
             </tree>
         </field>
     </record>
