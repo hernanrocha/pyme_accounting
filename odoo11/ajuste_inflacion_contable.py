@@ -283,9 +283,9 @@ class InflationAdjustment(models.Model):
                 adjustment = self.company_id.currency_id.round(adjustment)
             lines.append({
                 'account_id': line.get('account_id')[0],
-                'name': _('Ajuste por inflación cuentas al inicio '
-                '(%s * %.2f%%)') % (
-                    line.get('balance'), initial_factor * 100.0),
+                'name': 'Ajuste por inflación cuentas al inicio ({} * {:.2f}%)'.format(
+                    line.get('balance'), 
+                    initial_factor * 100.0),
                 'date_maturity': before_date_from,
                 'debit' if adjustment > 0 else 'credit': abs(adjustment),
                 'analytic_account_id': self.analytic_account_id.id,
@@ -315,10 +315,10 @@ class InflationAdjustment(models.Model):
                 adjustment = self.company_id.currency_id.round(adjustment)
                 lines.append({
                     'account_id': line.get('account_id')[0],
-                    'name': 'Ajuste por inflación {} ({} * {}%)'.format(
+                    'name': 'Ajuste por inflación {} ({} * {:.2f}%)'.format(
                         fields.Date.from_string(date_from).strftime('%m-%Y'),
                         line.get('balance'),
-                        self.company_id.currency_id.round(period.get('factor') * 100.0)),
+                        period.get('factor') * 100.0),
                     'date_maturity': period.get('date_from'),
                     'debit' if adjustment > 0 else 'credit': abs(adjustment),
                     'analytic_account_id': self.analytic_account_id.id,
