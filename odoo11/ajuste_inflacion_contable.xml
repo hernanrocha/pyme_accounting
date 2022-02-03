@@ -43,19 +43,44 @@
                         </group>
                     </group>
                     <button string="Generar" name="confirm" type="object" class="btn-primary"/>
-                    <group>
-                        <field name="adjust_move_id" />
-                    </group>
-                    <field name="adjust_line_ids">
-                        <tree>
-                            <field name="date" />
-                            <field name="account_id" />
-                            <field name="partner_id" invisible="1" />
-                            <field name="name" string="Descripción" />
-                            <field name="debit" sum="Total" />
-                            <field name="credit" sum="Total" />
-                        </tree>
-                    </field>
+                    <notebook>
+                        <!-- Asientos generados -->
+                        <page string="Asientos">
+                            <field name="adjust_move_ids" widget="many2many">
+                                <!-- context="{'tree_view_ref':'pyme_accounting.afip_acitivity_view_tree'}" -->
+                                <tree>
+                                    <field name="date" />
+                                    <field name="name" />
+                                    <field name="ref" />
+                                    <field name="state" />
+                                </tree>
+                            </field>
+                        </page>
+
+                        <!-- Detalle de ajuste -->
+                        <page string="Detalle">
+                            <field name="adjustment_lines" invisible="1" />
+                            <field name="adjustment_accounts" invisible="1" />
+                            
+                            <group>
+                                <field name="filter_account_id" widget="selection"
+                                    options="{'create': False, 'create_edit': False}"
+                                    domain="[('id', 'in', adjustment_accounts)]" />
+                            </group>
+
+                            <field name="filtered_adjustment_lines">
+                                <tree create="false" delete="false" editable="false">
+                                    <field name="date" />
+                                    <field name="account_id" />
+                                    <field name="amount" sum="Total" />
+                                    <field name="coef" />
+                                    <field name="debit" sum="Total" />
+                                    <field name="credit" sum="Total" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+
                     <footer>
                         <!-- <button string="Cancelar" class="btn-default" special="cancel"/> -->
                     </footer>
