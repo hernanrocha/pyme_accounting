@@ -26,6 +26,8 @@
         'web',             # Web Backend
         # 'portal'         # Web Login
 
+        'account_financial_report', # OCA Account Financial Report
+
         # 
         # 'report_xlsx', # Reporte XLSX
 
