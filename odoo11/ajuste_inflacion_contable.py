@@ -169,8 +169,8 @@ class InflationAdjustment(models.Model):
         help="Si usted ha realizado los asientos de cierre/apertura debe"
         " indicarnos cuales son para poder excluir los mismos en el cálculo."
     )
-    closure_move_id = fields.Many2one('account.move', string="Asiento de cierre")
-    open_move_id = fields.Many2one('account.move', string="Asiento de apertura")
+    closure_move_id = fields.Many2one('account.move', string="Asiento de Cierre")
+    open_move_id = fields.Many2one('account.move', string="Asiento de Apertura")
     adjust_move_ids = fields.Many2many('account.move', string="Asientos de Ajuste Mensuales")
 
     adjustment_lines = fields.One2many(string="Lineas de detalle del ajuste", 

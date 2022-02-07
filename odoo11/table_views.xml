@@ -62,7 +62,11 @@
             <tree editable="top">
                 <field name="code" />
                 <field name="name" />
+                <!-- TODO: investigar este parametro -->
+                <!-- <field name="centralized" />  -->
                 <field name="user_type_id" />
+                <field name="internal_type" />
+                <!-- <field name="internal_group" /> -->
                 <field name="tax_ids" />
                 <field name="tag_ids" />
                 <field name="reconcile" />
@@ -90,6 +94,52 @@
             <search string="Search Description">
                 <field name="date"/>
             </search>
+        </field>
+    </record>
+
+    <!-- TODO: mover a archivo diferente -->
+    <record id="ejercicios_fiscales_tree" model="ir.ui.view">
+        <field name="name">fiscal.year.tree</field>
+        <field name="model">date.range</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="date_start" string="Fecha Desde" />
+                <field name="date_end" string="Fecha Hasta" />
+                <!-- TODO: abierto/cerrado -->
+                <!-- <field name="status" /> -->
+            </tree>
+        </field>
+    </record>
+
+    <record id="ejercicios_fiscales_form" model="ir.ui.view">
+        <field name="name">fiscal.year.form</field>
+        <field name="model">date.range</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="name" />
+                    <field name="date_start" string="Fecha Desde" />
+                    <field name="date_end" string="Fecha Hasta" />
+
+                    <!-- Configuracion -->
+                    <field name="journal_id" />
+                    <field name="refundicion_account_id" />
+                    <field name="last_closure_move_id" />
+
+                    <!-- TODO: agrupar por account.group -->
+                    <!-- TODO: configurar account.group en plan contable -->
+
+                    <!-- Asientos Generados -->
+                    <field name="open_move_id" />
+                    <field name="refundicion_move_id" />
+                    <field name="closure_move_id" />
+                </group>
+                <button name="generar_apertura" string="Apertura" 
+                    type="object" default_focus="1" class="oe_highlight"/>
+                <button name="generar_refundicion" string="Refundición" 
+                    type="object" class="oe_highlight"/>
+            </form>
         </field>
     </record>
 
