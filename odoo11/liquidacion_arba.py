@@ -1,5 +1,5 @@
-from odoo import api, fields, models, _
-from odoo.exceptions import UserError, ValidationError
+from odoo import fields, models, _
+from odoo.exceptions import ValidationError
 
 import logging
 import base64
@@ -22,21 +22,28 @@ class IngresosBrutosArbaWizard(models.Model):
     _inherit = [ 'report.pyme_accounting.base' ]
     _description = 'Reporte de Agente Ingresos Brutos ARBA'
 
+    tipo = fields.Selection(
+        selection=[
+            ('retenciones','Retenciones'),
+            ('percepciones','Percepciones')
+        ], default='retenciones', string='Tipo de Liquidación')
+
     ARBA_PERC = fields.Text('ARBA Percepciones', readonly=True)
     arba_perc_file = fields.Binary(string="ARBA Percepciones Archivo", readonly=True)
     arba_perc_filename = fields.Char(string="ARBA Percepciones Nombre de Archivo", readonly=True)
-    
+    arba_perc_csv_file = fields.Binary(string="ARBA Percepciones CSV Archivo", readonly=True)
+    arba_perc_csv_filename = fields.Char(string="ARBA Percepciones CSV Nombre de Archivo", readonly=True)
+
     ARBA_RET = fields.Text('ARBA Retenciones', readonly=True)
     arba_ret_file = fields.Binary(string="ARBA Retenciones Archivo", readonly=True)
     arba_ret_filename = fields.Char(string="ARBA Retenciones Nombre de Archivo", readonly=True)
-    
+    arba_ret_csv_file = fields.Binary(string="ARBA Retenciones CSV Archivo", readonly=True)
+    arba_ret_csv_filename = fields.Char(string="ARBA Retenciones CSV Nombre de Archivo", readonly=True)
+
     invoice_ids = fields.Many2many('account.move', string="Facturas", compute="generate")
     payment_ids = fields.Many2many('account.move', string="Pagos", compute="generate")
     perc_line_ids = fields.Many2many('account.move.line', string="Percepciones", compute="generate")
     ret_line_ids = fields.Many2many('account.move.line', string="Retenciones", compute="generate")
-
-    # TODO: exclude_journal_ids = fields.Many2many('account.journal', string="Excluir Diarios Contables")
-    # TODO: include_journal_ids = fields.Many2many('account.journal', string="Incluir Diarios Contables")
 
     def _format_cuit(self, partner):
         cuit = partner.main_id_number
@@ -95,13 +102,15 @@ class IngresosBrutosArbaWizard(models.Model):
 
     def generate_percepciones(self):
         records_perc = []
+        records_perc_csv = []
         
         # TODO: permitir configurar estas cuentas
         # tax_account = self.env['account.account'].search([
         #     ('code', '=', '231000')
         # ])
 
-        # TODO: cambiar por referencia a percepcion ARBA aplicada
+        # TODO: cambiar por referencia a percepcion ARBA aplicada,
+        # usar grupo de impuestos o dejar que lo configure el usuario
         iibb_account = self.env['account.account'].search([
             # ('code', '=', '231000'),
             ('code', '=', '2.1.03.01.024')
@@ -118,7 +127,8 @@ class IngresosBrutosArbaWizard(models.Model):
             ('date', '>=', self.date_from),
             ('date', '<=', self.date_to),
             ('move_id.state', '=', 'posted'),
-            # TODO: order_by document_number
+            ('move_id.document_type_id', '!=', False),
+            # TODO: order_by date asc, document_number asc
         ])
         self.invoice_ids = self.perc_line_ids.mapped('move_id')
 
@@ -126,7 +136,6 @@ class IngresosBrutosArbaWizard(models.Model):
             try:
                 move = line.move_id
                 partner_id = move.partner_id
-                # tax_line = move.line_ids.filtered(lambda l: l.account_id == tax_account)
 
                 # Percepcion
                 record = [
@@ -159,6 +168,7 @@ class IngresosBrutosArbaWizard(models.Model):
                 ]
 
                 records_perc.append(''.join(record))
+                records_perc_csv.append(','.join(map(lambda r: '"{}"'.format(r), record)))
             except:
                 _logger.error("Error procesando percepcion. Asiento {}".format(line.move_id.name))
 
@@ -170,8 +180,15 @@ class IngresosBrutosArbaWizard(models.Model):
         self.arba_perc_file = base64.encodestring(
             self.ARBA_PERC.encode('ISO-8859-1'))
 
+        # Generar archivo excel
+        ARBA_PERC_CSV = '\r\n'.join(records_perc_csv)
+        self.arba_perc_csv_filename = 'ARBA-{}-perc.csv'.format(period)
+        self.arba_perc_csv_file = base64.encodestring(
+            ARBA_PERC_CSV.encode('ISO-8859-1'))
+
     def generate_retenciones(self):
         records_ret = []
+        records_ret_csv = []
         
         # TODO: permitir configurar estas cuentas
         # TODO: cambiar por referencia a retencion ARBA aplicada
@@ -187,7 +204,8 @@ class IngresosBrutosArbaWizard(models.Model):
             ('date', '>=', self.date_from),
             ('date', '<=', self.date_to),
             ('move_id.state', '=', 'posted'),
-            # TODO: order_by document_number
+            ('move_id.document_type_id', '!=', False),
+            # TODO: order_by date asc, document_number asc
         ])
         self.payment_ids = self.ret_line_ids.mapped('move_id')
 
@@ -213,6 +231,7 @@ class IngresosBrutosArbaWizard(models.Model):
                 ]
 
                 records_ret.append(''.join(record))
+                records_ret_csv.append(','.join(map(lambda r: '"{}"'.format(r), record)))
             except:
                 _logger.error("Error procesando retencion. Asiento {}".format(line.move_id.name))
 
@@ -223,6 +242,13 @@ class IngresosBrutosArbaWizard(models.Model):
         self.arba_ret_filename = 'ARBA-{}-ret.txt'.format(period)
         self.arba_ret_file = base64.encodestring(
             self.ARBA_RET.encode('ISO-8859-1'))
+
+        # Generar archivo excel
+        ARBA_RET_CSV = '\r\n'.join(records_ret_csv)
+        self.arba_ret_csv_filename = 'ARBA-{}-ret.csv'.format(period)
+        self.arba_ret_csv_file = base64.encodestring(
+            ARBA_RET_CSV.encode('ISO-8859-1'))
+
 
 # Valores en invoice_id:
 # amount_tax / amount_total / amount_untaxed / vat_amount 
@@ -235,4 +261,6 @@ class IngresosBrutosArbaWizard(models.Model):
 # 2.1.03.01.023 - Retención IIBB ARBA aplicada
 # 2.1.03.01.024 - Percepción IIBB ARBA aplicada
 
-# Las presentaciones de retenciones/percepciones es en diferentes epocas?
+# TODO: separar en tipo (percepcion/retencion)
+# Las presentaciones son mensual para percepciones y quincenal para retenciones
+# TODO: Agregar header en el archivo CSV

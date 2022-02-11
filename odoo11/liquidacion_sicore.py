@@ -23,9 +23,17 @@ class LiquidacionSicoreWizard(models.Model):
     _inherit = [ 'report.pyme_accounting.base' ]
     _description = 'Reporte de SICORE Agentes'
 
+    tipo = fields.Selection(
+        selection=[
+            ('retenciones','Retenciones'),
+            # ('percepciones','Percepciones')
+        ], default='retenciones', string='Tipo de Liquidación')
+
     SICORE = fields.Text('SICORE', readonly=True)
     sicore_file = fields.Binary(string="SICORE Archivo", readonly=True)
     sicore_filename = fields.Char(string="SICORE Nombre de Archivo", readonly=True)
+    sicore_csv_file = fields.Binary(string="SICORE Archivo", readonly=True)
+    sicore_csv_filename = fields.Char(string="SICORE Nombre de Archivo", readonly=True)
 
     # invoice_ids = fields.Many2many('account.move', string="Facturas", compute="generate")
     payment_ids = fields.Many2many('account.move', string="Pagos", compute="generate")
@@ -52,7 +60,7 @@ class LiquidacionSicoreWizard(models.Model):
         if not self.date_from or not self.date_to:
             return
 
-        records = self.generate_retenciones()
+        records, records_csv = self.generate_retenciones()
 
         # La ultima linea debe estar vacia
         records.append('')
@@ -65,8 +73,16 @@ class LiquidacionSicoreWizard(models.Model):
         self.sicore_file = base64.encodestring(
             self.SICORE.encode('ISO-8859-1'))
 
+        # Generar archivo excel
+        SICORE_CSV = '\r\n'.join(records_csv)
+        self.sicore_csv_filename = 'SICORE-{}.csv'.format(period)
+        self.sicore_csv_file = base64.encodestring(
+            SICORE_CSV.encode('ISO-8859-1'))
+
+
     def generate_retenciones(self):
         records = []
+        records_csv = []
 
         # TODO: cambiar por referencia a retencion Ganancias aplicada
         iibb_account = self.env['account.account'].search([
@@ -91,15 +107,7 @@ class LiquidacionSicoreWizard(models.Model):
             try:
                 move = line.move_id
                 payment = line.payment_id
-                # internal_type = move.document_type_id.internal_type
                 partner_id = move.partner_id
-
-                # monto_total = line.invoice_id.amount_total             # 53074,79
-                # monto_base = line.invoice_id.amount_untaxed            # 42122,85
-                # tax_lines = move.line_ids.filtered(lambda l: l.account_id == tax_account)
-                # monto_iva = abs(sum(tax_lines.mapped('balance')))
-                # monto_perc = abs(line.balance) # 1053,07
-                # monto_otros = monto_total - monto_base - monto_iva # 2106.14
 
                 record = [
                     # Campo 1 - Tipo de Comprobante (06 - Orden de Pago)
@@ -143,11 +151,12 @@ class LiquidacionSicoreWizard(models.Model):
                 ]
 
                 records.append(''.join(record))
+                records_csv.append(','.join(map(lambda r: '"{}"'.format(r), record)))
             except Exception as e:
                 _logger.error("Error procesando percepcion. Asiento {}. {}".format(line.move_id.name, e))
                 _logger.error(traceback.format_exc())
 
-        return records
+        return records, records_csv
 
 # Cuentas:
 # - 2.1.03.01.006 Retención ganancias aplicada (DONE)
