@@ -115,6 +115,7 @@ class IngresosBrutosArbaWizard(models.Model):
 
         # Buscar Facturas de Compras
         in_invoices = self.env['account.move'].search([
+            ('company_id', '=', self.env.company.id),
             ('move_type', '=', 'in_invoice'),
             ('state', '=', 'posted'),
             ('date', '>=', self.date_from),
@@ -126,6 +127,7 @@ class IngresosBrutosArbaWizard(models.Model):
 
         # Buscar Facturas de Ventas
         out_invoices = self.env['account.move'].search([
+            ('company_id', '=', self.env.company.id),
             ('move_type', '=', 'out_invoice'),
             ('state', '=', 'posted'),
             ('date', '>=', self.date_from),
@@ -146,7 +148,7 @@ class IngresosBrutosArbaWizard(models.Model):
         self.iibb_report_deducciones = -deducciones
 
         # TODO: calcular saldo del periodo anterior
-        self.iibb_report_tax_prev_saldo = sum(self.env['account.move.line'].search([
+        self.iibb_report_tax_prev_saldo = -sum(self.env['account.move.line'].search([
             ('parent_state', '=', 'posted'),
             ('account_id', '=', account_saldo_anterior.id),
         ]).mapped('balance'))
