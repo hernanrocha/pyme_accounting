@@ -326,7 +326,8 @@ class IngresosBrutosArbaWizard(models.Model):
             # Saldo a favor del periodo
             line_ids.append((0, 0, { 
                 'account_id': account_saldo_a_favor.id, 
-                'debit': -self.iibb_report_tax_total_saldo
+                'name': 'IIBB ARBA a Favor',
+                'debit': self.iibb_report_tax_total_saldo
             }))
 
         # Asiento de IIBB
