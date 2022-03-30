@@ -123,8 +123,6 @@ class IngresosBrutosArbaWizard(models.Model):
         ])
         print(len(in_invoices), in_invoices)
 
-        # TODO: tener en cuenta las in_refund
-
         # Buscar Facturas de Ventas
         out_invoices = self.env['account.move'].search([
             ('company_id', '=', self.env.company.id),
@@ -135,10 +133,23 @@ class IngresosBrutosArbaWizard(models.Model):
         ])
         print(len(out_invoices), out_invoices)
 
+        # Buscar Notas de Credito de Ventas
+        out_refunds = self.env['account.move'].search([
+            ('move_type', '=', 'out_refund'),
+            ('state', '=', 'posted'),
+            ('date', '>=', self.date_from),
+            ('date', '<=', self.date_to)
+        ])
+
         # Ventas
         ventas = 0
         for invoice in out_invoices:
             ventas += invoice.amount_total
+
+        # NC
+        for invoice in out_refunds:
+            ventas += invoice.amount_total
+        
         self.iibb_report_sale_total = ventas
 
         deducciones = 0
