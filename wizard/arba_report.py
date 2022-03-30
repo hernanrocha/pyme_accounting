@@ -148,7 +148,7 @@ class IngresosBrutosArbaWizard(models.Model):
 
         # NC
         for invoice in out_refunds:
-            ventas += invoice.amount_total
+            ventas -= invoice.amount_total
         
         self.iibb_report_sale_total = ventas
 
