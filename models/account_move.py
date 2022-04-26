@@ -28,6 +28,7 @@ class AccountMove(models.Model):
     
     z_desde = fields.Integer(string="Z Cbte Desde")
     z_hasta = fields.Integer(string="Z Cbte Hasta")
+    total_afip = fields.Monetary(string="Total AFIP")
 
     # TODO: esto esta generando siempre TI Z 0004-00001
     # def _get_last_sequence(self, relaxed=False):

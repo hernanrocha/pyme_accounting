@@ -412,21 +412,24 @@ class ImportPurchaseCompRecibidos(models.TransientModel):
                 print("Exempt Line", line)
 
             # Diferencia (se guarda como no gravado)
-            if invoice.difference > 0:
-                line = move.line_ids.create({
-                    'move_id': move.id,
-                    'name': 'Otros Montos No Gravados',
-                    'account_id': account_purchase.id,
-                    'quantity': 1,
-                    'price_unit': invoice.difference,
-                })
-                line.tax_ids += tax_no_corresponde if no_iva else tax_untaxed
-                print("Difference Line", line)
+            # TODO: guardar valor total_cbte_afip
+            # TODO: permitir guardar o no esta diferencia
+            # if invoice.difference > 0:
+            #     line = move.line_ids.create({
+            #         'move_id': move.id,
+            #         'name': 'Otros Montos No Gravados',
+            #         'account_id': account_purchase.id,
+            #         'quantity': 1,
+            #         'price_unit': invoice.difference,
+            #     })
+            #     line.tax_ids += tax_no_corresponde if no_iva else tax_untaxed
+            #     print("Difference Line", line)
 
             # Recalculate totals
             move._recompute_dynamic_lines(recompute_all_taxes=True, recompute_tax_base_amount=True)
             move._recompute_payment_terms_lines()
             move._compute_amount()
+            move.total_afip = invoice.total
 
         # Volver a menu Empresas > Compras > Comprobantes Recibidos
         ret = self.env["ir.actions.act_window"]._for_xml_id('pyme_accounting.action_move_in_invoice_type')
