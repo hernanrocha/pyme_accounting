@@ -23,6 +23,16 @@ def exempt_line(line):
     codes = line.mapped('tax_ids').mapped('tax_group_id').mapped('l10n_ar_vat_afip_code')
     return '2' in codes
 
+class AccountMoveLine(models.Model):
+    _inherit = "account.move.line"
+
+    display_price_subtotal = fields.Monetary(string="Subtotal", compute="_compute_display_price_subtotal")
+
+    @api.depends('quantity', 'price_unit')
+    def _compute_display_price_subtotal(self):
+        for line in self:
+            line.display_price_subtotal = line.quantity * line.price_unit
+
 class AccountMove(models.Model):
     _inherit = "account.move"
     
@@ -78,6 +88,20 @@ class AccountMove(models.Model):
     display_perc_iva = fields.Monetary(string='Perc. IVA', compute='_compute_percepciones')
     display_perc_iibb = fields.Monetary(string='Perc. IIBB', compute='_compute_percepciones')
     display_perc_municipales = fields.Monetary(string='Perc. Municipales', compute='_compute_percepciones')
+
+    @api.model
+    def create_batch(self, data):
+        records = []
+        for record in data:
+            move = self.create(dict(record))
+
+            # Recalculate totals
+            move._recompute_dynamic_lines(recompute_all_taxes=True, recompute_tax_base_amount=True)
+            move._recompute_payment_terms_lines()
+            move._compute_amount()
+
+            records.append(move.id)
+        return records
 
     @api.depends('l10n_latam_document_type_id')
     def _compute_display_z_desde_hasta(self):
