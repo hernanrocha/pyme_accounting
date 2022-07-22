@@ -72,6 +72,14 @@
                                 <field name="name" />
                             </tree>
                         </field>
+
+                        <field name="iibb_arba_activity_ids" colspan="4" widget="many2many"
+                            context="{'tree_view_ref':'pyme_accounting.iibb_arba_acitivity_view_tree'}">
+                            <tree>
+                                <field name="code" />
+                                <field name="name" />
+                            </tree>
+                        </field>
                     </group>
 
                     <group string="Monotributo" col="4" attrs="{'invisible': [('l10n_ar_afip_responsibility_type_id', '!=', 6)]}" >

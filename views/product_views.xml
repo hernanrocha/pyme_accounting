@@ -15,6 +15,11 @@
                         domain="[('id','in', available_afip_activity_ids)]" 
                         attrs="{'invisible': [('sale_ok', '=', False)]}" />
 
+                    <field name="available_iibb_arba_activity_ids" invisible="1" />
+                    <field name="iibb_arba_activity_id" 
+                        domain="[('id','in', available_iibb_arba_activity_ids)]" 
+                        attrs="{'invisible': [('sale_ok', '=', False)]}" />
+
                     <!-- Compras -->
                     <field name="afip_f2002_category" 
                         attrs="{'invisible': [('purchase_ok', '=', False)]}" />

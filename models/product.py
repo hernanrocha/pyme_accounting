@@ -15,9 +15,17 @@ class Product(models.Model):
         for m in self:
             m.available_afip_activity_ids = self.company_id.afip_activity_ids
     
+    def _compute_iibb_activities(self):
+        for m in self:
+            m.available_iibb_arba_activity_ids = self.company_id.iibb_arba_activity_ids
+
     # Actividad AFIP para ventas
     available_afip_activity_ids = fields.One2many('l10n_ar.afip.actividad', compute=_compute)
-    afip_activity_id = fields.Many2one('l10n_ar.afip.actividad', index=True, string='Actividad')
+    afip_activity_id = fields.Many2one('l10n_ar.afip.actividad', index=True, string='Actividad AFIP')
+
+    # Actividad ARBA para ventas
+    available_iibb_arba_activity_ids = fields.One2many('l10n_ar.iibb.arba.actividad', compute=_compute_iibb_activities)
+    iibb_arba_activity_id = fields.Many2one('l10n_ar.iibb.arba.actividad', index=True, string='Actividad ARBA')
 
     # Categoria de compras en F. 2002
     afip_f2002_category = fields.Selection(selection=[

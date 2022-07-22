@@ -79,11 +79,29 @@ class Company(models.Model):
     monotributo_pago = fields.Float(string="Pago", compute=_compute_monotributo_pago)
 
     # AFIP
-    afip_activity_ids = fields.Many2many('l10n_ar.afip.actividad', string='Actividades', help="La primera actividad de la lista debe ser la actividad principal")
+    afip_activity_ids = fields.Many2many('l10n_ar.afip.actividad', string='Actividades AFIP', help="La primera actividad de la lista debe ser la actividad principal")
 
     # IIBB
     iibb_tax_percentage = fields.Float(string="Alícuota (%)", default=1.50)
     iibb_min_amount = fields.Float(string="Impuesto Mínimo", default=0)
+    # Nomenclador en ARBA: NAIIB-18
+    # - http://www.arba.gov.ar/archivos/Publicaciones/naiib18.pdf
+    # - https://www.arba.gov.ar/Informacion/InfoGeneral/Naiib18/naiib.asp?lugar=E&apartado=IIBB
+    # Reporte de Ventas:
+    # Actividad  | Gravado | Alicuota IVA | IVA | Total 
+    # 000001     |     XXX |          21% | XXX |   XXX 
+    # 000001     |     XXX |          27% | XXX |   XXX 
+    # 000002     |     XXX |          21% | XXX |   XXX 
+    #            |     XXX |              | XXX |   XXX
+    #
+    # Montos No Gravados/Exentos: XXX
+    iibb_arba_activity_ids = fields.Many2many('l10n_ar.iibb.arba.actividad', string='Actividades ARBA', help='Lista de actividades en ARBA')
+
+    agente_percepcion_arba = fields.Boolean(string="Agente Percepcion ARBA", default=False)
+    agente_retencion_arba = fields.Boolean(string="Agente Retencion ARBA", default=False)
+    agente_percepcion_agip = fields.Boolean(string="Agente Percepcion AGIP", default=False)
+    agente_retencion_agip = fields.Boolean(string="Agente Retencion AGIP", default=False)
+    agente_retencion_sicore = fields.Boolean(string="Agente Retencion SICORE", default=False)
 
     def _default_country_id(self):
         country_ar = self.env['res.country'].search([('code', '=', 'AR')])

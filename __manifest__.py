@@ -97,6 +97,7 @@
         'views/sales_views.xml',
         'views/afip_activities.xml',
         'views/afip_apocrifos.xml',
+        'views/iibb_activities.xml',
 
         # Menu
         'views/account_menuitem.xml',
