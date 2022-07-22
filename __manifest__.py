@@ -105,6 +105,7 @@
         # Cross-Company Data
         "data/nano.monotributo.categoria.csv",
         "data/l10n_ar.afip.actividad.csv",
+        "data/l10n_ar.iibb.arba.actividad.csv",
         "data/l10n_ar.afip.cuit.apocrifo.csv",
         "data/l10n_latam.document.type.csv",
         "data/account.tax.template.csv",
