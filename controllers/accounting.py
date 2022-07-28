@@ -22,3 +22,9 @@ class AccountDashboardController(http.Controller):
             # })
             # 'html': '<div>ESTO ES UN BANNER!!!</div>'
         }
+
+    @http.route('/pyme_accounting/me', auth='user', type='json')
+    def account_me(self):
+        return {
+            'user_id': request.env.uid
+        }
