@@ -48,7 +48,7 @@ class AccountDashboardController(http.Controller):
         }
 
     @http.route('/pyme_accounting/cuit', auth='user', type='json')
-    def query_afip(self, kwargs):
+    def query_afip(self, **kwargs):
         vat = kwargs['vat']
         res = requests.get("https://afip.tangofactura.com/Rest/GetContribuyenteFull?cuit={}".format(vat))
 
@@ -59,7 +59,7 @@ class AccountDashboardController(http.Controller):
         
         resp = {}
         # TODO: Agregar campo razon social
-        resp.name = p['Contribuyente']['nombre']
+        resp['name'] = p['Contribuyente']['nombre']
 
         # TODO: No se puede cambiar existiendo comprobantes
         # if p['Contribuyente']['EsRI']:
@@ -75,13 +75,13 @@ class AccountDashboardController(http.Controller):
 
         # Codigo de Actividades
         activity_codes = list(map(lambda a: a['idActividad'], p['Contribuyente']['ListaActividades']))
-        resp.afip_activity_ids = self.env["l10n_ar.afip.actividad"].search([
+        resp['afip_activity_ids'] = self.env["l10n_ar.afip.actividad"].search([
             ('code', 'in', activity_codes)
         ])
-        resp.street = p['Contribuyente']['domicilioFiscal']['direccion']
-        resp.city = p['Contribuyente']['domicilioFiscal']['localidad']
+        resp['street'] = p['Contribuyente']['domicilioFiscal']['direccion']
+        resp['city'] = p['Contribuyente']['domicilioFiscal']['localidad']
         # TODO: self.state_id # Provincia
-        resp.zip = p['Contribuyente']['domicilioFiscal']['codPostal']
+        resp['zip'] = p['Contribuyente']['domicilioFiscal']['codPostal']
 
         return resp
 
