@@ -68,7 +68,7 @@ def split_iva_new(lines, activity_code, label):
         # current_subtotal = sum(current_lines.mapped('price_subtotal'))
         # current_total = list(map(current_tax.compute_all, current_lines.mapped('price_total')))
         # price_total incluye las percepciones de IIBB (y con 1 peso, las que estan mal)
-        current_subtotal = list(map(current_tax.compute_all, current_lines.mapped('price_subtotal')))
+        current_subtotal = list(map(current_tax.compute_all, current_lines.mapped('display_price_subtotal')))
         # current = current_total if current_tax.price_include else current_subtotal
         base = sum(map(lambda c: c['taxes'][0]['base'], current_subtotal))
         iva = sum(map(lambda c: c['taxes'][0]['amount'], current_subtotal))

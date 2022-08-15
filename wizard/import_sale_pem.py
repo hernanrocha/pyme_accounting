@@ -197,9 +197,9 @@ class SaleImportPEM(models.Model):
     f8012_file = fields.Binary(string="Archivo F8012 (*.pem)")
     f8012_filename = fields.Char(string="Archivo F8010")
 
-    f8010_xml_file = fields.Binary(string="Archivo XML F8010", readonly=True, attachment=False)
-    f8011_xml_file = fields.Binary(string="Archivo XML F8011", readonly=True, attachment=False)
-    f8012_xml_file = fields.Binary(string="Archivo XML F8012", readonly=True, attachment=False)
+    f8010_xml_file = fields.Binary(string="Archivo XML F8010", readonly=True)
+    f8011_xml_file = fields.Binary(string="Archivo XML F8011", readonly=True)
+    f8012_xml_file = fields.Binary(string="Archivo XML F8012", readonly=True)
     # f8012_xml_filename = fields.Char(string="Nombre de archivo XML F8012", compute)
 
     # TODO: soportar comprobante f8010
