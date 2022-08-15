@@ -17,6 +17,8 @@ class Company(models.Model):
     phone = fields.Char(related="partner_id.phone")
     email = fields.Char(related="partner_id.email")
     vat = fields.Char(related="partner_id.vat")
+    tipo_persona = fields.Selection([('fisica', 'Física'), ('juridica', 'Jurídica')],
+        string="Tipo de Persona")
 
     # TODO: guardar este valor en el invoice por si cambia la condicion fiscal
     l10n_ar_afip_responsibility_type_id = fields.Many2one(related="partner_id.l10n_ar_afip_responsibility_type_id")

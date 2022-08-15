@@ -58,26 +58,28 @@ class AccountDashboardController(http.Controller):
         p = res.json()
         
         resp = {}
-        # TODO: Agregar campo razon social
+
         resp['name'] = p['Contribuyente']['nombre']
 
-        # TODO: No se puede cambiar existiendo comprobantes
-        # if p['Contribuyente']['EsRI']:
-        #     self.l10n_ar_afip_responsibility_type_id = 1
-        # if p['Contribuyente']['EsMonotributo']:
-        #     self.l10n_ar_afip_responsibility_type_id = 6
-        #     self.monotributo_category = p['Contribuyente']['categoriasMonotributo'][0]['descCatMonotributo'][0]
-        # if p['Contribuyente']['EsExento']:
-        #     self.l10n_ar_afip_responsibility_type_id = 4
+        if p['Contribuyente']['EsRI']:
+            resp['condicion_fiscal']= 'iva_responsable_inscripto'
+        if p['Contribuyente']['EsMonotributo']:
+            resp['condicion_fiscal'] = 'responsable_monotributo'
+            # self.monotributo_category = p['Contribuyente']['categoriasMonotributo'][0]['descCatMonotributo'][0]
+        if p['Contribuyente']['EsExento']:
+            resp['condicion_fiscal'] = 'iva_sujeto_exento'
+
+        resp['tipo_persona'] = 'fisica' if p['Contribuyente']['tipoPersona'] == "FISICA" else 'juridica'
 
         # TODO:
         # p['Contribuyente']['EsConsumidorFinal'] # Consumidor Final
 
         # Codigo de Actividades
-        activity_codes = list(map(lambda a: a['idActividad'], p['Contribuyente']['ListaActividades']))
-        resp['afip_activity_ids'] = request.env["l10n_ar.afip.actividad"].search([
-            ('code', 'in', activity_codes)
-        ])
+        resp['afip_activity_codes'] = list(map(lambda a: a['idActividad'], p['Contribuyente']['ListaActividades']))
+        # afip_activity_ids = request.env["l10n_ar.afip.actividad"].search([
+        #     ('code', 'in', activity_codes)
+        # ])
+        # resp['afip_activity_ids'] = list(map(lambda a: { 'id': a.id, 'code': a.code, 'name': a.name }, afip_activity_ids))
         resp['street'] = p['Contribuyente']['domicilioFiscal']['direccion']
         resp['city'] = p['Contribuyente']['domicilioFiscal']['localidad']
         # TODO: self.state_id # Provincia
