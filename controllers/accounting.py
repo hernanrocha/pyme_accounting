@@ -75,7 +75,7 @@ class AccountDashboardController(http.Controller):
 
         # Codigo de Actividades
         activity_codes = list(map(lambda a: a['idActividad'], p['Contribuyente']['ListaActividades']))
-        resp['afip_activity_ids'] = self.env["l10n_ar.afip.actividad"].search([
+        resp['afip_activity_ids'] = request.env["l10n_ar.afip.actividad"].search([
             ('code', 'in', activity_codes)
         ])
         resp['street'] = p['Contribuyente']['domicilioFiscal']['direccion']
