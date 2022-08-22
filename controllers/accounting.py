@@ -131,3 +131,77 @@ class AccountDashboardController(http.Controller):
         # else:
         #     # Razon social
         #     self.name = "{}".format(datos["razonSocial"])
+
+    @http.route('/pyme_accounting/monotributo', auth='user', type='json')
+    def monotributo_mensual(self, **kwargs):
+        include_draft = kwargs['include_draft']
+        states = ['draft', 'posted'] if include_draft else ['posted']
+        
+        moves = request.env['account.move'].read_group(
+            # domain
+            [ 
+                ('company_id', '=', request.env.company.id),
+                ('move_type', 'in', [ 'in_invoice', 'in_refund', 'out_invoice', 'out_refund' ]),
+                ('state', 'in', states)
+            ], 
+            # fields
+            [ 'amount_total:sum' ],
+            # groupby
+            [ 'invoice_date:month', 'move_type' ],
+            # lazy: do all groupbys in one call.
+            lazy=False
+        )
+
+        month_line_ids = []
+
+        data = {}
+
+        for m in moves:
+            # Cargar por primera vez una linea de mes
+            # TODO: cargar automaticamente los ultimos 12 meses
+            if not m['invoice_date:month'] in data:
+                data[m['invoice_date:month']] = {
+                    'date': m['invoice_date:month'],
+                    'out_invoice': 0,
+                    'in_invoice': 0,
+                    'out_refund': 0,
+                    'in_refund': 0
+                }
+            
+            data[m['invoice_date:month']][m['move_type']] = m['amount_total']
+
+        t_sales = 0
+        # t_purchases = 0
+        # t_balance = 0
+        
+        for d in data.items():
+            ventas = d[1]['out_invoice'] - d[1]['out_refund']
+            compras = d[1]['in_invoice'] - d[1]['in_refund']
+            month_line_ids.append({
+                'mes': d[0],
+                'ventas': ventas,
+                'compras': compras,
+                'resultado': ventas - compras
+            })
+
+            # Agregar a totales
+            t_sales += ventas
+            # t_purchases += compras
+            # t_balance += ventas - compras
+
+        # TODO: obtener facturacion anual, pago mensual, etc.
+        # for c in categories:
+        #     facturacion_anual = c['max_invoice']
+            
+        #     # Si está dentro del limite de facturación, seleccionar esa categoria
+        #     if facturacion_anual > self.facturacion_anual:
+        #         self.categoria = c['char']
+        #         self.maximo_facturacion = facturacion_anual
+        #         self.pago_mensual = c['service_payment']
+        #         return
+
+        # Actualizar Facturacion Total
+        return {
+            'month_line_ids': month_line_ids,
+            'facturacion_anual': t_sales
+        }
