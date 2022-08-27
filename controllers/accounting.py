@@ -4,6 +4,10 @@ from odoo.exceptions import UserError
 
 import requests
 import logging
+import os
+import base64
+import uuid
+from pathlib import Path
 
 _logger = logging.getLogger(__name__)
 
@@ -39,11 +43,12 @@ class AccountDashboardController(http.Controller):
 
     @http.route('/pyme_accounting/logout', auth='user', type='json')
     def account_logout(self):
+        db = request.session.db
         resp = request.session.logout()
         return {
             'user_id': request.env.uid,
             'company_id': request.env.user.company_id.id,
-            'db': request.session.db,
+            'db': db,
             'resp': resp
         }
 
@@ -205,3 +210,34 @@ class AccountDashboardController(http.Controller):
             'month_line_ids': month_line_ids,
             'facturacion_anual': t_sales
         }
+
+    @http.route('/pyme_accounting/demo_pem', auth='public', type='json')
+    def monotributo_mensual(self, **kwargs):
+        pem = kwargs['pem_file']
+        
+        # Make sure /tmp/nanocontadores exists
+        Path("/tmp/nanocontadores").mkdir(parents=True, exist_ok=True) 
+
+        # Guardar PEM
+        xmlfile = str(uuid.uuid4())
+        _logger.info("Guardando archivo PEM como {}.pem".format(xmlfile))
+        with open('/tmp/nanocontadores/{}.pem'.format(xmlfile), 'w') as writer:
+            writer.write(pem)
+        
+        # Convertir PEM a XML
+        _logger.info("Convirtiendo archivo PEM {}.pem en XML".format(xmlfile))
+        ret = os.system('openssl cms -verify -in /tmp/nanocontadores/{}.pem -inform PEM -noverify -out /tmp/nanocontadores/{}.xml'.format(xmlfile, xmlfile))
+        if ret != 0:
+            raise UserError("Hubo un error analizando el archivo .PEM")
+        _logger.info("Return OpenSSL {}".format(ret))
+        
+        raw_xml = ''
+        with open('/tmp/odoo/{}.xml'.format(xmlfile), 'r') as reader:
+            raw_xml = base64.encodestring(
+                reader.read().encode('ISO-8859-1')) 
+
+        # Borrar archivos PEM y XML temporales
+        # os.remove('/tmp/nanocontadores/{}.pem'.format(xmlfile))
+        # os.remove('/tmp/nanocontadores/{}.xml'.format(xmlfile))
+
+        return { 'pem_xml': raw_xml }
