@@ -80,11 +80,11 @@ class AccountDashboardController(http.Controller):
         # p['Contribuyente']['EsConsumidorFinal'] # Consumidor Final
 
         # Codigo de Actividades
-        resp['afip_activity_codes'] = list(map(lambda a: a['idActividad'], p['Contribuyente']['ListaActividades']))
-        # afip_activity_ids = request.env["l10n_ar.afip.actividad"].search([
-        #     ('code', 'in', activity_codes)
-        # ])
-        # resp['afip_activity_ids'] = list(map(lambda a: { 'id': a.id, 'code': a.code, 'name': a.name }, afip_activity_ids))
+        afip_activity_codes = list(map(lambda a: a['idActividad'], p['Contribuyente']['ListaActividades']))
+        afip_activity_ids = request.env["l10n_ar.afip.actividad"].search([
+            ('code', 'in', afip_activity_codes)
+        ])
+        resp['afip_activity_ids'] = list(map(lambda a: { 'id': a.id, 'code': a.code, 'name': a.name }, afip_activity_ids))
         resp['street'] = p['Contribuyente']['domicilioFiscal']['direccion']
         resp['city'] = p['Contribuyente']['domicilioFiscal']['localidad']
         # TODO: self.state_id # Provincia
@@ -212,7 +212,7 @@ class AccountDashboardController(http.Controller):
         }
 
     @http.route('/pyme_accounting/demo_pem', auth='public', type='json')
-    def monotributo_mensual(self, **kwargs):
+    def demo_pem(self, **kwargs):
         pem = kwargs['pem_file']
         
         # Make sure /tmp/nanocontadores exists
@@ -222,7 +222,7 @@ class AccountDashboardController(http.Controller):
         xmlfile = str(uuid.uuid4())
         _logger.info("Guardando archivo PEM como {}.pem".format(xmlfile))
         with open('/tmp/nanocontadores/{}.pem'.format(xmlfile), 'w') as writer:
-            writer.write(pem)
+            writer.write(base64.decodebytes(pem.encode('utf-8')).decode('utf-8'))
         
         # Convertir PEM a XML
         _logger.info("Convirtiendo archivo PEM {}.pem en XML".format(xmlfile))
@@ -232,9 +232,8 @@ class AccountDashboardController(http.Controller):
         _logger.info("Return OpenSSL {}".format(ret))
         
         raw_xml = ''
-        with open('/tmp/odoo/{}.xml'.format(xmlfile), 'r') as reader:
-            raw_xml = base64.encodestring(
-                reader.read().encode('ISO-8859-1')) 
+        with open('/tmp/nanocontadores/{}.xml'.format(xmlfile), 'r') as reader:
+            raw_xml = base64.b64encode(reader.read().encode('ISO-8859-1')) 
 
         # Borrar archivos PEM y XML temporales
         # os.remove('/tmp/nanocontadores/{}.pem'.format(xmlfile))
