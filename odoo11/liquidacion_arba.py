@@ -1,6 +1,7 @@
 from odoo import fields, models, _
 from odoo.exceptions import ValidationError
 
+import requests
 import logging
 import base64
 
@@ -97,8 +98,9 @@ class IngresosBrutosArbaWizard(models.Model):
         if not self.date_from or not self.date_to:
             return
 
-        self.generate_percepciones()
-        self.generate_retenciones()
+        # self.generate_percepciones()
+        # self.generate_retenciones()
+        self.generate_retenciones_alicuotaonline()
 
     def generate_percepciones(self):
         records_perc = []
@@ -249,6 +251,70 @@ class IngresosBrutosArbaWizard(models.Model):
         self.arba_ret_csv_file = base64.encodestring(
             ARBA_RET_CSV.encode('ISO-8859-1'))
 
+    def generate_retenciones_alicuotaonline(self):
+        records_ret = []
+        
+        # TODO: permitir configurar estas cuentas
+        # TODO: cambiar por referencia a retencion ARBA aplicada
+        iibb_account = self.env['account.account'].search([
+            ('code', '=', '2.1.03.01.023'),
+        ])
+        if not iibb_account:
+            raise ValidationError('Cuenta de retencion ARBA aplicada no encontrada')
+
+        ret_line_ids = self.env['account.move.line'].search([
+            ('account_id', '=', iibb_account.id),
+            ('date', '>=', self.date_from),
+            ('date', '<=', self.date_to),
+            ('move_id.state', '=', 'posted'),
+            ('move_id.document_type_id', '!=', False),
+            # TODO: order_by date asc, document_number asc
+        ])
+        # payment_ids = ret_line_ids.mapped('move_id')
+
+        for line in self.ret_line_ids:
+            try:
+                move = line.move_id
+                partner_id = move.partner_id
+
+                d = {            
+                    "retenido_cuit": self._format_cuit(partner_id),            
+                    "retenido_razon_social": "TODO",            # TODO
+                    "retenido_iibb_numero": "1",               # TODO
+                    "retenido_iibb_tipo": "local",             # TODO
+                    "retenido_condicion_fiscal": "iva_sujeto_exento", # TODO           
+                    "cbte_fecha": line.date,         
+                    "cbte_gravado": 1,            
+                    "cbte_iva": 1,            
+                    "cbte_nogravado_exento": 1,            
+                    "cbte_otros": 1,            
+                    "cbte_total": 1,            
+                    "pago_fecha": line.date,            
+                    "pago_total": 1,            
+                    "sucursal": move.document_number.split("-")[0],            
+                    "numero_emision": move.document_number.split("-")[1],            
+                    "external_id": move.id,            
+                    "withholdings": [             
+                        {                    
+                            "id_jurisdiccion": 902,                    
+                            "monto_base": 1,                    
+                            "alicuota": 1,                    
+                            "monto_retencion": -line.balance,                    
+                            "certificado_numero": 2000,                    
+                            "tipo_operacion": "alta"                
+                        }            
+                    ]        
+                }
+                records_ret.append(d)
+            except:
+                _logger.error("Error procesando retencion. Asiento {}".format(line.move_id.name))
+
+        # period = fields.Date.from_string(self.date_to).strftime('%Y-%m-%d')
+        r = requests.post('http://18.189.239.110:8000/user/payments/import/', 
+        json={"data": records_ret}, headers={"X-User-Id": "1"})
+
+        print(r.status_code)
+        print(r.json())
 
 # Valores en invoice_id:
 # amount_tax / amount_total / amount_untaxed / vat_amount 
