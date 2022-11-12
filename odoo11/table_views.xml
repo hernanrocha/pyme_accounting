@@ -70,30 +70,7 @@
                 <field name="tax_ids" />
                 <field name="tag_ids" />
                 <field name="reconcile" />
-                <field name="partida_monetaria" widget="boolean_switch" />
             </tree>
-        </field>
-    </record>
-
-    <record id="inflation_adjustment_index_tree" model="ir.ui.view">
-        <field name="name">inflation.adjustment.index.tree</field>
-        <field name="model">inflation.adjustment.index</field>
-        <field name="arch" type="xml">
-            <tree editable="top">
-                <field name="date"/>
-                <field name="value"/>
-                <field name="xml_id" groups="base.group_no_one"/>
-            </tree>
-        </field>
-    </record>
-
-    <record id="inflation_adjustment_index_search" model="ir.ui.view">
-        <field name="name">inflation.adjustment.index.search</field>
-        <field name="model">inflation.adjustment.index</field>
-        <field name="arch" type="xml">
-            <search string="Search Description">
-                <field name="date"/>
-            </search>
         </field>
     </record>
 
