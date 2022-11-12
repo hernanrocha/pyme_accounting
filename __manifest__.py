@@ -26,10 +26,19 @@
         'web',             # Web Backend
         # 'portal'         # Web Login
 
-        'account_financial_report', # OCA Account Financial Report
+        # OCA Account Financial Report
+        # Incluye las siguientes dependencias:
+        # - date_range
+        # - report_xlsx
+        'account_financial_report',
 
-        # 
-        # 'report_xlsx', # Reporte XLSX
+        # OCA Asset Management
+        # Incluye las siguientes dependencias:
+        # - account_fiscal_year
+        # 'account_asset_management',
+
+        # Ejercicio Fiscal
+        'account_fiscal_year',
 
         # Localizacion Argentina         https://github.com/ctmil/odoo-argentina.git@14.0
         # 'l10n_ar_account_vat_ledger',  # IVA Compras/Ventas
@@ -41,11 +50,7 @@
 
         ### PYTHON pip install python-json-logger
     ],
-    'assets': {
-        'web._assets_primary_variables': [
-            # 'pyme_accounting/static/src/scss/primary_variables.scss'
-        ]
-    },
+    'assets': {},
     'data': [
         # # https://github.com/odoo/odoo/blob/bbc338438518bbb7d0e9ad1a313e872f95a36870/addons/web/static/src/js/views/list/list_renderer.js
         # # Web
@@ -120,11 +125,11 @@
         # ODOO 11
         'odoo11/iibb_views.xml',
         'odoo11/table_views.xml',
-        'odoo11/ajuste_inflacion_contable.xml',
+        # 'odoo11/ajuste_inflacion_contable.xml',
         'odoo11/account_menuitem.xml',
 
         # ODOO 11: Data
-        'odoo11/data/inflation_adjustment_index.xml',
+        # 'odoo11/data/inflation_adjustment_index.xml',
 
         # ODOO 11: Data de otros modulos
         # 'odoo11/data/account_account_tag.xml',

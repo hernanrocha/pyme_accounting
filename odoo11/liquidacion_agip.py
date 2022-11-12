@@ -62,6 +62,7 @@ class IngresosBrutosAgipWizard(models.Model):
         return '03'
 
     # depends('l10n_latam_identification_type_id')
+    # partner_id.main_id_category_id.code
     def _format_tipo_documento(self, partner_id):
         doc_type_mapping = {'CDI': '1', 'CUIL': '2', 'CUIT': '3' }
         doc_type_name = partner_id.main_id_category_id.code
@@ -71,9 +72,11 @@ class IngresosBrutosAgipWizard(models.Model):
                     'debe ser una de siguientes: CUIT, CUIL, CDI.' % (partner_id.id, partner_id.name)))
         return doc_type_mapping[doc_type_name]
 
+    # move.document_type_id.document_letter_id.name
     def _format_letra_cbte(self, move):
         return move.document_type_id.document_letter_id.name
 
+    # move.document_number
     def _format_numero_cbte(self, move):
         s = move.document_number.split("-")
         if len(s) != 2:
@@ -99,6 +102,7 @@ class IngresosBrutosAgipWizard(models.Model):
         return '5'
 
     # depends('gross_income_type', 'gross_income_number')
+    # partner_id.main_id_number
     def _format_numero_iibb(self, partner_id):
         # if partner_id.gross_income_type == 'no_liquida':
         #     return '00000000000' 

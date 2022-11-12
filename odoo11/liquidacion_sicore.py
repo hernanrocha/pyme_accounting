@@ -119,11 +119,11 @@ class LiquidacionSicoreWizard(models.Model):
                     self._format_numero_cbte(move),
                     # Campo 6 - Monto Retencion
                     format_amount(payment.withholding_base_amount, 16, 2, ','),
-                    # TODO Campo 7 - Codigo de Impuesto (217 - Importe a las Ganancias)
-                    '217', # payment.tax_withholding_id.???
+                    # TODO Campo 7 - Codigo de Impuesto (217 - Impuesto a las Ganancias)
+                    '767', # 767 - Retencion de IVA
                     # Campo 8 - Codigo de Regimen (078 - Enajenación de bienes muebles y bienes de cambio.)
                     # p.communication => "78 - Enajenación de bienes muebles y bienes de cambio."
-                    self._format_codigo_regimen(payment),
+                    self._format_codigo_regimen(payment),  # 499 Factura M - IVA - Emisión de comprobantes con discriminación del gravamen
                     # TODO Campo 9 - Codigo de Operacion (1 Retencion, 4 Imposibilidad de Retencion)
                     '1',
                     # Campo 10 - Base Imponible de la Retencion
