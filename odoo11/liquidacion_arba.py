@@ -2,6 +2,7 @@ from odoo import fields, models, _
 from odoo.exceptions import ValidationError
 
 import requests
+import json
 import logging
 import base64
 
@@ -99,8 +100,39 @@ class IngresosBrutosArbaWizard(models.Model):
             return
 
         # self.generate_percepciones()
-        # self.generate_retenciones()
+        self.generate_retenciones()
         self.generate_retenciones_alicuotaonline()
+
+    def _format_situacion_iva(self, partner_id):
+        res_iva = partner_id.afip_responsability_type_id
+        iva_code = res_iva.code
+        
+        # Resp. Inscripto / Resp. Inscripto Factura M
+        if iva_code in ['1', '1FM']:
+            return 'iva_responsable_inscripto'
+        # Exento
+        if iva_code == '4':
+            return 'iva_sujeto_exento'
+        # Monotributo
+        if iva_code == '6':
+            return 'responsable_monotributo'
+        
+        raise ValidationError('La responsabilidad frente a IVA "%s" no está soportada.' % res_iva.name)
+
+    def _get_alicuota_agip(self, partner_id, date):
+        tag_id = self.env['account.account.tag'].search([
+            ('name', '=', 'Jur: 901 - Capital Federal')
+        ])
+        # Primero chequear que esten seteados from_date y to_date. 
+        # Luego validar que el rango y la jurisdiccion coincidan 
+        alicuota = partner_id.arba_alicuot_ids.filtered(
+            lambda a: a.from_date and a.to_date and a.from_date <= date and a.to_date >= date and a.tag_id == tag_id)
+        if len(alicuota) != 1:
+            err = 'Alicuota AGIP no encontrada para partner {} - fecha {}'.format(partner_id, date)
+            _logger.error(err)
+            raise ValidationError(err)
+
+        return alicuota
 
     def generate_percepciones(self):
         records_perc = []
@@ -196,7 +228,7 @@ class IngresosBrutosArbaWizard(models.Model):
         # TODO: cambiar por referencia a retencion ARBA aplicada
         iibb_account = self.env['account.account'].search([
             # ('code', '=', '231000'),
-            ('code', '=', '2.1.03.01.023'),
+            ('code', '=', '2.1.03.01.011'),
         ])
         if not iibb_account:
             raise ValidationError('Cuenta de retencion ARBA aplicada no encontrada')
@@ -257,7 +289,7 @@ class IngresosBrutosArbaWizard(models.Model):
         # TODO: permitir configurar estas cuentas
         # TODO: cambiar por referencia a retencion ARBA aplicada
         iibb_account = self.env['account.account'].search([
-            ('code', '=', '2.1.03.01.023'),
+            ('code', '=', '2.1.03.01.011'),
         ])
         if not iibb_account:
             raise ValidationError('Cuenta de retencion ARBA aplicada no encontrada')
@@ -272,49 +304,50 @@ class IngresosBrutosArbaWizard(models.Model):
         ])
         # payment_ids = ret_line_ids.mapped('move_id')
 
-        for line in self.ret_line_ids:
-            try:
-                move = line.move_id
-                partner_id = move.partner_id
+        for line in ret_line_ids:
+            move = line.move_id
+            partner_id = move.partner_id
 
-                d = {            
+            monto_ret = abs(line.balance)
+            monto_alicuota = self._get_alicuota_agip(partner_id, move.date).alicuota_retencion
+            monto_base = round(monto_ret * 100.0 / monto_alicuota, 2)
+
+            d = {            
                     "retenido_cuit": self._format_cuit(partner_id),            
-                    "retenido_razon_social": "TODO",            # TODO
-                    "retenido_iibb_numero": "1",               # TODO
+                    "retenido_razon_social": partner_id.name,
+                    "retenido_iibb_numero": self._format_cuit(partner_id),               # TODO
                     "retenido_iibb_tipo": "local",             # TODO
-                    "retenido_condicion_fiscal": "iva_sujeto_exento", # TODO           
-                    "cbte_fecha": line.date,         
-                    "cbte_gravado": 1,            
-                    "cbte_iva": 1,            
-                    "cbte_nogravado_exento": 1,            
-                    "cbte_otros": 1,            
-                    "cbte_total": 1,            
-                    "pago_fecha": line.date,            
-                    "pago_total": 1,            
-                    "sucursal": move.document_number.split("-")[0],            
-                    "numero_emision": move.document_number.split("-")[1],            
-                    "external_id": move.id,            
-                    "withholdings": [             
-                        {                    
-                            "id_jurisdiccion": 902,                    
-                            "monto_base": 1,                    
-                            "alicuota": 1,                    
+                    "retenido_condicion_fiscal": self._format_situacion_iva(partner_id),
+                    "cbte_fecha": line.date,
+                    "cbte_gravado": round(monto_base, 2),
+                    "cbte_iva": 0,
+                    "cbte_nogravado_exento": 0,
+                    "cbte_otros": 0,
+                    "cbte_total": round(monto_base, 2),
+                    "pago_fecha": line.date,
+                    "pago_total": round(monto_base - monto_ret, 2),
+                    "sucursal": move.document_number.split("-")[0],
+                    "numero_emision": move.document_number.split("-")[1],
+                    "external_id": move.id,
+                    "withholdings": [
+                        {
+                            "id_jurisdiccion": 901,
+                            "monto_base": round(monto_base, 2),
+                            "alicuota": round(monto_alicuota, 2),
                             "monto_retencion": -line.balance,                    
-                            "certificado_numero": 2000,                    
+                            "certificado_numero": 1,                    
                             "tipo_operacion": "alta"                
-                        }            
-                    ]        
-                }
-                records_ret.append(d)
-            except:
-                _logger.error("Error procesando retencion. Asiento {}".format(line.move_id.name))
+                        }
+                    ]
+            }
 
+            _logger.info(json.dumps(d))
+            records_ret.append(d)
+
+        _logger.info(len(records_ret))
         # period = fields.Date.from_string(self.date_to).strftime('%Y-%m-%d')
-        r = requests.post('http://18.189.239.110:8000/user/payments/import/', 
-        json={"data": records_ret}, headers={"X-User-Id": "1"})
-
-        print(r.status_code)
-        print(r.json())
+        r = requests.post('http://18.189.239.110:8000/user/payments/import/', json={"data": records_ret}, headers={"X-User-Id": "60346912-f22a-4ce1-b469-12f22a3ce1e3"})
+        _logger.info(r.json())
 
 # Valores en invoice_id:
 # amount_tax / amount_total / amount_untaxed / vat_amount 
