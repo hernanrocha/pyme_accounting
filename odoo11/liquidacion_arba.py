@@ -115,8 +115,15 @@ class IngresosBrutosArbaWizard(models.Model):
             return 'iva_sujeto_exento'
         # Monotributo
         if iva_code == '6':
-            return 'responsable_monotributo'
+            return 'reponsable_monotributo'
+        # Proveedor Exterior
+        if iva_code == '8':
+            return 'proveedor_exterior'
         
+        # 2: IVA Responsable No Inscripto
+        # 3: IVA No Responsable (AFIP - 33693450239, China - 55000003106)
+        # 5: Consumidor Final
+        # 9: Cliente del Exterior
         raise ValidationError('La responsabilidad frente a IVA "%s" no está soportada.' % res_iva.name)
 
     def _get_alicuota_agip(self, partner_id, date):
@@ -133,6 +140,26 @@ class IngresosBrutosArbaWizard(models.Model):
             raise ValidationError(err)
 
         return alicuota
+
+    def _get_alicuota_arba(self, partner_id, date):
+        tag_id = self.env['account.account.tag'].search([
+            ('name', '=', 'Jur: 902 - Buenos Aires')
+        ])
+        # Primero chequear que esten seteados from_date y to_date. 
+        # Luego validar que el rango y la jurisdiccion coincidan 
+        alicuota = partner_id.arba_alicuot_ids.filtered(
+            lambda a: a.from_date and a.to_date and a.from_date <= date and a.to_date >= date and a.tag_id == tag_id)
+        if len(alicuota) != 1:
+            err = 'Alicuota ARBA no encontrada para partner {} - fecha {}'.format(partner_id, date)
+            _logger.error(err)
+            raise ValidationError(err)
+
+        return alicuota
+
+    # Jur: 904 - Córdoba
+    # Jur: 905 - Corrientes
+    # Jur: 910 - Jujuy
+    # Jur: 913 - Mendoza
 
     def generate_percepciones(self):
         records_perc = []
@@ -357,17 +384,22 @@ class IngresosBrutosArbaWizard(models.Model):
         iibb_account = self.env['account.account'].search([
             ('code', '=', '2.1.03.01.011'),
         ])
-        tax_id_agip = 21184
         if not iibb_account:
             raise ValidationError('Cuenta de retencion ARBA aplicada no encontrada')
 
+        tax_id_agip = self.env['account.tax'].search([('name', '=', 'Retención IIBB CABA Aplicada')])
+        tax_id_arba = self.env['account.tax'].search([('name', '=', 'Retención IIBB ARBA Aplicada')])
+        tax_id_ganancias = self.env['account.tax'].search([('name', '=', 'Retención Ganancias Aplicada')])
+        tax_id_iva = self.env['account.tax'].search([('name', '=', 'Retención IVA Aplicada')])
+
         move_ids = self.env['account.payment.group'].search([
             ('partner_type', '=', 'supplier'),
-            ('payment_date', '>=', '2022-05-01'),
-            ('payment_date','<=','2022-05-31'),
+            ('payment_date', '>=', '2022-05-01'), # TODO
+            ('payment_date','<=','2022-05-31'), # TODO
             ('state','=','posted')
         ])
         # document_type_id = id=86, display_name='ORDEN DE PAGO X' 
+        # sudo /odoo/odoo-server/odoo-bin shell -d test_maqui -c /etc/odoo-server.conf --no-http
         # res = env['account.move.line'].search([('account_id','=',129),('date', '>=', '2022-05-01'),('date','<=','2022-05-31'),('move_id.state','=','posted'),('move_id.document_type_id','!=',False)])
         # res = env['account.move'].search([('date', '>=', '2022-05-01'),('date','<=','2022-05-31'),('state','=','posted'),('document_type_id','!=',False)])
         # res = self.env['account.payment.group'].search([('partner_type', '=', 'supplier'),('payment_date', '>=', '2022-05-01'),('payment_date','<=','2022-05-31'),('state','=','posted')])
@@ -392,6 +424,32 @@ class IngresosBrutosArbaWizard(models.Model):
 
                     w.append({
                         "id_jurisdiccion": 901,
+                        "monto_base": round(monto_base, 2),
+                        "alicuota": round(monto_alicuota, 2),
+                        "monto_retencion": monto_ret,                    
+                        "certificado_numero": int(tax.withholding_number),                    
+                        "tipo_operacion": "alta"
+                    })
+                elif tax.tax_withholding_id.id == tax_id_arba:
+                    monto_ret = tax.computed_withholding_amount
+                    monto_alicuota = self._get_alicuota_arba(partner_id, move.payment_date).alicuota_retencion
+                    monto_base = round(monto_ret * 100.0 / monto_alicuota, 2)
+
+                    w.append({
+                        "id_jurisdiccion": 902,
+                        "monto_base": round(monto_base, 2),
+                        "alicuota": round(monto_alicuota, 2),
+                        "monto_retencion": monto_ret,                    
+                        "certificado_numero": int(tax.withholding_number),                    
+                        "tipo_operacion": "alta"
+                    })
+                elif tax.tax_withholding_id.id == tax_id_ganancias:
+                    monto_ret = tax.computed_withholding_amount
+                    monto_alicuota = 1 # TODO: self._get_alicuota_agip(partner_id, move.payment_date).alicuota_retencion
+                    monto_base = round(monto_ret * 100.0 / monto_alicuota, 2)
+
+                    w.append({
+                        "id_jurisdiccion": 101,
                         "monto_base": round(monto_base, 2),
                         "alicuota": round(monto_alicuota, 2),
                         "monto_retencion": monto_ret,                    
