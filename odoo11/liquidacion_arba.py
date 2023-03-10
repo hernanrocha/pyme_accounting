@@ -101,7 +101,7 @@ class IngresosBrutosArbaWizard(models.Model):
 
         # self.generate_percepciones()
         self.generate_retenciones()
-        self.generate_retenciones_alicuotaonline()
+        self.generate_payments_alicuotaonline()
 
     def _format_situacion_iva(self, partner_id):
         res_iva = partner_id.afip_responsability_type_id
@@ -347,6 +347,86 @@ class IngresosBrutosArbaWizard(models.Model):
         _logger.info(len(records_ret))
         # period = fields.Date.from_string(self.date_to).strftime('%Y-%m-%d')
         r = requests.post('http://18.189.239.110:8000/user/payments/import/', json={"data": records_ret}, headers={"X-User-Id": "60346912-f22a-4ce1-b469-12f22a3ce1e3"})
+        _logger.info(r.json())
+
+    def generate_payments_alicuotaonline(self):
+        records_ret = []
+        
+        # TODO: permitir configurar estas cuentas
+        # TODO: cambiar por referencia a retencion ARBA aplicada
+        iibb_account = self.env['account.account'].search([
+            ('code', '=', '2.1.03.01.011'),
+        ])
+        tax_id_agip = 21184
+        if not iibb_account:
+            raise ValidationError('Cuenta de retencion ARBA aplicada no encontrada')
+
+        move_ids = self.env['account.payment.group'].search([
+            ('partner_type', '=', 'supplier'),
+            ('payment_date', '>=', '2022-05-01'),
+            ('payment_date','<=','2022-05-31'),
+            ('state','=','posted')
+        ])
+        # document_type_id = id=86, display_name='ORDEN DE PAGO X' 
+        # res = env['account.move.line'].search([('account_id','=',129),('date', '>=', '2022-05-01'),('date','<=','2022-05-31'),('move_id.state','=','posted'),('move_id.document_type_id','!=',False)])
+        # res = env['account.move'].search([('date', '>=', '2022-05-01'),('date','<=','2022-05-31'),('state','=','posted'),('document_type_id','!=',False)])
+        # res = self.env['account.payment.group'].search([('partner_type', '=', 'supplier'),('payment_date', '>=', '2022-05-01'),('payment_date','<=','2022-05-31'),('state','=','posted')])
+        # payment_ids = ret_line_ids.mapped('move_id')
+
+        for move in move_ids:
+            partner_id = move.partner_id
+
+            # monto_ret = abs(line.balance)
+            # monto_alicuota = self._get_alicuota_agip(partner_id, move.date).alicuota_retencion
+            # monto_base = round(monto_ret * 100.0 / monto_alicuota, 2)
+
+            taxes = move.payment_ids.filtered(lambda p: p.tax_withholding_id.id != False)
+
+            w = []
+
+            for tax in taxes:
+                if tax.tax_withholding_id.id == tax_id_agip:
+                    monto_ret = tax.computed_withholding_amount
+                    monto_alicuota = self._get_alicuota_agip(partner_id, move.payment_date).alicuota_retencion
+                    monto_base = round(monto_ret * 100.0 / monto_alicuota, 2)
+
+                    w.append({
+                        "id_jurisdiccion": 901,
+                        "monto_base": round(monto_base, 2),
+                        "alicuota": round(monto_alicuota, 2),
+                        "monto_retencion": monto_ret,                    
+                        "certificado_numero": int(tax.withholding_number),                    
+                        "tipo_operacion": "alta"
+                    })
+
+            d = {            
+                    "retenido_cuit": self._format_cuit(partner_id),            
+                    "retenido_razon_social": partner_id.name,
+                    "retenido_iibb_numero": self._format_cuit(partner_id),
+                    "retenido_iibb_tipo": "local",
+                    "retenido_condicion_fiscal": self._format_situacion_iva(partner_id),
+                    "cbte_fecha": move.payment_date,
+                    "cbte_gravado": 10, # TODO: round(monto_base, 2),
+                    "cbte_iva": 0,
+                    "cbte_nogravado_exento": 0,
+                    "cbte_otros": 0,
+                    "cbte_total": 10, # TODO: round(monto_base, 2),
+                    "pago_fecha": move.payment_date,
+                    "pago_total": 10, # round(monto_base - monto_ret, 2),
+                    "sucursal": move.document_number.split("-")[0],
+                    "numero_emision": move.document_number.split("-")[1],
+                    "external_id": move.id,
+                    "withholdings": w,
+            }
+
+            _logger.info(json.dumps(d))
+            records_ret.append(d)
+
+        _logger.info(len(records_ret))
+        # period = fields.Date.from_string(self.date_to).strftime('%Y-%m-%d')
+        r = requests.post('http://18.189.239.110:8000/user/payments/import/', 
+            json={"data": records_ret}, 
+            headers={"X-User-Id": "60346912-f22a-4ce1-b469-12f22a3ce1e3"})
         _logger.info(r.json())
 
 # Valores en invoice_id:
