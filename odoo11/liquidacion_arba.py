@@ -111,11 +111,11 @@ class IngresosBrutosArbaWizard(models.Model):
         if iva_code in ['1', '1FM']:
             return 'iva_responsable_inscripto'
         # Exento
-        if iva_code == '4':
+        if iva_code in ['2', '3', '4']:
             return 'iva_sujeto_exento'
         # Monotributo
         if iva_code == '6':
-            return 'reponsable_monotributo'
+            return 'responsable_monotributo'
         # Proveedor Exterior
         if iva_code == '8':
             return 'proveedor_exterior'
@@ -417,7 +417,7 @@ class IngresosBrutosArbaWizard(models.Model):
             w = []
 
             for tax in taxes:
-                if tax.tax_withholding_id.id == tax_id_agip:
+                if tax.tax_withholding_id.id == tax_id_agip.id:
                     monto_ret = tax.computed_withholding_amount
                     monto_alicuota = self._get_alicuota_agip(partner_id, move.payment_date).alicuota_retencion
                     monto_base = round(monto_ret * 100.0 / monto_alicuota, 2)
@@ -430,7 +430,7 @@ class IngresosBrutosArbaWizard(models.Model):
                         "certificado_numero": int(tax.withholding_number),                    
                         "tipo_operacion": "alta"
                     })
-                elif tax.tax_withholding_id.id == tax_id_arba:
+                elif tax.tax_withholding_id.id == tax_id_arba.id:
                     monto_ret = tax.computed_withholding_amount
                     monto_alicuota = self._get_alicuota_arba(partner_id, move.payment_date).alicuota_retencion
                     monto_base = round(monto_ret * 100.0 / monto_alicuota, 2)
@@ -443,7 +443,7 @@ class IngresosBrutosArbaWizard(models.Model):
                         "certificado_numero": int(tax.withholding_number),                    
                         "tipo_operacion": "alta"
                     })
-                elif tax.tax_withholding_id.id == tax_id_ganancias:
+                elif tax.tax_withholding_id.id == tax_id_ganancias.id:
                     monto_ret = tax.computed_withholding_amount
                     monto_alicuota = 1 # TODO: self._get_alicuota_agip(partner_id, move.payment_date).alicuota_retencion
                     monto_base = round(monto_ret * 100.0 / monto_alicuota, 2)
